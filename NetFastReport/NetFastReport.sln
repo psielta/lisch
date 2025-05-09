@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetFastReport", "NetFastReport.csproj", "{FFA62173-1517-478E-8C1E-1EDA7275FEF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkProject", "..\EntityFrameworkProject\EntityFrameworkProject.csproj", "{15123A5F-9B19-4E1C-830E-C8BF56B2D13C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FFA62173-1517-478E-8C1E-1EDA7275FEF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFA62173-1517-478E-8C1E-1EDA7275FEF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFA62173-1517-478E-8C1E-1EDA7275FEF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFA62173-1517-478E-8C1E-1EDA7275FEF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15123A5F-9B19-4E1C-830E-C8BF56B2D13C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15123A5F-9B19-4E1C-830E-C8BF56B2D13C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15123A5F-9B19-4E1C-830E-C8BF56B2D13C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15123A5F-9B19-4E1C-830E-C8BF56B2D13C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {82A09BD1-2646-46AB-AF72-4B75817F2603}
+	EndGlobalSection
+EndGlobal

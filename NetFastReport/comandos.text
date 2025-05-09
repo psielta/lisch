@@ -1,0 +1,31 @@
+sudo tee /var/www/trx/GoCore/bin/GlobalPostGre.ini > /dev/null << 'EOF'
+[Banco de Dados]
+hostname = localhost
+database = gobid
+port     = 5432
+user     = ADM
+password = 2104
+EOF
+
+sudo chown root:root /var/www/trx/GoCore/bin/GlobalPostGre.ini
+sudo chmod 640        /var/www/trx/GoCore/bin/GlobalPostGre.ini
+
+# 1) Atualize cache e instale o libgdiplus e o libc6-dev
+sudo apt-get update
+sudo apt-get install -y libgdiplus libc6-dev
+
+# 2) (Opcional) se ainda der erro, crie um link para o nome esperado
+sudo ln -s /usr/lib/libgdiplus.so /usr/lib/gdiplus.dll
+
+cd /var/www/trx/NetFastReport
+
+# 1. Reset total para o último commit
+git reset --hard HEAD
+
+# 2. Remove arquivos não rastreados (obj/, bin/, etc)
+git clean -fdx
+
+# 3. Agora puxa sem erro
+git pull
+
+dotnet ef dbcontext scaffold "Host=127.0.0.1;Port=5435;Database=lisch;Username=ADM;Password=2104" Npgsql.EntityFrameworkCore.PostgreSQL --output-dir Models --data-annotations

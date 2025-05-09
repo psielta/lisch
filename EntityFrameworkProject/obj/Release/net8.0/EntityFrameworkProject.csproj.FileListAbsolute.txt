@@ -1,0 +1,15 @@
+/var/www/trx/EntityFrameworkProject/bin/Release/net8.0/EntityFrameworkProject.deps.json
+/var/www/trx/EntityFrameworkProject/bin/Release/net8.0/EntityFrameworkProject.runtimeconfig.json
+/var/www/trx/EntityFrameworkProject/bin/Release/net8.0/EntityFrameworkProject.dll
+/var/www/trx/EntityFrameworkProject/bin/Release/net8.0/EntityFrameworkProject.pdb
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.csproj.AssemblyReference.cache
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.GeneratedMSBuildEditorConfig.editorconfig
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.AssemblyInfoInputs.cache
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.AssemblyInfo.cs
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.csproj.CoreCompileInputs.cache
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.sourcelink.json
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.dll
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/refint/EntityFrameworkProject.dll
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.pdb
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/EntityFrameworkProject.genruntimeconfig.cache
+/var/www/trx/EntityFrameworkProject/obj/Release/net8.0/ref/EntityFrameworkProject.dll

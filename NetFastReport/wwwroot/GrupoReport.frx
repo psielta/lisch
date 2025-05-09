@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="04/20/2025 19:33:45" ReportInfo.Modified="04/20/2025 21:51:48" ReportInfo.CreatorVersion="2025.2.0.0">
+  <Dictionary>
+    <BusinessObjectDataSource Name="product_groups" ReferenceName="product_groups" DataType="System.Int32" Enabled="true">
+      <Column Name="Id" DataType="System.Guid"/>
+      <Column Name="TenantId" DataType="System.Guid"/>
+      <Column Name="GroupName" DataType="System.String"/>
+      <Column Name="SubgroupName" DataType="System.String"/>
+      <Column Name="CreatedAt" DataType="System.DateTime"/>
+    </BusinessObjectDataSource>
+  </Dictionary>
+  <ReportPage Name="Page1" Watermark.Font="Arial, 60pt">
+    <ReportTitleBand Name="ReportTitle1" Width="718.2" Height="47.25">
+      <TextObject Name="Text9" Left="118.12" Top="9.45" Width="481.95" Height="18.9" Text="Relatorio de Grupos e Sub-Grupos de Produtos" HorzAlign="Center" Font="Arial, 12pt"/>
+    </ReportTitleBand>
+    <PageHeaderBand Name="PageHeader1" Top="49.92" Width="718.2" Height="28.35" Border.Lines="All" Border.Color="59, 130, 183" Fill.Color="59, 130, 183">
+      <TextObject Name="Text2" Left="5" Top="5" Width="94.5" Height="18.9" Text="ID" VertAlign="Center" Font="Arial, 9pt, style=Bold" TextFill.Color="White"/>
+      <TextObject Name="Text4" Left="292.95" Top="5" Width="56.7" Height="18.9" Text="Grupo" VertAlign="Center" Font="Arial, 9pt, style=Bold" TextFill.Color="White"/>
+      <TextObject Name="Text6" Left="453.6" Top="5" Width="85.05" Height="18.9" Text="Sub-Grupo" VertAlign="Center" Font="Arial, 9pt, style=Bold" TextFill.Color="White"/>
+      <TextObject Name="Text8" Left="595.35" Top="5" Width="94.5" Height="18.9" Text="Criado em" VertAlign="Center" Font="Arial, 9pt, style=Bold" TextFill.Color="White"/>
+    </PageHeaderBand>
+    <DataBand Name="Data1" Top="80.93" Width="718.2" Height="37.8" Border.ShadowWidth="0" Border.Lines="All" Border.Color="DarkGray" DataSource="product_groups">
+      <TextObject Name="Text1" Top="4" Width="292.95" Height="30.24" Border.Color="Gray" Text="[product_groups.Id]" VertAlign="Center" Font="Arial, 10pt"/>
+      <TextObject Name="Text3" Left="292.95" Top="4" Width="160.65" Height="30.24" Border.Color="Gray" Text="[product_groups.GroupName]" VertAlign="Center" Font="Arial, 10pt"/>
+      <TextObject Name="Text5" Left="453.6" Top="4" Width="141.75" Height="30.24" Border.Color="Gray" Text="[product_groups.SubgroupName]" VertAlign="Center" Font="Arial, 10pt"/>
+      <TextObject Name="Text7" Left="595.35" Top="4" Width="122.85" Height="30.24" Border.Color="Gray" Text="[product_groups.CreatedAt]" Format="Date" Format.Format="d" VertAlign="Center" Font="Arial, 10pt"/>
+    </DataBand>
+    <PageFooterBand Name="PageFooter1" Top="121.4" Width="718.2" Height="18.9">
+      <TextObject Name="Text11" Left="217.35" Width="283.5" Height="18.9" Text="[Page] de [TotalPages#]" HorzAlign="Center" Font="Arial, 10pt"/>
+    </PageFooterBand>
+  </ReportPage>
+</Report>

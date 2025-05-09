@@ -1,0 +1,6 @@
+@NetFastReport_HostAddress = http://localhost:5283
+
+GET {{NetFastReport_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

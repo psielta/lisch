@@ -1,0 +1,1 @@
+sqlboiler --config sqlboiler.toml psql

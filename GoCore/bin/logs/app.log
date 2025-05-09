@@ -1,0 +1,3 @@
+{"level":"info","ts":1746576476.2890348,"caller":"httpmiddleware/zaplogger.go:20","msg":"request","method":"GET","path":"/","status":404,"bytes":19,"duration":0.00005095,"request_id":"srv800965/fs9KUEzxa7-000214","remote_ip":"127.0.0.1:42574"}
+{"level":"info","ts":1746576763.5494084,"caller":"httpmiddleware/zaplogger.go:20","msg":"request","method":"GET","path":"/robots.txt","status":404,"bytes":19,"duration":0.00005258,"request_id":"srv800965/fs9KUEzxa7-000215","remote_ip":"127.0.0.1:52640"}
+{"level":"info","ts":1746577615.0052989,"caller":"httpmiddleware/zaplogger.go:20","msg":"request","method":"GET","path":"/","status":404,"bytes":19,"duration":0.00005771,"request_id":"srv800965/wMJkNCcxxK-000001","remote_ip":"127.0.0.1:60674"}

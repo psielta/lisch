@@ -4,4 +4,9 @@
 package models_sql_boiler
 
 var ViewNames = struct {
-}{}
+	CategoriaOpcoesView string
+	CategoriasView      string
+}{
+	CategoriaOpcoesView: "categoria_opcoes_view",
+	CategoriasView:      "categorias_view",
+}

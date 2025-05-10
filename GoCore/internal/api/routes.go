@@ -43,16 +43,18 @@ func (api *Api) BindRoutes() {
 				})
 			})
 
-			// r.Route("/depositos", func(r chi.Router) {
-			// 	r.Group(func(r chi.Router) {
-			// 		r.Use(api.AuthMiddleware)
-			// 		r.Get("/", api.handleDeposito_List)
-			// 		r.Get("/{id}", api.handleDeposito_Get)
-			// 		r.Post("/", api.handleDeposito_Post)
-			// 		r.Put("/{id}", api.handleDeposito_Put)
-			// 		r.Delete("/{id}", api.handleDeposito_Delete)
-			// 	})
-			// })
+			r.Route("/categorias", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+					r.Get("/", api.handleCategorias_List)
+					r.Get("/{id}", api.handleCategorias_Get)
+					r.Post("/", api.handleCategorias_Post)
+					r.Put("/{id}", api.handleCategorias_Put)
+					r.Put("/{id}/status", api.handleCategorias_PutStatus)
+					r.Put("/{id}/ordem", api.handleCategorias_PutOrdem)
+					r.Put("/{id}/opcoes-alterar-status/{opcaoId}", api.handleCategorias_PutOpcoesAlterarStatus)
+				})
+			})
 		})
 	})
 

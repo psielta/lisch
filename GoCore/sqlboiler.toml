@@ -13,3 +13,39 @@ no-tests = true
   sslmode   = "disable"
   schema    = ["public"]
   blacklist = ["schema_version"]
+
+# Aliases para tabelas
+[aliases.tables.categorias]
+up_singular   = "Categoria"
+up_plural     = "Categorias"
+down_singular = "categoria"
+down_plural   = "categorias"
+
+[aliases.tables.categoria_opcoes]
+up_singular   = "CategoriaOpcao"
+up_plural     = "CategoriaOpcoes"
+down_singular = "categoriaOpcao"
+down_plural   = "categoriaOpcoes"
+
+[aliases.tables.culinarias]
+up_singular   = "Culinaria"
+up_plural     = "Culinarias"
+down_singular = "culinaria"
+down_plural   = "culinarias"
+
+# Aliases para relacionamentos entre tabelas
+[aliases.tables.categorias.relationships.fk_categorias_culinarias]
+foreign = "Culinaria"
+local   = "Categorias"
+
+[aliases.tables.categorias.relationships.fk_categorias_tenant]
+foreign = "Tenant"
+local   = "Categorias"
+
+[aliases.tables.categoria_opcoes.relationships.fk_categoria_opcoes_categorias]
+foreign = "Categoria"
+local   = "CategoriaOpcoes"
+
+[aliases.tables.culinarias.relationships.categorias_id_culinaria_fkey]
+foreign = "Categoria"
+local   = "Culinarias"

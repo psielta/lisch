@@ -8,7 +8,104 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// Armazena as categorias de produtos do cardápio de um tenant
+type Categoria struct {
+	// Identificador único UUID da categoria
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial para facilitar CRUD
+	SeqID pgtype.Int8 `json:"seq_id"`
+	// ID do tenant ao qual a categoria pertence
+	IDTenant uuid.UUID `json:"id_tenant"`
+	// Referência ao tipo de culinária da categoria
+	IDCulinaria int32 `json:"id_culinaria"`
+	// Nome da categoria exibido no cardápio
+	Nome string `json:"nome"`
+	// Descrição da categoria
+	Descricao pgtype.Text `json:"descricao"`
+	// Horário de início da disponibilidade da categoria
+	Inicio pgtype.Time `json:"inicio"`
+	// Horário de fim da disponibilidade da categoria
+	Fim pgtype.Time `json:"fim"`
+	// Status da categoria (1=ativo, 0=inativo)
+	Ativo int16 `json:"ativo"`
+	// Opção para meio a meio (M=Valor médio, V=Maior valor, vazio=Não permitido)
+	OpcaoMeia pgtype.Text `json:"opcao_meia"`
+	// Ordem de exibição da categoria no cardápio
+	Ordem             pgtype.Int4        `json:"ordem"`
+	DisponivelDomingo int16              `json:"disponivel_domingo"`
+	DisponivelSegunda int16              `json:"disponivel_segunda"`
+	DisponivelTerca   int16              `json:"disponivel_terca"`
+	DisponivelQuarta  int16              `json:"disponivel_quarta"`
+	DisponivelQuinta  int16              `json:"disponivel_quinta"`
+	DisponivelSexta   int16              `json:"disponivel_sexta"`
+	DisponivelSabado  int16              `json:"disponivel_sabado"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	// Data e hora de exclusão lógica (soft delete)
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+// Armazena as opções disponíveis para cada categoria (ex: tamanhos)
+type CategoriaOpco struct {
+	// Identificador único UUID da opção
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial para facilitar CRUD
+	SeqID pgtype.Int8 `json:"seq_id"`
+	// ID da categoria a qual esta opção pertence
+	IDCategoria uuid.UUID `json:"id_categoria"`
+	// Nome da opção (ex: Pequeno, Médio, Grande)
+	Nome string `json:"nome"`
+	// Status da opção (1=ativo, 0=inativo)
+	Status    int16              `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	// Data e hora de exclusão lógica (soft delete)
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CategoriaOpcoesView struct {
+	ID          uuid.UUID          `json:"id"`
+	SeqID       pgtype.Int8        `json:"seq_id"`
+	IDCategoria uuid.UUID          `json:"id_categoria"`
+	Nome        string             `json:"nome"`
+	Status      int16              `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CategoriasView struct {
+	ID                uuid.UUID          `json:"id"`
+	SeqID             pgtype.Int8        `json:"seq_id"`
+	IDTenant          uuid.UUID          `json:"id_tenant"`
+	IDCulinaria       int32              `json:"id_culinaria"`
+	Nome              string             `json:"nome"`
+	Descricao         pgtype.Text        `json:"descricao"`
+	Inicio            pgtype.Time        `json:"inicio"`
+	Fim               pgtype.Time        `json:"fim"`
+	Ativo             int16              `json:"ativo"`
+	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
+	Ordem             pgtype.Int4        `json:"ordem"`
+	DisponivelDomingo int16              `json:"disponivel_domingo"`
+	DisponivelSegunda int16              `json:"disponivel_segunda"`
+	DisponivelTerca   int16              `json:"disponivel_terca"`
+	DisponivelQuarta  int16              `json:"disponivel_quarta"`
+	DisponivelQuinta  int16              `json:"disponivel_quinta"`
+	DisponivelSexta   int16              `json:"disponivel_sexta"`
+	DisponivelSabado  int16              `json:"disponivel_sabado"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type Culinaria struct {
+	IDCulinaria int32  `json:"id_culinaria"`
+	Nome        string `json:"nome"`
+	MeioMeio    int16  `json:"meio_meio"`
+}
 
 type Product struct {
 	ID          uuid.UUID `json:"id"`

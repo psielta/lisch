@@ -52,7 +52,7 @@ func (api *Api) BindRoutes() {
 					r.Put("/{id}", api.handleCategorias_Put)
 					r.Put("/{id}/status", api.handleCategorias_PutStatus)
 					r.Put("/{id}/ordem", api.handleCategorias_PutOrdem)
-					r.Put("/{id}/opcoes-alterar-status/{opcaoId}", api.handleCategorias_PutOpcoesAlterarStatus)
+					r.Put("/{id}/opcoes/{opcaoId}/status", api.handleCategorias_PutOpcoesAlterarStatus)
 				})
 			})
 		})

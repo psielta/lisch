@@ -15,6 +15,7 @@ export interface User {
   tenant_id: string;
   admin: number;
   permission_users: number | null;
+  permission_categoria: number | null;
 }
 
 interface LoginInput {

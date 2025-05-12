@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { User } from "@/context/auth-context";
 import Link from "next/link";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import {
   ArrowLongLeftIcon,
   ArrowLongRightIcon,
@@ -14,6 +15,7 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
+  getFilteredRowModel,
 } from "@tanstack/react-table";
 
 export default function CategoriaTableClient({
@@ -27,6 +29,29 @@ export default function CategoriaTableClient({
     pageIndex: 0,
     pageSize: 10,
   });
+  const [filteredData, setFilteredData] = useState<ICoreCategoria[]>(data);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Atualiza os dados filtrados quando o termo de pesquisa muda
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredData(data);
+    } else {
+      const term = searchTerm.toLowerCase().trim();
+      const filtered = data.filter(
+        (categoria) =>
+          categoria.nome.toLowerCase().includes(term) ||
+          (categoria.descricao &&
+            categoria.descricao.toLowerCase().includes(term))
+      );
+      setFilteredData(filtered);
+      // Volta para a primeira página quando filtrar
+      setPagination({
+        ...pagination,
+        pageIndex: 0,
+      });
+    }
+  }, [searchTerm, data]);
 
   const columnHelper = createColumnHelper<ICoreCategoria>();
 
@@ -63,7 +88,7 @@ export default function CategoriaTableClient({
   ];
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -126,16 +151,51 @@ export default function CategoriaTableClient({
 
   const pageNumbers = getPageNumbers();
 
+  // Handler para limpar a pesquisa
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
+      <div className="sm:flex sm:items-center sm:justify-between">
         <div className="sm:flex-auto">
           <h1 className="text-base font-semibold leading-6">Categorias</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Lista de todas as categorias disponíveis no sistema.
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+
+        {/* Componente de busca centralizado */}
+        <div className="mt-4 sm:mt-0 relative flex-1 mx-auto max-w-md">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon
+                className="h-5 w-5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+            <input
+              type="text"
+              name="search"
+              id="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Pesquisar categorias..."
+              className="block w-full rounded-md border border-border bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+              >
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
           <Link
             href="/cadastros/categorias/new"
             className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -144,55 +204,77 @@ export default function CategoriaTableClient({
           </Link>
         </div>
       </div>
+
+      {/* Contador de resultados quando houver pesquisa */}
+      {searchTerm && (
+        <div className="mt-2 text-sm text-muted-foreground">
+          {filteredData.length === 0
+            ? "Nenhum resultado encontrado"
+            : `${filteredData.length} ${
+                filteredData.length === 1
+                  ? "resultado encontrado"
+                  : "resultados encontrados"
+              }`}
+        </div>
+      )}
+
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-border rounded-md border border-border">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        scope="col"
-                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-3"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-border">
-                {table.getRowModel().rows.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    className={i % 2 === 1 ? "bg-muted/50" : undefined}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={
-                          cell.column.id === "actions"
-                            ? "relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-3"
-                            : "whitespace-nowrap px-3 py-4 text-sm text-muted-foreground"
-                        }
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {filteredData.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                {searchTerm
+                  ? "Nenhuma categoria encontrada para esta pesquisa."
+                  : "Nenhuma categoria disponível."}
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-border rounded-md border border-border">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          scope="col"
+                          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-3"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {table.getRowModel().rows.map((row, i) => (
+                    <tr
+                      key={row.id}
+                      className={i % 2 === 1 ? "bg-muted/50" : undefined}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className={
+                            cell.column.id === "actions"
+                              ? "relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-3"
+                              : "whitespace-nowrap px-3 py-4 text-sm text-muted-foreground"
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

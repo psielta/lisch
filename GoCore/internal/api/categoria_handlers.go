@@ -44,6 +44,29 @@ func (api *Api) handleCategorias_List(w http.ResponseWriter, r *http.Request) {
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
 }
 
+// handleCulinarias_List busca todas as culinarias de um tenant
+func (api *Api) handleCulinarias_List(w http.ResponseWriter, r *http.Request) {
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	// Buscar culinarias
+	culinariasList, err := models_sql_boiler.Culinarias().All(r.Context(), api.SQLBoilerDB.GetDB())
+
+	if err != nil {
+		api.Logger.Error("erro ao buscar culinarias", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// Converter para DTO
+	resp := dto.ConvertSQLBoilerCulinariasListToDTO(culinariasList)
+	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
+}
+
+// handleCategorias_Get busca uma categoria por ID
 func (api *Api) handleCategorias_Get(w http.ResponseWriter, r *http.Request) {
 	api.Logger.Info("handlePedidoGetByID")
 	id := chi.URLParam(r, "id")
@@ -54,6 +77,7 @@ func (api *Api) handleCategorias_Get(w http.ResponseWriter, r *http.Request) {
 
 	c, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", id),
+		qm.Where("deleted_at IS NULL"),
 		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 	if err != nil {

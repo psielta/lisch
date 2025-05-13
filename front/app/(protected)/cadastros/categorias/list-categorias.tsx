@@ -77,7 +77,7 @@ export default function CategoriaTableClient({
       cell: (props) => (
         <div className="text-right">
           <Link
-            href={`/cadastros/categorias/edit/${props.row.original.id}`}
+            href={`/cadastros/categorias/${props.row.original.id}`}
             className="text-primary hover:text-primary/80"
           >
             Editar<span className="sr-only">, {props.row.original.nome}</span>

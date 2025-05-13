@@ -55,6 +55,12 @@ func (api *Api) BindRoutes() {
 					r.Put("/{id}/opcoes/{opcaoId}/status", api.handleCategorias_PutOpcoesAlterarStatus)
 				})
 			})
+			r.Route("/culinarias", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+					r.Get("/", api.handleCulinarias_List)
+				})
+			})
 		})
 	})
 

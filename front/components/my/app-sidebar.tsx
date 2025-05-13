@@ -86,8 +86,8 @@ export const financeiroItems = [
 export const estoqueItems = [
   { title: "Produtos", url: "/cadastros/produtos", icon: RedeemIcon },
   {
-    title: "Grupos de produtos",
-    url: "/cadastros/grupos",
+    title: "Categorias de produtos",
+    url: "/cadastros/categorias",
     icon: WorkspacesIcon,
   },
   { title: "Depósitos", url: "/cadastros/depositos", icon: WarehouseOutlined },

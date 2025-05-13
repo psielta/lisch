@@ -232,16 +232,16 @@ export default function FormCategoria({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-12 sm:space-y-16">
         <div>
-          <h2 className="text-base font-semibold leading-7 text-gray-900">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             {categoria ? "Editar Categoria" : "Nova Categoria"}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
             {categoria
               ? "Altere os dados da categoria conforme necessário."
               : "Preencha os dados para criar uma nova categoria."}
           </p>
 
-          <div className="mt-10 space-y-8 border-b border-gray-900/10 pb-12 sm:space-y-0 sm:divide-y sm:divide-gray-900/10 sm:border-t sm:pb-0">
+          <div className="mt-10 space-y-8 border-b border-border pb-12 sm:space-y-0 sm:divide-y sm:divide-border sm:border-t sm:pb-0">
             {/* Campo oculto para ID */}
             <Controller
               name="id"
@@ -261,7 +261,7 @@ export default function FormCategoria({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label
                 htmlFor="id_culinaria"
-                className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+                className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5"
               >
                 Culinária
               </label>
@@ -285,7 +285,7 @@ export default function FormCategoria({
                           e.target.value === "" ? undefined : e.target.value
                         )
                       } // Envia string ou undefined
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:max-w-xs sm:text-sm sm:leading-6"
                     >
                       <option value="">Selecione uma culinária</option>
                       {culinarias.map((c) => (
@@ -300,7 +300,7 @@ export default function FormCategoria({
                   )}
                 />
                 {errors.id_culinaria && (
-                  <p className="mt-2 text-sm text-red-600">
+                  <p className="mt-2 text-sm text-destructive">
                     {errors.id_culinaria.message}
                   </p>
                 )}
@@ -311,7 +311,7 @@ export default function FormCategoria({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label
                 htmlFor="nome"
-                className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+                className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5"
               >
                 Nome
               </label>
@@ -324,13 +324,13 @@ export default function FormCategoria({
                       type="text"
                       id="nome"
                       autoComplete="off"
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-md sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:max-w-md sm:text-sm sm:leading-6"
                       {...field}
                     />
                   )}
                 />
                 {errors.nome && (
-                  <p className="mt-2 text-sm text-red-600">
+                  <p className="mt-2 text-sm text-destructive">
                     {errors.nome.message}
                   </p>
                 )}
@@ -341,7 +341,7 @@ export default function FormCategoria({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label
                 htmlFor="descricao"
-                className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+                className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5"
               >
                 Descrição
               </label>
@@ -353,13 +353,13 @@ export default function FormCategoria({
                     <textarea
                       id="descricao"
                       rows={3}
-                      className="block w-full max-w-2xl rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      className="block w-full max-w-2xl rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                       {...field}
                     />
                   )}
                 />
                 {errors.descricao && (
-                  <p className="mt-2 text-sm text-red-600">
+                  <p className="mt-2 text-sm text-destructive">
                     {errors.descricao.message}
                   </p>
                 )}
@@ -370,7 +370,7 @@ export default function FormCategoria({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label
                 htmlFor="periodo"
-                className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+                className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5"
               >
                 Período de disponibilidade
               </label>
@@ -378,7 +378,7 @@ export default function FormCategoria({
                 <div>
                   <label
                     htmlFor="inicio"
-                    className="block text-sm text-gray-600 mb-1"
+                    className="block text-sm text-muted-foreground mb-1"
                   >
                     Início
                   </label>
@@ -389,7 +389,7 @@ export default function FormCategoria({
                       <input
                         type="time"
                         id="inicio"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                         {...field}
                       />
                     )}
@@ -398,7 +398,7 @@ export default function FormCategoria({
                 <div>
                   <label
                     htmlFor="fim"
-                    className="block text-sm text-gray-600 mb-1"
+                    className="block text-sm text-muted-foreground mb-1"
                   >
                     Fim
                   </label>
@@ -409,7 +409,7 @@ export default function FormCategoria({
                       <input
                         type="time"
                         id="fim"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                         {...field}
                       />
                     )}
@@ -420,14 +420,14 @@ export default function FormCategoria({
 
             {/* Status e Ordem */}
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-              <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              <label className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5">
                 Configurações
               </label>
               <div className="mt-2 sm:col-span-2 sm:mt-0 grid grid-cols-2 gap-4">
                 <div>
                   <label
                     htmlFor="ativo"
-                    className="block text-sm text-gray-600 mb-1"
+                    className="block text-sm text-muted-foreground mb-1"
                   >
                     Status
                   </label>
@@ -437,7 +437,7 @@ export default function FormCategoria({
                     render={({ field }) => (
                       <select
                         id="ativo"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                         value={
                           field.value === undefined ? "1" : String(field.value)
                         } // Default to "1" (Ativo) if undefined
@@ -454,7 +454,7 @@ export default function FormCategoria({
                 <div>
                   <label
                     htmlFor="ordem"
-                    className="block text-sm text-gray-600 mb-1"
+                    className="block text-sm text-muted-foreground mb-1"
                   >
                     Ordem
                   </label>
@@ -466,7 +466,7 @@ export default function FormCategoria({
                         type="number"
                         id="ordem"
                         min="0"
-                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                         {...field}
                         value={field.value === undefined ? "" : field.value} // Para input number, controlar com string vazia para "vazio"
                         onChange={(e) =>
@@ -480,7 +480,7 @@ export default function FormCategoria({
                     )}
                   />
                   {errors.ordem && (
-                    <p className="mt-2 text-sm text-red-600">
+                    <p className="mt-2 text-sm text-destructive">
                       {errors.ordem.message}
                     </p>
                   )}
@@ -492,7 +492,7 @@ export default function FormCategoria({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label
                 htmlFor="opcao_meia"
-                className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+                className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5"
               >
                 Opção Meia
               </label>
@@ -503,7 +503,7 @@ export default function FormCategoria({
                   render={({ field }) => (
                     <select
                       id="opcao_meia"
-                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
+                      className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:max-w-xs sm:text-sm sm:leading-6"
                       {...field}
                     >
                       <option value="">Não oferecer opção meio a meio</option>
@@ -517,7 +517,7 @@ export default function FormCategoria({
 
             {/* Dias disponíveis */}
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
-              <label className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5">
+              <label className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5">
                 Dias disponíveis
               </label>
               <div className="mt-2 sm:col-span-2 sm:mt-0 grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -538,7 +538,7 @@ export default function FormCategoria({
                         <input
                           type="checkbox"
                           id={dia.name}
-                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                          className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-ring"
                           checked={!!field.value} // Booleano para 'checked'
                           onChange={(e) =>
                             field.onChange(e.target.checked ? 1 : 0)
@@ -548,7 +548,7 @@ export default function FormCategoria({
                     />
                     <label
                       htmlFor={dia.name}
-                      className="ml-2 block text-sm text-gray-900"
+                      className="ml-2 block text-sm text-foreground"
                     >
                       {dia.label}
                     </label>
@@ -561,14 +561,14 @@ export default function FormCategoria({
 
         {/* Opções da Categoria */}
         <div>
-          <h2 className="text-base font-semibold leading-7 text-gray-900">
+          <h2 className="text-base font-semibold leading-7 text-foreground">
             Opções da Categoria
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
             Adicione as opções disponíveis para esta categoria.
           </p>
 
-          <div className="mt-10 space-y-8 border-b border-gray-900/10 pb-12">
+          <div className="mt-10 space-y-8 border-b border-border pb-12">
             {fields.map((fieldItem, index) => {
               // Obter os dados atuais desta opção específica do array observado
               const currentOptionData = watchedOpcoes?.[index];
@@ -595,7 +595,7 @@ export default function FormCategoria({
                     {/* Ajustado para responsividade */}
                     <label
                       htmlFor={`opcao-nome-${index}`}
-                      className="block text-sm font-medium leading-6 text-gray-900 mb-1"
+                      className="block text-sm font-medium leading-6 text-foreground mb-1"
                     >
                       Nome da opção
                     </label>
@@ -606,13 +606,13 @@ export default function FormCategoria({
                         <input
                           type="text"
                           id={`opcao-nome-${index}`}
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                           {...field}
                         />
                       )}
                     />
                     {errors.opcoes?.[index]?.nome && (
-                      <p className="mt-1 text-sm text-red-600">
+                      <p className="mt-1 text-sm text-destructive">
                         {errors.opcoes[index]?.nome?.message}
                       </p>
                     )}
@@ -624,7 +624,7 @@ export default function FormCategoria({
                     {/* Ajustado para responsividade */}
                     <label
                       htmlFor={`opcao-status-${index}`}
-                      className="block text-sm font-medium leading-6 text-gray-900 mb-1"
+                      className="block text-sm font-medium leading-6 text-foreground mb-1"
                     >
                       Status
                     </label>
@@ -634,7 +634,7 @@ export default function FormCategoria({
                       render={({ field }) => (
                         <select
                           id={`opcao-status-${index}`}
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                           value={
                             field.value === undefined
                               ? "1"
@@ -662,8 +662,8 @@ export default function FormCategoria({
                       className={`rounded-full p-1.5 text-white shadow-sm ${
                         // Aumentado padding
                         isRemoveDisabled
-                          ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-red-600 hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                          ? "bg-zinc-200 dark:bg-zinc-700 text-muted-foreground cursor-not-allowed"
+                          : "bg-destructive hover:bg-destructive/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                       }`}
                     >
                       <TrashIcon className="h-5 w-5" aria-hidden="true" />
@@ -677,7 +677,7 @@ export default function FormCategoria({
 
             {/* Erros gerais das opções */}
             {errors.opcoes && !Array.isArray(errors.opcoes) && (
-              <p className="mt-2 text-sm text-red-600">
+              <p className="mt-2 text-sm text-destructive">
                 {errors.opcoes.message}
               </p>
             )}
@@ -689,7 +689,7 @@ export default function FormCategoria({
               <button
                 type="button"
                 onClick={() => append({ nome: "", status: 1, id: undefined })} // Adicionar id: undefined para consistência
-                className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="inline-flex items-center gap-x-1.5 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 <PlusIcon className="-ml-0.5 h-5 w-5" aria-hidden="true" />
                 Adicionar Opção
@@ -706,14 +706,14 @@ export default function FormCategoria({
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700"
+          className="text-sm font-semibold leading-6 text-foreground hover:text-foreground/80 cursor-pointer"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={postOrPutState === "pending"}
-          className="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 disabled:cursor-not-allowed" // Melhorado estado desabilitado
+          className="inline-flex justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:bg-primary/40 disabled:cursor-not-allowed" // Melhorado estado desabilitado
         >
           {postOrPutState === "pending" ? (
             <>

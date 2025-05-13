@@ -26,9 +26,9 @@ type Categoria struct {
 	// Descrição da categoria
 	Descricao pgtype.Text `json:"descricao"`
 	// Horário de início da disponibilidade da categoria
-	Inicio pgtype.Time `json:"inicio"`
+	Inicio pgtype.Timestamp `json:"inicio"`
 	// Horário de fim da disponibilidade da categoria
-	Fim pgtype.Time `json:"fim"`
+	Fim pgtype.Timestamp `json:"fim"`
 	// Status da categoria (1=ativo, 0=inativo)
 	Ativo int16 `json:"ativo"`
 	// Opção para meio a meio (M=Valor médio, V=Maior valor, vazio=Não permitido)
@@ -84,8 +84,8 @@ type CategoriasView struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -118,6 +118,64 @@ type Product struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	TenantID    uuid.UUID `json:"tenant_id"`
+}
+
+// Armazena os produtos do cardápio, vinculados a uma categoria.
+type Produto struct {
+	// Identificador único UUID do produto.
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial único do produto (para facilitar CRUD e referência legada se necessário).
+	SeqID pgtype.Int8 `json:"seq_id"`
+	// Referência à categoria à qual o produto pertence (FK para public.categorias.id).
+	IDCategoria uuid.UUID `json:"id_categoria"`
+	// Nome do produto exibido no cardápio.
+	Nome string `json:"nome"`
+	// Descrição detalhada do produto.
+	Descricao pgtype.Text `json:"descricao"`
+	// Código externo do produto, utilizado para identificação em integrações ou sistemas legados.
+	CodigoExterno pgtype.Text `json:"codigo_externo"`
+	// SKU (Stock Keeping Unit) do produto, para controle de inventário se aplicável.
+	Sku pgtype.Text `json:"sku"`
+	// Indica se o cliente pode adicionar observações a este produto no pedido (TRUE/FALSE).
+	PermiteObservacao pgtype.Bool `json:"permite_observacao"`
+	// Define a ordem de exibição deste produto dentro de sua categoria no cardápio.
+	Ordem pgtype.Int4 `json:"ordem"`
+	// URL da imagem principal associada ao produto.
+	ImagemUrl pgtype.Text `json:"imagem_url"`
+	// Status do produto (1 = ativo, 0 = inativo).
+	Status int16 `json:"status"`
+	// Timestamp da criação do registro do produto.
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	// Timestamp da última atualização do registro do produto.
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	// Timestamp da exclusão lógica do produto (soft delete).
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+// Armazena as variações de preço para cada produto, baseadas nas opções de categoria.
+type ProdutoPreco struct {
+	// Identificador único UUID para a entrada de preço.
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial único para a entrada de preço (para facilitar CRUD e referência legada se necessário).
+	SeqID pgtype.Int8 `json:"seq_id"`
+	// Referência ao produto ao qual este preço pertence (FK para public.produtos.id).
+	IDProduto uuid.UUID `json:"id_produto"`
+	// Referência à opção da categoria que define esta variação de preço (FK para public.categoria_opcoes.id). Ex: "Pequeno", "Médio".
+	IDCategoriaOpcao uuid.UUID `json:"id_categoria_opcao"`
+	// Código externo para esta variação de preço específica (ex: "PEQUENO_COPO_ACAI"). Mapeia para o campo "codigo" dentro do array "opcoes" no JSON do produto.
+	CodigoExternoOpcaoPreco pgtype.Text `json:"codigo_externo_opcao_preco"`
+	// O preço regular desta opção do produto.
+	PrecoBase pgtype.Numeric `json:"preco_base"`
+	// O preço promocional desta opção do produto, se aplicável. Corresponde a "valor2" ou "valorAtual" no JSON.
+	PrecoPromocional pgtype.Numeric `json:"preco_promocional"`
+	// Status desta opção de preço (1 = disponível, 0 = indisponível). Corresponde ao campo "status" dentro do array "opcoes" no JSON do produto.
+	Disponivel int16 `json:"disponivel"`
+	// Timestamp da criação do registro de preço.
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	// Timestamp da última atualização do registro de preço.
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	// Timestamp da exclusão lógica do preço (soft delete).
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Session struct {

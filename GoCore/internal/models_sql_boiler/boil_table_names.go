@@ -8,6 +8,8 @@ var TableNames = struct {
 	Categorias      string
 	Culinarias      string
 	Products        string
+	ProdutoPrecos   string
+	Produtos        string
 	Sessions        string
 	Tenants         string
 	Users           string
@@ -16,6 +18,8 @@ var TableNames = struct {
 	Categorias:      "categorias",
 	Culinarias:      "culinarias",
 	Products:        "products",
+	ProdutoPrecos:   "produto_precos",
+	Produtos:        "produtos",
 	Sessions:        "sessions",
 	Tenants:         "tenants",
 	Users:           "users",

@@ -59,22 +59,22 @@ INSERT INTO categorias (
 `
 
 type CreateCategoriaParams struct {
-	IDTenant          uuid.UUID   `json:"id_tenant"`
-	IDCulinaria       int32       `json:"id_culinaria"`
-	Nome              string      `json:"nome"`
-	Descricao         pgtype.Text `json:"descricao"`
-	Inicio            pgtype.Time `json:"inicio"`
-	Fim               pgtype.Time `json:"fim"`
-	Ativo             int16       `json:"ativo"`
-	OpcaoMeia         pgtype.Text `json:"opcao_meia"`
-	Ordem             pgtype.Int4 `json:"ordem"`
-	DisponivelDomingo int16       `json:"disponivel_domingo"`
-	DisponivelSegunda int16       `json:"disponivel_segunda"`
-	DisponivelTerca   int16       `json:"disponivel_terca"`
-	DisponivelQuarta  int16       `json:"disponivel_quarta"`
-	DisponivelQuinta  int16       `json:"disponivel_quinta"`
-	DisponivelSexta   int16       `json:"disponivel_sexta"`
-	DisponivelSabado  int16       `json:"disponivel_sabado"`
+	IDTenant          uuid.UUID        `json:"id_tenant"`
+	IDCulinaria       int32            `json:"id_culinaria"`
+	Nome              string           `json:"nome"`
+	Descricao         pgtype.Text      `json:"descricao"`
+	Inicio            pgtype.Timestamp `json:"inicio"`
+	Fim               pgtype.Timestamp `json:"fim"`
+	Ativo             int16            `json:"ativo"`
+	OpcaoMeia         pgtype.Text      `json:"opcao_meia"`
+	Ordem             pgtype.Int4      `json:"ordem"`
+	DisponivelDomingo int16            `json:"disponivel_domingo"`
+	DisponivelSegunda int16            `json:"disponivel_segunda"`
+	DisponivelTerca   int16            `json:"disponivel_terca"`
+	DisponivelQuarta  int16            `json:"disponivel_quarta"`
+	DisponivelQuinta  int16            `json:"disponivel_quinta"`
+	DisponivelSexta   int16            `json:"disponivel_sexta"`
+	DisponivelSabado  int16            `json:"disponivel_sabado"`
 }
 
 type CreateCategoriaRow struct {
@@ -84,8 +84,8 @@ type CreateCategoriaRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -165,8 +165,8 @@ type GetCategoriaRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -230,8 +230,8 @@ type GetCategoriaByNomeRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -290,8 +290,8 @@ type GetCategoriaBySeqIDRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -373,8 +373,8 @@ type ListCategoriasRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -455,8 +455,8 @@ type ListCategoriasByCulinariaRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -553,8 +553,8 @@ type ListCategoriasDisponiveisRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -631,8 +631,8 @@ type RestoreCategoriaRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -717,23 +717,23 @@ WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL
 `
 
 type UpdateCategoriaParams struct {
-	ID                uuid.UUID   `json:"id"`
-	IDTenant          uuid.UUID   `json:"id_tenant"`
-	IDCulinaria       int32       `json:"id_culinaria"`
-	Nome              string      `json:"nome"`
-	Descricao         pgtype.Text `json:"descricao"`
-	Inicio            pgtype.Time `json:"inicio"`
-	Fim               pgtype.Time `json:"fim"`
-	Ativo             int16       `json:"ativo"`
-	OpcaoMeia         pgtype.Text `json:"opcao_meia"`
-	Ordem             pgtype.Int4 `json:"ordem"`
-	DisponivelDomingo int16       `json:"disponivel_domingo"`
-	DisponivelSegunda int16       `json:"disponivel_segunda"`
-	DisponivelTerca   int16       `json:"disponivel_terca"`
-	DisponivelQuarta  int16       `json:"disponivel_quarta"`
-	DisponivelQuinta  int16       `json:"disponivel_quinta"`
-	DisponivelSexta   int16       `json:"disponivel_sexta"`
-	DisponivelSabado  int16       `json:"disponivel_sabado"`
+	ID                uuid.UUID        `json:"id"`
+	IDTenant          uuid.UUID        `json:"id_tenant"`
+	IDCulinaria       int32            `json:"id_culinaria"`
+	Nome              string           `json:"nome"`
+	Descricao         pgtype.Text      `json:"descricao"`
+	Inicio            pgtype.Timestamp `json:"inicio"`
+	Fim               pgtype.Timestamp `json:"fim"`
+	Ativo             int16            `json:"ativo"`
+	OpcaoMeia         pgtype.Text      `json:"opcao_meia"`
+	Ordem             pgtype.Int4      `json:"ordem"`
+	DisponivelDomingo int16            `json:"disponivel_domingo"`
+	DisponivelSegunda int16            `json:"disponivel_segunda"`
+	DisponivelTerca   int16            `json:"disponivel_terca"`
+	DisponivelQuarta  int16            `json:"disponivel_quarta"`
+	DisponivelQuinta  int16            `json:"disponivel_quinta"`
+	DisponivelSexta   int16            `json:"disponivel_sexta"`
+	DisponivelSabado  int16            `json:"disponivel_sabado"`
 }
 
 type UpdateCategoriaRow struct {
@@ -743,8 +743,8 @@ type UpdateCategoriaRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -829,8 +829,8 @@ type UpdateCategoriaOrdemRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`
@@ -897,8 +897,8 @@ type UpdateCategoriaStatusRow struct {
 	IDCulinaria       int32              `json:"id_culinaria"`
 	Nome              string             `json:"nome"`
 	Descricao         pgtype.Text        `json:"descricao"`
-	Inicio            pgtype.Time        `json:"inicio"`
-	Fim               pgtype.Time        `json:"fim"`
+	Inicio            pgtype.Timestamp   `json:"inicio"`
+	Fim               pgtype.Timestamp   `json:"fim"`
 	Ativo             int16              `json:"ativo"`
 	OpcaoMeia         pgtype.Text        `json:"opcao_meia"`
 	Ordem             pgtype.Int4        `json:"ordem"`

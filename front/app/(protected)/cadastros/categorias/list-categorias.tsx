@@ -64,9 +64,47 @@ export default function CategoriaTableClient({
       header: "Descrição",
       cell: (info) => info.getValue() || "-",
     }),
+    columnHelper.accessor("opcoes", {
+      header: "Opções",
+      cell: (info) => (
+        <div className="overflow-hidden rounded-md bg-card shadow">
+          <ul role="list" className="divide-y divide-border">
+            {info.getValue().map((opcao) => (
+              <li
+                key={opcao.id}
+                className="bg-background/36 px-4 py-2 text-sm flex items-center justify-between hover:bg-accent/50 transition-colors"
+              >
+                <span className="font-medium text-foreground">
+                  {opcao.nome}
+                </span>
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    opcao.status === 1
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  }`}
+                >
+                  {opcao.status === 1 ? "Ativo" : "Inativo"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ),
+    }),
     columnHelper.accessor("ativo", {
       header: "Status",
-      cell: (info) => (info.getValue() === 1 ? "Ativo" : "Inativo"),
+      cell: (info) => (
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
+            info.getValue() === 1
+              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+          }`}
+        >
+          {info.getValue() === 1 ? "Ativo" : "Inativo"}
+        </span>
+      ),
     }),
     columnHelper.accessor("ordem", {
       header: "Ordem",

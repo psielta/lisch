@@ -70,6 +70,11 @@ const drawerCollapsed = 72; // largura recolhida
 /* Itens dos grupos --------------------------------------------------------- */
 export const cadastrosItems = [
   { title: "Usuários", url: "/cadastros/usuarios", icon: PersonOutline },
+  {
+    title: "Categorias de produtos",
+    url: "/cadastros/categorias",
+    icon: WorkspacesIcon,
+  },
 ] as const;
 
 export const movimentoItems = [
@@ -85,11 +90,7 @@ export const financeiroItems = [
 
 export const estoqueItems = [
   { title: "Produtos", url: "/cadastros/produtos", icon: RedeemIcon },
-  {
-    title: "Categorias de produtos",
-    url: "/cadastros/categorias",
-    icon: WorkspacesIcon,
-  },
+
   { title: "Depósitos", url: "/cadastros/depositos", icon: WarehouseOutlined },
   {
     title: "Movimentações",

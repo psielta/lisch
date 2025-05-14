@@ -61,6 +61,25 @@ func (api *Api) BindRoutes() {
 					r.Get("/", api.handleCulinarias_List)
 				})
 			})
+			// Continuação das rotas de produtos
+			r.Route("/produtos", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+					r.Get("/", api.handleProdutos_List)
+					r.Get("/{id}", api.handleProdutos_Get)
+					r.Post("/", api.handleProdutos_Post)
+					r.Put("/{id}", api.handleProdutos_Put)
+					r.Delete("/{id}", api.handleProdutos_Delete)
+					r.Put("/{id}/status", api.handleProdutos_PutStatus)
+					r.Put("/{id}/ordem", api.handleProdutos_PutOrdem)
+
+					// Rotas para gerenciamento de preços
+					r.Post("/{id}/precos", api.handleProdutoPrecos_Post)
+					r.Put("/{id}/precos/{precoId}", api.handleProdutoPrecos_Put)
+					r.Delete("/{id}/precos/{precoId}", api.handleProdutoPrecos_Delete)
+					r.Put("/{id}/precos/{precoId}/disponibilidade", api.handleProdutoPrecos_PutDisponibilidade)
+				})
+			})
 		})
 	})
 

@@ -31,17 +31,16 @@ type CreateProdutoPrecoRequestDTO struct {
 }
 
 type UpdateProdutoRequest struct {
-	IDCategoria       string  `json:"id_categoria" validate:"required,uuid"`
-	Nome              string  `json:"nome" validate:"required,min=1,max=255"`
-	Descricao         *string `json:"descricao"`
-	CodigoExterno     *string `json:"codigo_externo" validate:"omitempty,max=100"`
-	SKU               *string `json:"sku" validate:"omitempty,max=100"`
-	PermiteObservacao *bool   `json:"permite_observacao"`
-	Ordem             *int32  `json:"ordem"`
-	ImagemURL         *string `json:"imagem_url" validate:"omitempty,url,max=2048"`
-	Status            int16   `json:"status" validate:"oneof=0 1"`
-	// Preços são gerenciados separadamente na atualização para maior controle,
-	// ou pode-se adicionar uma lógica para sincronizar/atualizar preços aqui.
+	IDCategoria       string                         `json:"id_categoria" validate:"required,uuid"`
+	Nome              string                         `json:"nome" validate:"required,min=1,max=255"`
+	Descricao         *string                        `json:"descricao"`
+	CodigoExterno     *string                        `json:"codigo_externo" validate:"omitempty,max=100"`
+	SKU               *string                        `json:"sku" validate:"omitempty,max=100"`
+	PermiteObservacao *bool                          `json:"permite_observacao"`
+	Ordem             *int32                         `json:"ordem"`
+	ImagemURL         *string                        `json:"imagem_url" validate:"omitempty,url,max=2048"`
+	Status            int16                          `json:"status" validate:"oneof=0 1"`
+	Precos            []CreateProdutoPrecoRequestDTO `json:"precos" validate:"omitempty,dive"`
 }
 
 type ProdutoResponse struct {

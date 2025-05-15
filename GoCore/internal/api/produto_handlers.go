@@ -345,6 +345,7 @@ func (api *Api) handleProdutos_Post(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleProdutos_Put atualiza um produto existente
+// handleProdutos_Put atualiza um produto existente
 func (api *Api) handleProdutos_Put(w http.ResponseWriter, r *http.Request) {
 	api.Logger.Info("handleProdutos_Put")
 
@@ -382,10 +383,11 @@ func (api *Api) handleProdutos_Put(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verificar se a categoria existe e pertence ao tenant
-	_, err = models_sql_boiler.Categorias(
+	categoria, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", updateDTO.IDCategoria),
 		qm.Where("id_tenant = ?", tenantID.String()),
 		qm.Where("deleted_at IS NULL"),
+		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes, qm.Where("deleted_at IS NULL")),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -398,12 +400,32 @@ func (api *Api) handleProdutos_Put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Criar um mapa de opções de categoria para validação dos preços
+	opcoesMap := make(map[string]bool)
+	if categoria.R != nil && categoria.R.CategoriaOpcoes != nil {
+		for _, opcao := range categoria.R.CategoriaOpcoes {
+			opcoesMap[opcao.ID] = true
+		}
+	}
+
+	// Validar que as opções de categoria nos preços pertencem à categoria selecionada
+	if updateDTO.Precos != nil {
+		for _, preco := range updateDTO.Precos {
+			if !opcoesMap[preco.IDCategoriaOpcao] {
+				jsonutils.EncodeJson(w, r, http.StatusBadRequest,
+					map[string]any{"error": "categoria_opcao_id não pertence à categoria selecionada"})
+				return
+			}
+		}
+	}
+
 	// Buscar produto existente
 	produtoExistente, err := models_sql_boiler.Produtos(
 		qm.Where("produtos.id = ?", id), // <-- Mudança aqui: agora explicitamente mencionando produtos.id
 		qm.Where("produtos.deleted_at IS NULL"),
 		qm.InnerJoin("categorias c on c.id = produtos.id_categoria"),
 		qm.Where("c.id_tenant = ? AND c.deleted_at IS NULL", tenantID.String()),
+		qm.Load(models_sql_boiler.ProdutoRels.IDProdutoProdutoPrecos, qm.Where("deleted_at IS NULL")),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -415,6 +437,15 @@ func (api *Api) handleProdutos_Put(w http.ResponseWriter, r *http.Request) {
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
+
+	// Iniciar transação
+	tx, err := api.SQLBoilerDB.GetDB().BeginTx(r.Context(), nil)
+	if err != nil {
+		api.Logger.Error("erro ao iniciar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+	defer tx.Rollback()
 
 	// Atualizar dados do produto
 	produtoExistente.IDCategoria = updateDTO.IDCategoria
@@ -457,16 +488,138 @@ func (api *Api) handleProdutos_Put(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Atualizar produto no banco
-	_, err = produtoExistente.Update(r.Context(), api.SQLBoilerDB.GetDB(), boil.Infer())
+	_, err = produtoExistente.Update(r.Context(), tx, boil.Infer())
 	if err != nil {
 		api.Logger.Error("erro ao atualizar produto", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error updating product"})
 		return
 	}
 
+	// Gerenciar preços se foram fornecidos no DTO
+	if updateDTO.Precos != nil {
+		// Mapear preços existentes para facilitar a atualização
+		precosExistentes := make(map[string]*models_sql_boiler.ProdutoPreco)
+		if produtoExistente.R != nil && produtoExistente.R.IDProdutoProdutoPrecos != nil {
+			for _, preco := range produtoExistente.R.IDProdutoProdutoPrecos {
+				precosExistentes[preco.IDCategoriaOpcao] = preco
+			}
+		}
+
+		// Mapear preços do DTO para verificar quais serão processados
+		precosDTO := make(map[string]bool)
+
+		// Processar cada preço do DTO
+		for _, precoDTO := range updateDTO.Precos {
+			precosDTO[precoDTO.IDCategoriaOpcao] = true
+
+			// Verificar se já existe preço para esta opção
+			if existente, ok := precosExistentes[precoDTO.IDCategoriaOpcao]; ok {
+				// Atualizar preço existente
+
+				// Converter e definir preço base
+				precoBase, err := decimalutils.FromString(precoDTO.PrecoBase)
+				if err != nil {
+					api.Logger.Error("erro ao converter preço base", zap.Error(err))
+					jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid preco_base format"})
+					return
+				}
+				existente.PrecoBase = precoBase
+
+				// Converter e definir preço promocional, se fornecido
+				if precoDTO.PrecoPromocional != nil {
+					precoPromocional, err := decimalutils.FromStringToNullDecimal(*precoDTO.PrecoPromocional)
+					if err != nil {
+						api.Logger.Error("erro ao converter preço promocional", zap.Error(err))
+						jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid preco_promocional format"})
+						return
+					}
+					existente.PrecoPromocional = precoPromocional
+				}
+
+				// Atualizar disponibilidade
+				existente.Disponivel = precoDTO.Disponivel
+
+				// Definir código externo, se fornecido
+				if precoDTO.CodigoExternoOpcaoPreco != nil {
+					existente.CodigoExternoOpcaoPreco.SetValid(*precoDTO.CodigoExternoOpcaoPreco)
+				} else {
+					existente.CodigoExternoOpcaoPreco.Valid = false
+				}
+
+				// Atualizar no banco
+				_, err = existente.Update(r.Context(), tx, boil.Infer())
+				if err != nil {
+					api.Logger.Error("erro ao atualizar preço", zap.Error(err))
+					jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error updating product price"})
+					return
+				}
+			} else {
+				// Criar novo preço
+				novoPreco := &models_sql_boiler.ProdutoPreco{
+					ID:               uuid.New().String(),
+					IDProduto:        id,
+					IDCategoriaOpcao: precoDTO.IDCategoriaOpcao,
+					Disponivel:       precoDTO.Disponivel,
+				}
+
+				// Converter e definir preço base
+				precoBase, err := decimalutils.FromString(precoDTO.PrecoBase)
+				if err != nil {
+					api.Logger.Error("erro ao converter preço base", zap.Error(err))
+					jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid preco_base format"})
+					return
+				}
+				novoPreco.PrecoBase = precoBase
+
+				// Converter e definir preço promocional, se fornecido
+				if precoDTO.PrecoPromocional != nil {
+					precoPromocional, err := decimalutils.FromStringToNullDecimal(*precoDTO.PrecoPromocional)
+					if err != nil {
+						api.Logger.Error("erro ao converter preço promocional", zap.Error(err))
+						jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid preco_promocional format"})
+						return
+					}
+					novoPreco.PrecoPromocional = precoPromocional
+				}
+
+				// Definir código externo, se fornecido
+				if precoDTO.CodigoExternoOpcaoPreco != nil {
+					novoPreco.CodigoExternoOpcaoPreco.SetValid(*precoDTO.CodigoExternoOpcaoPreco)
+				}
+
+				// Inserir no banco
+				if err := novoPreco.Insert(r.Context(), tx, boil.Infer()); err != nil {
+					api.Logger.Error("erro ao inserir preço", zap.Error(err))
+					jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating product price"})
+					return
+				}
+			}
+		}
+
+		// Realizar soft delete dos preços que não foram enviados no DTO
+		for opcaoID, preco := range precosExistentes {
+			if !precosDTO[opcaoID] {
+				preco.DeletedAt.SetValid(time.Now())
+				_, err = preco.Update(r.Context(), tx, boil.Infer())
+				if err != nil {
+					api.Logger.Error("erro ao fazer soft delete de preço", zap.Error(err))
+					jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error removing product price"})
+					return
+				}
+			}
+		}
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
 	// Buscar produto atualizado com preços
 	produtoAtualizado, err := models_sql_boiler.Produtos(
-		qm.Where("id = ?", id),
+		qm.Where("produtos.id = ?", id),
 		qm.Load(models_sql_boiler.ProdutoRels.IDProdutoProdutoPrecos,
 			qm.Where("deleted_at IS NULL"),
 			qm.Load(models_sql_boiler.ProdutoPrecoRels.IDCategoriaOpcaoCategoriaOpco)),

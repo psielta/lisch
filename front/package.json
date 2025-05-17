@@ -66,6 +66,7 @@
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5",
     "typesafe-actions": "^5.1.0",
+    "use-debounce": "^10.0.4",
     "uuid": "^11.1.0",
     "uuid-validate": "^0.0.3",
     "yup": "^1.6.1",

@@ -48,6 +48,68 @@ type Categoria struct {
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
+// Tipos de adicionais disponíveis em cada categoria do cardápio
+type CategoriaAdicionai struct {
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial para facilitar CRUD
+	SeqID       int64       `json:"seq_id"`
+	IDCategoria uuid.UUID   `json:"id_categoria"`
+	CodigoTipo  pgtype.Text `json:"codigo_tipo"`
+	Nome        string      `json:"nome"`
+	// U = Único (obrigatório escolher 1) | M = Múltiplo | Q = Quantidade múltipla
+	Selecao string      `json:"selecao"`
+	Minimo  pgtype.Int4 `json:"minimo"`
+	Limite  pgtype.Int4 `json:"limite"`
+	// 1 = ativo | 0 = inativo
+	Status    int16              `json:"status"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CategoriaAdicionaisView struct {
+	ID          uuid.UUID          `json:"id"`
+	SeqID       int64              `json:"seq_id"`
+	IDCategoria uuid.UUID          `json:"id_categoria"`
+	CodigoTipo  pgtype.Text        `json:"codigo_tipo"`
+	Nome        string             `json:"nome"`
+	Selecao     string             `json:"selecao"`
+	Minimo      pgtype.Int4        `json:"minimo"`
+	Limite      pgtype.Int4        `json:"limite"`
+	Status      int16              `json:"status"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+// Cada linha representa uma opção (ex.: “Cheddar”, “Bacon”) de um tipo de adicional
+type CategoriaAdicionalOpco struct {
+	ID uuid.UUID `json:"id"`
+	// Identificador sequencial para facilitar CRUD
+	SeqID                int64              `json:"seq_id"`
+	IDCategoriaAdicional uuid.UUID          `json:"id_categoria_adicional"`
+	Codigo               pgtype.Text        `json:"codigo"`
+	Nome                 string             `json:"nome"`
+	Valor                pgtype.Numeric     `json:"valor"`
+	Status               int16              `json:"status"`
+	CreatedAt            time.Time          `json:"created_at"`
+	UpdatedAt            time.Time          `json:"updated_at"`
+	DeletedAt            pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CategoriaAdicionalOpcoesView struct {
+	ID                   uuid.UUID          `json:"id"`
+	SeqID                int64              `json:"seq_id"`
+	IDCategoriaAdicional uuid.UUID          `json:"id_categoria_adicional"`
+	Codigo               pgtype.Text        `json:"codigo"`
+	Nome                 string             `json:"nome"`
+	Valor                pgtype.Numeric     `json:"valor"`
+	Status               int16              `json:"status"`
+	CreatedAt            time.Time          `json:"created_at"`
+	UpdatedAt            time.Time          `json:"updated_at"`
+	DeletedAt            pgtype.Timestamptz `json:"deleted_at"`
+}
+
 // Armazena as opções disponíveis para cada categoria (ex: tamanhos)
 type CategoriaOpco struct {
 	// Identificador único UUID da opção

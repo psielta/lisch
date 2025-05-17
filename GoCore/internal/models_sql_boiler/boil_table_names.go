@@ -4,23 +4,27 @@
 package models_sql_boiler
 
 var TableNames = struct {
-	CategoriaOpcoes string
-	Categorias      string
-	Culinarias      string
-	Products        string
-	ProdutoPrecos   string
-	Produtos        string
-	Sessions        string
-	Tenants         string
-	Users           string
+	CategoriaAdicionais      string
+	CategoriaAdicionalOpcoes string
+	CategoriaOpcoes          string
+	Categorias               string
+	Culinarias               string
+	Products                 string
+	ProdutoPrecos            string
+	Produtos                 string
+	Sessions                 string
+	Tenants                  string
+	Users                    string
 }{
-	CategoriaOpcoes: "categoria_opcoes",
-	Categorias:      "categorias",
-	Culinarias:      "culinarias",
-	Products:        "products",
-	ProdutoPrecos:   "produto_precos",
-	Produtos:        "produtos",
-	Sessions:        "sessions",
-	Tenants:         "tenants",
-	Users:           "users",
+	CategoriaAdicionais:      "categoria_adicionais",
+	CategoriaAdicionalOpcoes: "categoria_adicional_opcoes",
+	CategoriaOpcoes:          "categoria_opcoes",
+	Categorias:               "categorias",
+	Culinarias:               "culinarias",
+	Products:                 "products",
+	ProdutoPrecos:            "produto_precos",
+	Produtos:                 "produtos",
+	Sessions:                 "sessions",
+	Tenants:                  "tenants",
+	Users:                    "users",
 }

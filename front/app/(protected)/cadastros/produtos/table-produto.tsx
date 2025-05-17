@@ -69,6 +69,8 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { Badge } from "@/components/catalyst-ui-kit/badge";
+import { useForm } from "react-hook-form";
+import { useDebounce } from "use-debounce";
 
 interface ProdutoPaginationParams {
   idCategoria?: string;
@@ -76,6 +78,11 @@ interface ProdutoPaginationParams {
   offset: number;
   nome?: string;
   sku?: string;
+}
+
+interface FilterForm {
+  nome: string;
+  idCategoria: string;
 }
 
 function TableProduto({
@@ -94,9 +101,6 @@ function TableProduto({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] =
     useState<ProdutoResponse | null>(null);
-  const [filterNome, setFilterNome] = useState("");
-  const [filterSku, setFilterSku] = useState("");
-  const [filterIdCategoria, setFilterIdCategoria] = useState<string>("-1");
 
   // Selectors do Redux
   const produtoState = useSelector(selectProdutoState);
@@ -111,7 +115,21 @@ function TableProduto({
   // Calcular página atual e total de páginas
   const currentPage = Math.floor(offset / limit) + 1;
   const totalPages = Math.ceil(totalCount / limit);
-  console.log("totalPages", totalPages);
+
+  // React Hook Form setup
+  const { register, handleSubmit, watch, reset } = useForm<FilterForm>({
+    defaultValues: {
+      nome: "",
+      idCategoria: "-1",
+    },
+  });
+
+  // Watch form values
+  const nomeValue = watch("nome");
+  const idCategoriaValue = watch("idCategoria");
+
+  // Debounce nome filter to reduce dispatch frequency
+  const [debouncedNome] = useDebounce(nomeValue, 500);
 
   // Inicialização do estado com os dados do servidor
   useEffect(() => {
@@ -133,24 +151,22 @@ function TableProduto({
     }
   }, [removeActionState, dispatch]);
 
-  // Aplicar filtros
-  const applyFilters = () => {
+  // Efeito para aplicar filtros debounced
+  useEffect(() => {
     dispatch(setOffset(0)); // Volta para a primeira página ao filtrar
-    dispatch(setNome(filterNome));
-    if (filterIdCategoria !== "-1") {
-      dispatch(setIdCategoria(filterIdCategoria));
-    } else {
-      dispatch(setIdCategoria(undefined));
-    }
-    dispatch(setLimit(limit));
+    dispatch(setNome(debouncedNome || undefined));
+    dispatch(
+      setIdCategoria(idCategoriaValue !== "-1" ? idCategoriaValue : undefined)
+    );
     dispatch(listProdutosAction.request());
-  };
+  }, [debouncedNome, idCategoriaValue, dispatch]);
 
   // Limpar filtros
   const clearFilters = () => {
-    setFilterNome("");
-    setFilterSku("");
-    setFilterIdCategoria("-1");
+    reset({
+      nome: "",
+      idCategoria: "-1",
+    });
     dispatch(setIdCategoria(undefined));
     dispatch(setNome(undefined));
     dispatch(setLimit(20));
@@ -194,11 +210,6 @@ function TableProduto({
         return categoria ? categoria.nome : "-";
       },
     }),
-
-    // columnHelper.accessor("codigo_externo", {
-    //   header: "Código Externo",
-    //   cell: (info) => info.getValue() || "-",
-    // }),
     columnHelper.accessor("precos", {
       header: () => (
         <div className="flex w-full">
@@ -392,36 +403,30 @@ function TableProduto({
         </Button>
       </div>
 
-      {/* Filtros */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      {/* Filtros com react-hook-form */}
+      <form className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Field>
           <Label>Nome</Label>
-          <Input
-            value={filterNome}
-            onChange={(e) => setFilterNome(e.target.value)}
-            placeholder="Filtrar por nome"
-          />
+          <Input {...register("nome")} placeholder="Filtrar por nome" />
         </Field>
         <Field>
           <Label>Categoria</Label>
-          <Select
-            name="status"
-            value={filterIdCategoria}
-            onChange={(e) => setFilterIdCategoria(e.target.value)}
-          >
+          <Select {...register("idCategoria")}>
             <option value="-1">Todas</option>
             {dataCategorias.map((categoria) => (
-              <option value={categoria.id}>{categoria.nome}</option>
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nome}
+              </option>
             ))}
           </Select>
         </Field>
         <div className="flex items-end space-x-2">
-          <Button onClick={applyFilters}>Filtrar</Button>
-          <Button onClick={clearFilters} outline>
+          <Button type="submit">Filtrar</Button>
+          <Button type="button" onClick={clearFilters} outline>
             Limpar
           </Button>
         </div>
-      </div>
+      </form>
 
       {/* Tabela de Produtos */}
       <div>

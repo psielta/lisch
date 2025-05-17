@@ -49,3 +49,24 @@ local   = "CategoriaOpcoes"
 [aliases.tables.culinarias.relationships.categorias_id_culinaria_fkey]
 foreign = "Categoria"
 local   = "Culinarias"
+
+[aliases.tables.categoria_adicionais]
+up_singular   = "CategoriaAdicional"
+up_plural     = "CategoriaAdicionais"
+down_singular = "categoriaAdicional"
+down_plural   = "categoriaAdicionais"
+
+[aliases.tables.categoria_adicional_opcoes]
+up_singular   = "CategoriaAdicionalOpcao"
+up_plural     = "CategoriaAdicionalOpcoes"
+down_singular = "categoriaAdicionalOpcao"
+down_plural   = "categoriaAdicionalOpcoes"
+
+# Aliases dos relacionamentos (nomes dos FKs no seu banco)
+[aliases.tables.categoria_adicionais.relationships.fk_categoria_adicionais_categorias]
+foreign = "Categoria"
+local   = "CategoriaAdicionais"
+
+[aliases.tables.categoria_adicional_opcoes.relationships.fk_categoria_adicional_opcoes_categoria_adicionais]
+foreign = "CategoriaAdicional"
+local   = "CategoriaAdicionalOpcoes"

@@ -4,9 +4,13 @@
 package models_sql_boiler
 
 var ViewNames = struct {
-	CategoriaOpcoesView string
-	CategoriasView      string
+	CategoriaAdicionaisView      string
+	CategoriaAdicionalOpcoesView string
+	CategoriaOpcoesView          string
+	CategoriasView               string
 }{
-	CategoriaOpcoesView: "categoria_opcoes_view",
-	CategoriasView:      "categorias_view",
+	CategoriaAdicionaisView:      "categoria_adicionais_view",
+	CategoriaAdicionalOpcoesView: "categoria_adicional_opcoes_view",
+	CategoriaOpcoesView:          "categoria_opcoes_view",
+	CategoriasView:               "categorias_view",
 }

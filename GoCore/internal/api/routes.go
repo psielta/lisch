@@ -80,6 +80,24 @@ func (api *Api) BindRoutes() {
 					r.Put("/{id}/precos/{precoId}/disponibilidade", api.handleProdutoPrecos_PutDisponibilidade)
 				})
 			})
+
+			r.Route("/categoria-adicionais", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+					r.Get("/", api.handleCategoriaAdicionais_List)
+					r.Get("/{id}", api.handleCategoriaAdicionais_Get)
+					r.Post("/", api.handleCategoriaAdicionais_Post)
+					r.Put("/{id}", api.handleCategoriaAdicionais_Put)
+					r.Delete("/{id}", api.handleCategoriaAdicionais_Delete)
+					r.Put("/{id}/status", api.handleCategoriaAdicionais_PutStatus)
+
+					// Rotas para gerenciamento de opções
+					r.Post("/{id}/opcoes", api.handleCategoriaAdicionalOpcoes_Post)
+					r.Put("/{id}/opcoes/{opcaoId}", api.handleCategoriaAdicionalOpcoes_Put)
+					r.Delete("/{id}/opcoes/{opcaoId}", api.handleCategoriaAdicionalOpcoes_Delete)
+					r.Put("/{id}/opcoes/{opcaoId}/status", api.handleCategoriaAdicionalOpcoes_PutStatus)
+				})
+			})
 		})
 	})
 

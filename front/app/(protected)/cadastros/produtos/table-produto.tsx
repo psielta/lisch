@@ -68,6 +68,7 @@ import { useAppDispatch } from "@/rxjs/hooks";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
+import { Badge } from "@/components/catalyst-ui-kit/badge";
 
 interface ProdutoPaginationParams {
   idCategoria?: string;
@@ -176,32 +177,127 @@ function TableProduto({
   const columnHelper = createColumnHelper<ProdutoResponse>();
 
   const columns = [
+    columnHelper.accessor("seq_id", {
+      header: "ID",
+      cell: (info) => info.getValue() || "-",
+    }),
     columnHelper.accessor("nome", {
       header: "Nome",
       cell: (info) => (
         <div className="whitespace-normal">{info.getValue()}</div>
       ),
     }),
-    columnHelper.accessor("sku", {
-      header: "SKU",
-      cell: (info) => info.getValue() || "-",
-    }),
-    columnHelper.accessor("codigo_externo", {
-      header: "Código Externo",
-      cell: (info) => info.getValue() || "-",
-    }),
-    columnHelper.accessor("precos", {
-      header: "Preço Base",
+    columnHelper.accessor("id_categoria", {
+      header: "Categoria",
       cell: (info) => {
-        const precos = info.getValue();
-        return precos && precos.length > 0
-          ? `R$ ${parseFloat(precos[0].preco_base).toFixed(2)}`
-          : "-";
+        const categoria = dataCategorias.find((c) => c.id === info.getValue());
+        return categoria ? categoria.nome : "-";
+      },
+    }),
+
+    // columnHelper.accessor("codigo_externo", {
+    //   header: "Código Externo",
+    //   cell: (info) => info.getValue() || "-",
+    // }),
+    columnHelper.accessor("precos", {
+      header: "Preços",
+      size: 300,
+      cell: ({ row }) => {
+        const [openSections, setOpenSections] = useState<string[]>([]);
+        const produto = row.original;
+        const precos = produto.precos;
+        const categoria = dataCategorias.find(
+          (c) => c.id === produto.id_categoria
+        );
+
+        const toggleSection = (section: string) => {
+          if (openSections.includes(section)) {
+            setOpenSections(openSections.filter((s) => s !== section));
+          } else {
+            setOpenSections([...openSections, section]);
+          }
+        };
+
+        const isOpen = (section: string) => openSections.includes(section);
+
+        // Define preço principal para exibição rápida
+        const precoDestaque =
+          precos && precos.length > 0
+            ? `R$ ${parseFloat(precos[0].preco_base).toFixed(2)}`
+            : "-";
+
+        return (
+          <div className="p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg shadow-sm min-w-[300px]">
+            {/* Lista de Preços */}
+            {precos && (
+              <div className="mt-1 pl-2">
+                {precos.map((preco, index) => {
+                  const opcaoPreco = categoria?.opcoes.find(
+                    (opcao) => opcao.id === preco.id_categoria_opcao
+                  );
+                  return (
+                    <div
+                      key={preco.id}
+                      className={`py-2 ${
+                        index !== 0
+                          ? "border-t border-gray-200 dark:border-gray-700"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">
+                          {opcaoPreco?.nome}
+                        </span>
+                        <span
+                          className={`text-sm ${
+                            preco.disponivel ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {preco.disponivel ? "Disponível" : "Indisponível"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-500">Base:</span>
+                          <span className="text-sm">
+                            R$ {parseFloat(preco.preco_base).toFixed(2)}
+                          </span>
+                        </div>
+                        {preco.preco_promocional && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-500">
+                              Promocional:
+                            </span>
+                            <span className="text-sm">
+                              R${" "}
+                              {parseFloat(preco.preco_promocional).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {/* <div className="flex justify-between">
+                              <span className="text-sm text-gray-500">Código:</span>
+                              <span className="text-sm">
+                                {preco.codigo_externo_opcao_preco || "-"}
+                              </span>
+                            </div> */}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
       },
     }),
     columnHelper.accessor("status", {
       header: "Status",
-      cell: (info) => (info.getValue() === 1 ? "Ativo" : "Inativo"),
+      cell: (info) =>
+        info.getValue() === 1 ? (
+          <Badge color="green">Ativo</Badge>
+        ) : (
+          <Badge color="red">Inativo</Badge>
+        ),
     }),
     columnHelper.accessor("created_at", {
       header: "Criado em",

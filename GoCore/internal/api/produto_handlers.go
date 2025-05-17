@@ -9,6 +9,7 @@ import (
 	"gobid/internal/models_sql_boiler"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,8 +27,9 @@ func (api *Api) handleProdutos_List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verificar se há um ID de categoria na query
+	// Verificar se há um ID de categoria ou nome na query
 	categoriaID := r.URL.Query().Get("id_categoria")
+	nome := strings.TrimSpace(r.URL.Query().Get("nome"))
 
 	// Parse limit e offset para paginação
 	limit := 20 // Default
@@ -80,6 +82,17 @@ func (api *Api) handleProdutos_List(w http.ResponseWriter, r *http.Request) {
 		// Se não for filtrado por categoria, filtrar pelo tenant via join com categoria
 		queryMods = append(queryMods, qm.InnerJoin("categorias c on c.id = produtos.id_categoria"))
 		queryMods = append(queryMods, qm.Where("c.id_tenant = ? AND c.deleted_at IS NULL", tenantID.String()))
+	}
+
+	// Condição para filtrar por nome (case-insensitive, accent-insensitive, partial match)
+	if nome != "" {
+		// Opcional: definir um comprimento mínimo para o filtro
+		if len(nome) < 2 {
+			api.Logger.Warn("nome de filtro muito curto", zap.String("nome", nome))
+			jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "nome filter too short (minimum 2 characters)"})
+			return
+		}
+		queryMods = append(queryMods, qm.Where("unaccent(produtos.nome) ILIKE unaccent(?)", "%"+nome+"%"))
 	}
 
 	// Condições básicas

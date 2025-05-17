@@ -75,6 +75,7 @@ export const cadastrosItems = [
     url: "/cadastros/categorias",
     icon: WorkspacesIcon,
   },
+  { title: "Produtos", url: "/cadastros/produtos", icon: RedeemIcon },
 ] as const;
 
 export const movimentoItems = [
@@ -89,8 +90,6 @@ export const financeiroItems = [
 ] as const;
 
 export const estoqueItems = [
-  { title: "Produtos", url: "/cadastros/produtos", icon: RedeemIcon },
-
   { title: "Depósitos", url: "/cadastros/depositos", icon: WarehouseOutlined },
   {
     title: "Movimentações",

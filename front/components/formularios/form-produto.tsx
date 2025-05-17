@@ -31,65 +31,133 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 // Schema de validação com Zod para Produtos
-const produtoSchema = z.object({
-  id: z.string().optional(),
-  id_categoria: z.string().min(1, "Categoria é obrigatória"),
-  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  descricao: z.string().optional(),
-  codigo_externo: z.string().optional(),
-  sku: z.string().optional(),
-  permite_observacao: z.boolean().optional().default(true),
-  ordem: z.preprocess(
-    (val) =>
-      val === "" || val === null || val === undefined
-        ? undefined
-        : typeof val === "string"
-        ? parseInt(val, 10)
-        : val,
-    z.number({ invalid_type_error: "Ordem deve ser um número." }).optional()
-  ),
-  imagem_url: z
-    .string()
-    .url("URL da imagem inválida")
-    .optional()
-    .or(z.literal("")),
-  status: z.number().optional().default(1),
-  precos: z
-    .array(
-      z.object({
-        id: z.string().optional(),
-        id_categoria_opcao: z
-          .string()
-          .min(1, "Opção de categoria é obrigatória"),
-        codigo_externo_opcao_preco: z.string().optional(),
-        preco_base: z.preprocess(
-          (val) => (typeof val === "string" ? parseFloat(val) : val),
-          z
-            .number({
-              invalid_type_error: "Preço base deve ser um número válido.",
-            })
-            .min(0.01, "Preço base deve ser maior que zero")
-        ),
-        preco_promocional: z.preprocess(
-          (val) =>
-            val === "" || val === null || val === undefined
-              ? undefined
-              : typeof val === "string"
-              ? parseFloat(val)
-              : val,
-          z
-            .number({
-              invalid_type_error:
-                "Preço promocional deve ser um número válido.",
-            })
-            .min(0.01, "Preço promocional deve ser maior que zero")
-            .optional()
-        ),
-        disponivel: z.number().optional().default(1),
-      })
-    )
-    .min(1, "Adicione pelo menos um preço"),
-});
+// ======================  SCHEMA DE VALIDAÇÃO  ======================
+const precoSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+
+    // FK obrigatória ― deve ser UUID
+    id_categoria_opcao: z
+      .string({ invalid_type_error: "Opção é obrigatória" })
+      .uuid("Opção inválida"),
+
+    // até 100 caracteres (mesma limitação da coluna)
+    codigo_externo_opcao_preco: z
+      .string()
+      .max(100, "Máx. 100 caracteres")
+      .optional()
+      .or(z.literal("")),
+
+    // NUMERIC(10,2) → máx 99 999 999,99 com 2 casas
+    preco_base: z.preprocess(
+      (v) => (typeof v === "string" ? parseFloat(v) : v),
+      z
+        .number({ invalid_type_error: "Preço deve ser numérico" })
+        .positive("Preço deve ser > 0")
+        .max(9_999_9999.99, "Valor acima do permitido") // 8 dígitos + 2 decimais
+        .refine(
+          (n) => Number.isFinite(n) && /^\d+(\.\d{1,2})?$/.test(n.toString()),
+          "Máx. 2 casas decimais"
+        )
+    ),
+
+    // opcional, mas se existir precisa respeitar as mesmas regras
+    preco_promocional: z.preprocess(
+      (v) =>
+        v === "" || v === null || v === undefined
+          ? undefined
+          : typeof v === "string"
+          ? parseFloat(v)
+          : v,
+      z
+        .number({ invalid_type_error: "Preço deve ser numérico" })
+        .positive("Preço deve ser > 0")
+        .max(9_999_9999.99, "Valor acima do permitido")
+        .refine(
+          (n) => Number.isFinite(n) && /^\d+(\.\d{1,2})?$/.test(n.toString()),
+          "Máx. 2 casas decimais"
+        )
+        .optional()
+    ),
+
+    // 0 | 1 no banco
+    disponivel: z.union([z.literal(0), z.literal(1)]).default(1),
+  })
+  // preço promocional nunca pode ser maior que o base
+  .refine(
+    (p) =>
+      p.preco_promocional === undefined || p.preco_promocional <= p.preco_base,
+    {
+      message: "Preço promocional não pode ser maior que o preço base",
+      path: ["preco_promocional"],
+    }
+  );
+
+const produtoSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+
+    // FK obrigatória ― UUID
+    id_categoria: z
+      .string({ invalid_type_error: "Categoria é obrigatória" })
+      .uuid("Categoria inválida"),
+
+    nome: z
+      .string()
+      .min(3, "Mín. 3 caracteres")
+      .max(255, "Máx. 255 caracteres"),
+
+    descricao: z.string().optional(),
+
+    codigo_externo: z.string().max(100, "Máx. 100 caracteres").optional(),
+    sku: z.string().max(100, "Máx. 100 caracteres").optional(),
+
+    permite_observacao: z.boolean().default(true),
+
+    ordem: z.preprocess(
+      (v) =>
+        v === "" || v === null || v === undefined
+          ? undefined
+          : typeof v === "string"
+          ? parseInt(v, 10)
+          : v,
+      z
+        .number({ invalid_type_error: "Ordem deve ser numérica" })
+        .int("Deve ser inteiro")
+        .nonnegative("Não pode ser negativo")
+        .optional()
+    ),
+
+    imagem_url: z
+      .string()
+      .url("URL inválida")
+      .max(2048, "Máx. 2048 caracteres")
+      .optional()
+      .or(z.literal("")),
+
+    // 0 | 1 no banco
+    status: z.union([z.literal(0), z.literal(1)]).default(1),
+
+    // pelo menos um preço e sem duplicidade de opção
+    precos: z.array(precoSchema).min(1, "Adicione pelo menos um preço"),
+  })
+  // nenhuma opção duplicada
+  .superRefine((prod, ctx) => {
+    const dups = new Set<string>();
+    prod.precos.forEach((p, i) => {
+      if (dups.has(p.id_categoria_opcao)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Opção duplicada",
+          path: ["precos", i, "id_categoria_opcao"],
+        });
+      } else {
+        dups.add(p.id_categoria_opcao);
+      }
+    });
+  });
+
+// ================================================================
 
 type ProdutoFormValues = z.infer<typeof produtoSchema>;
 
@@ -122,7 +190,9 @@ function FormProduto({
       data?.permite_observacao === undefined ? true : data.permite_observacao,
     ordem: data?.ordem === undefined ? undefined : Number(data.ordem),
     imagem_url: data?.imagem_url || "",
-    status: data?.status === undefined ? 1 : Number(data.status),
+    status: (data?.status === undefined ? 1 : data.status === 1 ? 1 : 0) as
+      | 0
+      | 1,
     precos: data?.precos?.map((p) => ({
       id: p.id || undefined,
       id_categoria_opcao: p.id_categoria_opcao || "",
@@ -131,7 +201,11 @@ function FormProduto({
       preco_promocional: p.preco_promocional
         ? parseFloat(p.preco_promocional)
         : undefined,
-      disponivel: p.disponivel === undefined ? 1 : Number(p.disponivel),
+      disponivel: (p.disponivel === undefined
+        ? 1
+        : p.disponivel === 1
+        ? 1
+        : 0) as 0 | 1,
     })) || [{ id_categoria_opcao: "", preco_base: 0, disponivel: 1 }],
   };
 
@@ -245,7 +319,8 @@ function FormProduto({
                     <select
                       id="id_categoria"
                       {...field}
-                      className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:max-w-xs sm:text-sm sm:leading-6"
+                      disabled={isEditing}
+                      className="block w-full disabled:opacity-50 disabled:cursor-not-allowed rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:max-w-xs sm:text-sm sm:leading-6"
                     >
                       <option value="">Selecione uma categoria</option>
                       {dataCategorias.map((c) => (
@@ -561,7 +636,8 @@ function FormProduto({
                       render={({ field }) => (
                         <select
                           id={`preco-opcao-${index}`}
-                          className="block w-full rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
+                          disabled={isEditing}
+                          className="block w-full disabled:opacity-50 disabled:cursor-not-allowed rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                           {...field}
                         >
                           <option value="">Selecione uma opção</option>

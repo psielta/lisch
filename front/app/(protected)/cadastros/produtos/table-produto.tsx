@@ -200,93 +200,63 @@ function TableProduto({
     //   cell: (info) => info.getValue() || "-",
     // }),
     columnHelper.accessor("precos", {
-      header: "Preços",
+      header: () => (
+        <div className="flex w-full">
+          <div className="w-1/4 text-center">Opção</div>
+          <div className="w-1/4 text-center">Preço Base</div>
+          <div className="w-1/4 text-center">Preço Promocional</div>
+          <div className="w-1/4 text-center">Disponível</div>
+        </div>
+      ),
       size: 300,
       cell: ({ row }) => {
-        const [openSections, setOpenSections] = useState<string[]>([]);
         const produto = row.original;
         const precos = produto.precos;
         const categoria = dataCategorias.find(
           (c) => c.id === produto.id_categoria
         );
 
-        const toggleSection = (section: string) => {
-          if (openSections.includes(section)) {
-            setOpenSections(openSections.filter((s) => s !== section));
-          } else {
-            setOpenSections([...openSections, section]);
-          }
-        };
-
-        const isOpen = (section: string) => openSections.includes(section);
-
-        // Define preço principal para exibição rápida
-        const precoDestaque =
-          precos && precos.length > 0
-            ? `R$ ${parseFloat(precos[0].preco_base).toFixed(2)}`
-            : "-";
-
         return (
-          <div className="p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg shadow-sm min-w-[300px]">
-            {/* Lista de Preços */}
+          <Table
+            className="p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg border"
+            dense
+          >
             {precos && (
-              <div className="mt-1 pl-2">
+              <TableBody>
                 {precos.map((preco, index) => {
                   const opcaoPreco = categoria?.opcoes.find(
                     (opcao) => opcao.id === preco.id_categoria_opcao
                   );
                   return (
-                    <div
-                      key={preco.id}
-                      className={`py-2 ${
-                        index !== 0
-                          ? "border-t border-gray-200 dark:border-gray-700"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">
-                          {opcaoPreco?.nome}
-                        </span>
+                    <TableRow key={preco.id}>
+                      <TableCell className="text-center">
+                        {opcaoPreco?.nome || "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        R$ {parseFloat(preco.preco_base).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {preco.preco_promocional
+                          ? `R$ ${parseFloat(preco.preco_promocional).toFixed(
+                              2
+                            )}`
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <span
-                          className={`text-sm ${
+                          className={
                             preco.disponivel ? "text-green-600" : "text-red-600"
-                          }`}
+                          }
                         >
                           {preco.disponivel ? "Disponível" : "Indisponível"}
                         </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-500">Base:</span>
-                          <span className="text-sm">
-                            R$ {parseFloat(preco.preco_base).toFixed(2)}
-                          </span>
-                        </div>
-                        {preco.preco_promocional && (
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-500">
-                              Promocional:
-                            </span>
-                            <span className="text-sm">
-                              R${" "}
-                              {parseFloat(preco.preco_promocional).toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-                        {/* <div className="flex justify-between">
-                              <span className="text-sm text-gray-500">Código:</span>
-                              <span className="text-sm">
-                                {preco.codigo_externo_opcao_preco || "-"}
-                              </span>
-                            </div> */}
-                      </div>
-                    </div>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </div>
+              </TableBody>
             )}
-          </div>
+          </Table>
         );
       },
     }),

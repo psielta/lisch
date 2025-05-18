@@ -9,7 +9,7 @@ import (
 // ---------- Requests ----------
 
 type CreateCategoriaAdicionalOpcaoRequest struct {
-	IDCategoriaAdicional string  `json:"id_categoria_adicional" validate:"required,uuid"`
+	IDCategoriaAdicional string  `json:"id_categoria_adicional" validate:"omitempty,uuid"`
 	Codigo               *string `json:"codigo" validate:"omitempty,max=100"`
 	Nome                 string  `json:"nome" validate:"required,min=1,max=100"`
 	Valor                string  `json:"valor" validate:"required,numeric"` // string p/ validação

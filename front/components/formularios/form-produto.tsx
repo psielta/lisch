@@ -30,6 +30,7 @@ import {
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { Button } from "../catalyst-ui-kit/button";
+import { toast } from "sonner";
 
 // Schema de validação com Zod para Produtos
 // ======================  SCHEMA DE VALIDAÇÃO  ======================
@@ -233,6 +234,7 @@ function FormProduto({
       updateProdutoState === "completed"
     ) {
       router.push("/cadastros/produtos"); // Ajuste a rota se necessário
+      toast.success("Produto salvo com sucesso");
       if (createProdutoState === "completed") {
         dispatch(resetCreateProdutoActionState());
       }

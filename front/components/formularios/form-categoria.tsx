@@ -29,6 +29,7 @@ import {
 import { useRouter } from "next/navigation";
 import { User } from "@/context/auth-context"; // Ajuste o caminho se necessário
 import { Button } from "../catalyst-ui-kit/button";
+import { toast } from "sonner";
 
 // Schema de validação com Zod revisado
 const categoriaSchema = z.object({
@@ -173,6 +174,7 @@ export default function FormCategoria({
   useEffect(() => {
     if (postOrPutState === "completed") {
       router.push("/cadastros/categorias"); // Ajuste a rota se necessário
+      toast.success("Categoria salva com sucesso");
       dispatch(resetPostOrPutCategoriaActionState());
     }
     // Adicionar dispatch à lista de dependências se for estável (geralmente é)

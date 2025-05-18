@@ -8,11 +8,19 @@ import Loader from "@/components/my/Loader";
 
 export const dynamic = "force-dynamic";
 
+interface PageProps {
+  params: {
+    id: string;
+    idCategoria: string;
+  };
+}
+
 export default async function CategoriaAdicionalEditPage({
   params,
-}: {
-  params: { id: string; idCategoria: string };
-}) {
+}: PageProps) {
+  const { id, idCategoria } = params;
+  console.log("id", id);
+  console.log("idCategoria", idCategoria);
   const user = await apiServer<User>("/users/me");
 
   if (user.admin !== 1 && (user.permission_adicional ?? 0) !== 1) {
@@ -22,13 +30,12 @@ export default async function CategoriaAdicionalEditPage({
   try {
     const dataCategorias = await apiServer<ICoreCategoria[]>(`/categorias`);
     const data = await apiServer<CategoriaAdicionalResponse>(
-      `/categoria-adicionais/${params.id}`
+      `/categoria-adicionais/${idCategoria}`
     );
+    console.log("data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", data);
 
     if (!data) {
-      redirect(
-        `/cadastros/categorias/${params.idCategoria}/categoria-adicional`
-      );
+      redirect(`/cadastros/categorias/${idCategoria}/categoria-adicional`);
     }
 
     return (
@@ -36,9 +43,10 @@ export default async function CategoriaAdicionalEditPage({
         user={user}
         data={data}
         dataCategorias={dataCategorias}
+        defaultIdCategoria={idCategoria}
       />
     );
   } catch (error) {
-    redirect(`/cadastros/categorias/${params.idCategoria}/categoria-adicional`);
+    redirect(`/cadastros/categorias/${idCategoria}/categoria-adicional`);
   }
 }

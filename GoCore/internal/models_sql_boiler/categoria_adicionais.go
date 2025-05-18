@@ -385,8 +385,8 @@ type categoriaAdicionalL struct{}
 
 var (
 	categoriaAdicionalAllColumns            = []string{"id", "seq_id", "id_categoria", "codigo_tipo", "nome", "selecao", "minimo", "limite", "status", "created_at", "updated_at", "deleted_at"}
-	categoriaAdicionalColumnsWithoutDefault = []string{"seq_id", "id_categoria", "nome", "selecao"}
-	categoriaAdicionalColumnsWithDefault    = []string{"id", "codigo_tipo", "minimo", "limite", "status", "created_at", "updated_at", "deleted_at"}
+	categoriaAdicionalColumnsWithoutDefault = []string{"seq_id", "id_categoria", "nome", "selecao", "status"}
+	categoriaAdicionalColumnsWithDefault    = []string{"id", "codigo_tipo", "minimo", "limite", "created_at", "updated_at", "deleted_at"}
 	categoriaAdicionalPrimaryKeyColumns     = []string{"id"}
 	categoriaAdicionalGeneratedColumns      = []string{}
 )

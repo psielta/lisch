@@ -215,12 +215,17 @@ function TableCategoriaAdicional({
     }),
     columnHelper.display({
       id: "minmax",
-      header: "Mín./Máx.",
+      header: "Modo de escolha",
       cell: ({ row }) => {
         const adic = row.original;
+        if (adic.selecao === "M" && adic.limite && adic.limite > 0) {
+          return `Max.: ${adic.limite ?? "-"}`;
+        } else if (adic.selecao === "M") {
+          return "Sem limite";
+        }
         return adic.selecao === "Q"
-          ? `${adic.minimo ?? "-"} / ${adic.limite ?? "-"}`
-          : "-";
+          ? `Mín.: ${adic.minimo ?? "-"} / Máx.: ${adic.limite ?? "-"}`
+          : "Único";
       },
     }),
     columnHelper.accessor("status", {

@@ -3,8 +3,17 @@
 import { useState, useEffect } from "react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { User } from "@/context/auth-context";
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownItem,
+  DropdownMenu,
+} from "@/components/catalyst-ui-kit/dropdown";
 import Link from "next/link";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import {
   ArrowLongLeftIcon,
   ArrowLongRightIcon,
@@ -17,6 +26,7 @@ import {
   useReactTable,
   getFilteredRowModel,
 } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 
 export default function CategoriaTableClient({
   user,
@@ -25,6 +35,7 @@ export default function CategoriaTableClient({
   user: User;
   data: ICoreCategoria[];
 }) {
+  const router = useRouter();
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -56,6 +67,38 @@ export default function CategoriaTableClient({
   const columnHelper = createColumnHelper<ICoreCategoria>();
 
   const columns = [
+    columnHelper.display({
+      id: "actions",
+      size: 75,
+      header: "Ações",
+      cell: (info) => (
+        <div className="flex items-center justify-center">
+          <Dropdown>
+            <DropdownButton>
+              <EllipsisHorizontalIcon className="h-5 w-5" />
+            </DropdownButton>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={() =>
+                  router.push(`/cadastros/categorias/${info.row.original.id}`)
+                }
+              >
+                Editar
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {
+                  router.push(
+                    `/cadastros/categorias/${info.row.original.id}/categoria-adicional`
+                  );
+                }}
+              >
+                Adicionais
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </div>
+      ),
+    }),
     columnHelper.accessor("nome", {
       header: "Nome",
       cell: (info) => info.getValue(),
@@ -109,19 +152,6 @@ export default function CategoriaTableClient({
     columnHelper.accessor("ordem", {
       header: "Ordem",
       cell: (info) => info.getValue() || "-",
-    }),
-    columnHelper.display({
-      id: "actions",
-      cell: (props) => (
-        <div className="text-right">
-          <Link
-            href={`/cadastros/categorias/${props.row.original.id}`}
-            className="text-primary hover:text-primary/80"
-          >
-            Editar<span className="sr-only">, {props.row.original.nome}</span>
-          </Link>
-        </div>
-      ),
     }),
   ];
 

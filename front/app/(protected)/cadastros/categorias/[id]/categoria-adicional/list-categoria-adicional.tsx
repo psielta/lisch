@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { useDebounce } from "use-debounce";
 import { useForm } from "react-hook-form";
+
 import {
   createColumnHelper,
   flexRender,
@@ -69,7 +70,11 @@ import {
   PaginationPage,
   PaginationPrevious,
 } from "@/components/catalyst-ui-kit/pagination";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
+import Link from "next/link";
 
 interface FilterForm {
   nome: string;
@@ -277,7 +282,7 @@ function TableCategoriaAdicional({
             <DropdownItem
               onClick={() =>
                 router.push(
-                  `/cadastros/categoria-adicional/${info.row.original.id}`
+                  `/cadastros/categorias/${idCategoria}/categoria-adicional/${info.row.original.id}`
                 )
               }
             >
@@ -364,38 +369,58 @@ function TableCategoriaAdicional({
   /* -------------------  JSX  ------------------- */
   return (
     <div className="space-y-6 mt-5">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Categoria – Adicionais</h1>
-        <Button
-          onClick={() => router.push("/cadastros/categoria-adicional/novo")}
-        >
-          Novo Adicional
-        </Button>
-      </div>
+      <div className="sm:flex sm:items-center sm:justify-between">
+        <div className="sm:flex-auto">
+          <h1 className="text-base font-semibold leading-6">
+            Adicionais por categoria
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Lista de todos os adicionais disponíveis para esta categoria.
+          </p>
+        </div>
 
-      {/* Filtros */}
-      <form className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <Field>
-          <Label>Categoria</Label>
-          <Select {...register("idCategoria")}>
-            <option value="-1">Todas</option>
-            {dataCategorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
+        {/* Componentes de busca centralizados e lado a lado */}
+        <div className="mt-4 sm:mt-0 relative flex-1 mx-auto max-w-2xl flex gap-2">
+          <div className="relative flex-1 ">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon
+                className="h-5 w-5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+            <input
+              type="text"
+              {...register("nome")}
+              placeholder="Pesquisar adicionais..."
+              className="block w-full rounded-md border border-border bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+
+          <select
+            {...register("idCategoria")}
+            className="w-48 rounded-md border border-border bg-background py-2 pl-3 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="-1">Todas as categorias</option>
+            {dataCategorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nome}
               </option>
             ))}
-          </Select>
-        </Field>
-        <Field>
-          <Label>Nome (não filtra na API — futuro)</Label>
-          <Input {...register("nome")} placeholder="Filtrar por nome" />
-        </Field>
-        <div className="flex items-end space-x-2">
-          <Button type="button" onClick={clearFilters}>
-            Limpar
-          </Button>
+          </select>
         </div>
-      </form>
+
+        <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-none flex gap-2">
+          <Button onClick={() => router.push("/cadastros/categorias")}>
+            Voltar
+          </Button>
+          <Link
+            href={`/cadastros/categorias/${idCategoria}/categoria-adicional/novo`}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Adicionar adicional
+          </Link>
+        </div>
+      </div>
 
       {/* Tabela */}
       <div>

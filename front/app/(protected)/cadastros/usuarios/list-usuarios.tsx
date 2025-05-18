@@ -183,10 +183,7 @@ export default function ListUsuarios({
           </BreadcrumbList>
         </Breadcrumb>
         <div>
-          <Button
-            onClick={() => router.push("/cadastros/usuarios/new")}
-            variant="outline"
-          >
+          <Button onClick={() => router.push("/cadastros/usuarios/new")}>
             <Plus className="h-4 w-4" />
             Novo
           </Button>

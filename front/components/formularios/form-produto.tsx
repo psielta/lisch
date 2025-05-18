@@ -29,6 +29,7 @@ import {
 } from "@/rxjs/produto/produto.slice";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
+import { Button } from "../catalyst-ui-kit/button";
 
 // Schema de validação com Zod para Produtos
 // ======================  SCHEMA DE VALIDAÇÃO  ======================
@@ -286,14 +287,21 @@ function FormProduto({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-12 sm:space-y-16">
         <div>
-          <h2 className="text-base font-semibold leading-7 text-foreground">
-            {isEditing ? "Editar Produto" : "Novo Produto"}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {isEditing
-              ? "Altere os dados do produto conforme necessário."
-              : "Preencha os dados para criar um novo produto."}
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-base font-semibold leading-7 text-foreground">
+                {isEditing ? "Editar Produto" : "Novo Produto"}
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {isEditing
+                  ? "Altere os dados do produto conforme necessário."
+                  : "Preencha os dados para criar um novo produto."}
+              </p>
+            </div>
+            <Button onClick={() => router.push("/cadastros/produtos")}>
+              Voltar
+            </Button>
+          </div>
 
           <div className="mt-10 space-y-8 border-b border-border pb-12 sm:space-y-0 sm:divide-y sm:divide-border sm:border-t sm:pb-0">
             {/* Campo oculto para ID */}

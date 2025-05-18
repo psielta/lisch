@@ -60,6 +60,7 @@ import { getMe } from "@/proxies/users/GetMe";
 import ViewTimelineIcon from "@mui/icons-material/ViewTimeline";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
+import AddCardIcon from "@mui/icons-material/AddCard";
 import { useGridApiRef } from "@mui/x-data-grid";
 /* -------------------------------------------------------------------------- */
 /* Configurações gerais                                                       */

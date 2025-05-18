@@ -63,7 +63,10 @@ import {
   PaginationPage,
   PaginationPrevious,
 } from "@/components/catalyst-ui-kit/pagination";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
+import {
+  EllipsisHorizontalIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import { useAppDispatch } from "@/rxjs/hooks";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -71,6 +74,7 @@ import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { Badge } from "@/components/catalyst-ui-kit/badge";
 import { useForm } from "react-hook-form";
 import { useDebounce } from "use-debounce";
+import Link from "next/link";
 
 interface ProdutoPaginationParams {
   idCategoria?: string;
@@ -396,37 +400,53 @@ function TableProduto({
 
   return (
     <div className="space-y-6 mt-5">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Produtos</h1>
-        <Button onClick={() => router.push("/cadastros/produtos/novo")}>
-          Novo Produto
-        </Button>
-      </div>
+      <div className="sm:flex sm:items-center sm:justify-between">
+        <div className="sm:flex-auto">
+          <h1 className="text-base font-semibold leading-6">Produtos</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Lista de todos os produtos disponíveis no sistema.
+          </p>
+        </div>
 
-      {/* Filtros com react-hook-form */}
-      <form className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <Field>
-          <Label>Nome</Label>
-          <Input {...register("nome")} placeholder="Filtrar por nome" />
-        </Field>
-        <Field>
-          <Label>Categoria</Label>
-          <Select {...register("idCategoria")}>
-            <option value="-1">Todas</option>
+        {/* Componentes de busca centralizados e lado a lado */}
+        <div className="mt-4 sm:mt-0 relative flex-1 mx-auto max-w-2xl flex gap-2">
+          <div className="relative flex-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon
+                className="h-5 w-5 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+            <input
+              type="text"
+              {...register("nome")}
+              placeholder="Pesquisar produtos..."
+              className="block w-full rounded-md border border-border bg-background py-2 pl-10 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+
+          <select
+            {...register("idCategoria")}
+            className="w-48 rounded-md border border-border bg-background py-2 pl-3 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="-1">Todas as categorias</option>
             {dataCategorias.map((categoria) => (
               <option key={categoria.id} value={categoria.id}>
                 {categoria.nome}
               </option>
             ))}
-          </Select>
-        </Field>
-        <div className="flex items-end space-x-2">
-          <Button type="submit">Filtrar</Button>
-          <Button type="button" onClick={clearFilters} outline>
-            Limpar
-          </Button>
+          </select>
         </div>
-      </form>
+
+        <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-none">
+          <Link
+            href="/cadastros/produtos/novo"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            Adicionar produto
+          </Link>
+        </div>
+      </div>
 
       {/* Tabela de Produtos */}
       <div>

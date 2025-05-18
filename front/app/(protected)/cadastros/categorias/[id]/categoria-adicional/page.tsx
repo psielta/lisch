@@ -9,7 +9,12 @@ import TableCategoriaAdicional from "./list-categoria-adicional";
 
 export const dynamic = "force-dynamic"; // não cachear
 
-export default async function CategoriaAdicionalPage() {
+export default async function CategoriaAdicionalPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   /* ---------------------------------------------------------------
    *  1. Autenticação & Autorização
    * --------------------------------------------------------------*/
@@ -40,14 +45,19 @@ export default async function CategoriaAdicionalPage() {
     offset,
   };
 
-  let defaultIdCategoria: string | undefined = undefined;
+  let defaultIdCategoria: string | undefined = id ?? undefined;
 
+  console.log("dataCategorias.length", dataCategorias.length);
   if (dataCategorias.length) {
-    defaultIdCategoria = dataCategorias[0].id;
+    if (!defaultIdCategoria) {
+      defaultIdCategoria = dataCategorias[0].id;
+    }
 
     const endpoint = `/categoria-adicionais?limit=${limit}&offset=${offset}&id_categoria=${defaultIdCategoria}`;
     data = await apiServer<CategoriaAdicionalListResponse>(endpoint);
   }
+
+  console.log(data);
 
   /* ---------------------------------------------------------------
    *  4. Render

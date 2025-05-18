@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,93 +24,114 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID              string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserName        string    `boil:"user_name" json:"user_name" toml:"user_name" yaml:"user_name"`
-	Email           string    `boil:"email" json:"email" toml:"email" yaml:"email"`
-	PasswordHash    []byte    `boil:"password_hash" json:"password_hash" toml:"password_hash" yaml:"password_hash"`
-	Bio             string    `boil:"bio" json:"bio" toml:"bio" yaml:"bio"`
-	CreatedAt       time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt       time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	TenantID        string    `boil:"tenant_id" json:"tenant_id" toml:"tenant_id" yaml:"tenant_id"`
-	Admin           int       `boil:"admin" json:"admin" toml:"admin" yaml:"admin"`
-	PermissionUsers int       `boil:"permission_users" json:"permission_users" toml:"permission_users" yaml:"permission_users"`
+	ID                  string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserName            string    `boil:"user_name" json:"user_name" toml:"user_name" yaml:"user_name"`
+	Email               string    `boil:"email" json:"email" toml:"email" yaml:"email"`
+	PasswordHash        []byte    `boil:"password_hash" json:"password_hash" toml:"password_hash" yaml:"password_hash"`
+	Bio                 string    `boil:"bio" json:"bio" toml:"bio" yaml:"bio"`
+	CreatedAt           time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt           time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	TenantID            string    `boil:"tenant_id" json:"tenant_id" toml:"tenant_id" yaml:"tenant_id"`
+	Admin               int       `boil:"admin" json:"admin" toml:"admin" yaml:"admin"`
+	PermissionUsers     int       `boil:"permission_users" json:"permission_users" toml:"permission_users" yaml:"permission_users"`
+	PermissionCategoria null.Int  `boil:"permission_categoria" json:"permission_categoria,omitempty" toml:"permission_categoria" yaml:"permission_categoria,omitempty"`
+	PermissionProduto   null.Int  `boil:"permission_produto" json:"permission_produto,omitempty" toml:"permission_produto" yaml:"permission_produto,omitempty"`
+	PermissionAdicional null.Int  `boil:"permission_adicional" json:"permission_adicional,omitempty" toml:"permission_adicional" yaml:"permission_adicional,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID              string
-	UserName        string
-	Email           string
-	PasswordHash    string
-	Bio             string
-	CreatedAt       string
-	UpdatedAt       string
-	TenantID        string
-	Admin           string
-	PermissionUsers string
+	ID                  string
+	UserName            string
+	Email               string
+	PasswordHash        string
+	Bio                 string
+	CreatedAt           string
+	UpdatedAt           string
+	TenantID            string
+	Admin               string
+	PermissionUsers     string
+	PermissionCategoria string
+	PermissionProduto   string
+	PermissionAdicional string
 }{
-	ID:              "id",
-	UserName:        "user_name",
-	Email:           "email",
-	PasswordHash:    "password_hash",
-	Bio:             "bio",
-	CreatedAt:       "created_at",
-	UpdatedAt:       "updated_at",
-	TenantID:        "tenant_id",
-	Admin:           "admin",
-	PermissionUsers: "permission_users",
+	ID:                  "id",
+	UserName:            "user_name",
+	Email:               "email",
+	PasswordHash:        "password_hash",
+	Bio:                 "bio",
+	CreatedAt:           "created_at",
+	UpdatedAt:           "updated_at",
+	TenantID:            "tenant_id",
+	Admin:               "admin",
+	PermissionUsers:     "permission_users",
+	PermissionCategoria: "permission_categoria",
+	PermissionProduto:   "permission_produto",
+	PermissionAdicional: "permission_adicional",
 }
 
 var UserTableColumns = struct {
-	ID              string
-	UserName        string
-	Email           string
-	PasswordHash    string
-	Bio             string
-	CreatedAt       string
-	UpdatedAt       string
-	TenantID        string
-	Admin           string
-	PermissionUsers string
+	ID                  string
+	UserName            string
+	Email               string
+	PasswordHash        string
+	Bio                 string
+	CreatedAt           string
+	UpdatedAt           string
+	TenantID            string
+	Admin               string
+	PermissionUsers     string
+	PermissionCategoria string
+	PermissionProduto   string
+	PermissionAdicional string
 }{
-	ID:              "users.id",
-	UserName:        "users.user_name",
-	Email:           "users.email",
-	PasswordHash:    "users.password_hash",
-	Bio:             "users.bio",
-	CreatedAt:       "users.created_at",
-	UpdatedAt:       "users.updated_at",
-	TenantID:        "users.tenant_id",
-	Admin:           "users.admin",
-	PermissionUsers: "users.permission_users",
+	ID:                  "users.id",
+	UserName:            "users.user_name",
+	Email:               "users.email",
+	PasswordHash:        "users.password_hash",
+	Bio:                 "users.bio",
+	CreatedAt:           "users.created_at",
+	UpdatedAt:           "users.updated_at",
+	TenantID:            "users.tenant_id",
+	Admin:               "users.admin",
+	PermissionUsers:     "users.permission_users",
+	PermissionCategoria: "users.permission_categoria",
+	PermissionProduto:   "users.permission_produto",
+	PermissionAdicional: "users.permission_adicional",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID              whereHelperstring
-	UserName        whereHelperstring
-	Email           whereHelperstring
-	PasswordHash    whereHelper__byte
-	Bio             whereHelperstring
-	CreatedAt       whereHelpertime_Time
-	UpdatedAt       whereHelpertime_Time
-	TenantID        whereHelperstring
-	Admin           whereHelperint
-	PermissionUsers whereHelperint
+	ID                  whereHelperstring
+	UserName            whereHelperstring
+	Email               whereHelperstring
+	PasswordHash        whereHelper__byte
+	Bio                 whereHelperstring
+	CreatedAt           whereHelpertime_Time
+	UpdatedAt           whereHelpertime_Time
+	TenantID            whereHelperstring
+	Admin               whereHelperint
+	PermissionUsers     whereHelperint
+	PermissionCategoria whereHelpernull_Int
+	PermissionProduto   whereHelpernull_Int
+	PermissionAdicional whereHelpernull_Int
 }{
-	ID:              whereHelperstring{field: "\"users\".\"id\""},
-	UserName:        whereHelperstring{field: "\"users\".\"user_name\""},
-	Email:           whereHelperstring{field: "\"users\".\"email\""},
-	PasswordHash:    whereHelper__byte{field: "\"users\".\"password_hash\""},
-	Bio:             whereHelperstring{field: "\"users\".\"bio\""},
-	CreatedAt:       whereHelpertime_Time{field: "\"users\".\"created_at\""},
-	UpdatedAt:       whereHelpertime_Time{field: "\"users\".\"updated_at\""},
-	TenantID:        whereHelperstring{field: "\"users\".\"tenant_id\""},
-	Admin:           whereHelperint{field: "\"users\".\"admin\""},
-	PermissionUsers: whereHelperint{field: "\"users\".\"permission_users\""},
+	ID:                  whereHelperstring{field: "\"users\".\"id\""},
+	UserName:            whereHelperstring{field: "\"users\".\"user_name\""},
+	Email:               whereHelperstring{field: "\"users\".\"email\""},
+	PasswordHash:        whereHelper__byte{field: "\"users\".\"password_hash\""},
+	Bio:                 whereHelperstring{field: "\"users\".\"bio\""},
+	CreatedAt:           whereHelpertime_Time{field: "\"users\".\"created_at\""},
+	UpdatedAt:           whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	TenantID:            whereHelperstring{field: "\"users\".\"tenant_id\""},
+	Admin:               whereHelperint{field: "\"users\".\"admin\""},
+	PermissionUsers:     whereHelperint{field: "\"users\".\"permission_users\""},
+	PermissionCategoria: whereHelpernull_Int{field: "\"users\".\"permission_categoria\""},
+	PermissionProduto:   whereHelpernull_Int{field: "\"users\".\"permission_produto\""},
+	PermissionAdicional: whereHelpernull_Int{field: "\"users\".\"permission_adicional\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -150,9 +172,9 @@ func (r *userR) GetSellerProducts() ProductSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "user_name", "email", "password_hash", "bio", "created_at", "updated_at", "tenant_id", "admin", "permission_users"}
+	userAllColumns            = []string{"id", "user_name", "email", "password_hash", "bio", "created_at", "updated_at", "tenant_id", "admin", "permission_users", "permission_categoria", "permission_produto", "permission_adicional"}
 	userColumnsWithoutDefault = []string{"user_name", "email", "password_hash", "bio", "tenant_id", "admin", "permission_users"}
-	userColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
+	userColumnsWithDefault    = []string{"id", "created_at", "updated_at", "permission_categoria", "permission_produto", "permission_adicional"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )

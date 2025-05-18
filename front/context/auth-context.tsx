@@ -17,6 +17,7 @@ export interface User {
   permission_users: number | null;
   permission_categoria: number | null;
   permission_produto: number | null;
+  permission_adicional: number | null;
 }
 
 interface LoginInput {

@@ -66,6 +66,9 @@ const userSchema = z.object({
     .optional(),
   admin: z.boolean(),
   permission_users: z.boolean().optional(),
+  permission_categoria: z.boolean().optional(),
+  permission_produto: z.boolean().optional(),
+  permission_adicional: z.boolean().optional(),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -98,6 +101,9 @@ function EditUsuario({
       password: "",
       admin: initial.admin === 1,
       permission_users: initial.permission_users === 1,
+      permission_categoria: initial.permission_categoria === 1,
+      permission_produto: initial.permission_produto === 1,
+      permission_adicional: initial.permission_adicional === 1,
     },
   });
 
@@ -113,6 +119,9 @@ function EditUsuario({
         // Converte boolean para inteiro (conforme banco de dados)
         admin: data.admin ? 1 : 0,
         permission_users: data.permission_users ? 1 : 0,
+        permission_categoria: data.permission_categoria ? 1 : 0,
+        permission_produto: data.permission_produto ? 1 : 0,
+        permission_adicional: data.permission_adicional ? 1 : 0,
       });
 
       if (response.status === 200) {
@@ -285,8 +294,23 @@ function EditUsuario({
                   },
                   {
                     name: "permission_users",
-                    label: "Gerenciar Usuários",
+                    label: "Usuários",
                     description: "Permite gerenciar usuários.",
+                  },
+                  {
+                    name: "permission_categoria",
+                    label: "Categoria",
+                    description: "Permite gerenciar categorias.",
+                  },
+                  {
+                    name: "permission_produto",
+                    label: "Produto",
+                    description: "Permite gerenciar produtos.",
+                  },
+                  {
+                    name: "permission_adicional",
+                    label: "Adicional",
+                    description: "Permite gerenciar adicionais.",
                   },
                 ].map((permission) => (
                   <FormField

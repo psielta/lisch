@@ -60,6 +60,9 @@ const userSchema = z.object({
   password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
   admin: z.boolean(),
   permission_users: z.boolean().optional(),
+  permission_categoria: z.boolean().optional(),
+  permission_produto: z.boolean().optional(),
+  permission_adicional: z.boolean().optional(),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -84,6 +87,9 @@ function NewUsuario({ user }: { user: User }) {
       password: "",
       admin: false,
       permission_users: false,
+      permission_categoria: false,
+      permission_produto: false,
+      permission_adicional: false,
     },
   });
 
@@ -95,6 +101,9 @@ function NewUsuario({ user }: { user: User }) {
         // Converte boolean para inteiro (conforme banco de dados)
         admin: data.admin ? 1 : 0,
         permission_users: data.permission_users ? 1 : 0,
+        permission_categoria: data.permission_categoria ? 1 : 0,
+        permission_produto: data.permission_produto ? 1 : 0,
+        permission_adicional: data.permission_adicional ? 1 : 0,
       });
 
       if (response.status === 200) {
@@ -250,6 +259,26 @@ function NewUsuario({ user }: { user: User }) {
                     name: "admin",
                     label: "Administrador",
                     description: "Permite gerenciar todos os dados.",
+                  },
+                  {
+                    name: "permission_users",
+                    label: "Usuários",
+                    description: "Permite gerenciar usuários.",
+                  },
+                  {
+                    name: "permission_categoria",
+                    label: "Categoria",
+                    description: "Permite gerenciar categorias.",
+                  },
+                  {
+                    name: "permission_produto",
+                    label: "Produto",
+                    description: "Permite gerenciar produtos.",
+                  },
+                  {
+                    name: "permission_adicional",
+                    label: "Adicional",
+                    description: "Permite gerenciar adicionais.",
                   },
                 ].map((permission) => (
                   <FormField

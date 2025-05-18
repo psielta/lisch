@@ -6,33 +6,42 @@ import (
 )
 
 type CreateUserReq struct {
-	UserName        string `json:"user_name"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	Bio             string `json:"bio"`
-	TenantID        string `json:"tenant_id"`
-	Admin           int32  `json:"admin"`
-	PermissionUsers int32  `json:"permission_users"`
+	UserName            string `json:"user_name"`
+	Email               string `json:"email"`
+	Password            string `json:"password"`
+	Bio                 string `json:"bio"`
+	TenantID            string `json:"tenant_id"`
+	Admin               int32  `json:"admin"`
+	PermissionUsers     int32  `json:"permission_users"`
+	PermissionCategoria int32  `json:"permission_categoria"`
+	PermissionProduto   int32  `json:"permission_produto"`
+	PermissionAdicional int32  `json:"permission_adicional"`
 }
 
 type UpdateUserReq struct {
-	ID              string `json:"id"`
-	UserName        string `json:"user_name"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	Bio             string `json:"bio"`
-	TenantID        string `json:"tenant_id"`
-	Admin           int32  `json:"admin"`
-	PermissionUsers int32  `json:"permission_users"`
+	ID                  string `json:"id"`
+	UserName            string `json:"user_name"`
+	Email               string `json:"email"`
+	Password            string `json:"password"`
+	Bio                 string `json:"bio"`
+	TenantID            string `json:"tenant_id"`
+	Admin               int32  `json:"admin"`
+	PermissionUsers     int32  `json:"permission_users"`
+	PermissionCategoria int32  `json:"permission_categoria"`
+	PermissionProduto   int32  `json:"permission_produto"`
+	PermissionAdicional int32  `json:"permission_adicional"`
 }
 type UpdateUserReqNoPassword struct {
-	ID              string `json:"id"`
-	UserName        string `json:"user_name"`
-	Email           string `json:"email"`
-	Bio             string `json:"bio"`
-	TenantID        string `json:"tenant_id"`
-	Admin           int32  `json:"admin"`
-	PermissionUsers int32  `json:"permission_users"`
+	ID                  string `json:"id"`
+	UserName            string `json:"user_name"`
+	Email               string `json:"email"`
+	Bio                 string `json:"bio"`
+	TenantID            string `json:"tenant_id"`
+	Admin               int32  `json:"admin"`
+	PermissionUsers     int32  `json:"permission_users"`
+	PermissionCategoria int32  `json:"permission_categoria"`
+	PermissionProduto   int32  `json:"permission_produto"`
+	PermissionAdicional int32  `json:"permission_adicional"`
 }
 
 func (req CreateUserReq) Valid(ctx context.Context) validator.Evaluator {

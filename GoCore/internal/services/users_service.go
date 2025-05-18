@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"errors"
+	"gobid/internal/helpers"
 	"gobid/internal/store/pgstore"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -36,6 +38,9 @@ func (us *UserService) CreateUser(
 	userName, email, password, bio, tenantId string,
 	admin int32,
 	permissionUsers int32,
+	permissionCategoria int32,
+	permissionProduto int32,
+	permissionAdicional int32,
 ) (uuid.UUID, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
@@ -46,11 +51,16 @@ func (us *UserService) CreateUser(
 		return uuid.Nil, err
 	}
 	args := pgstore.CreateUserParams{
-		UserName:     userName,
-		Email:        email,
-		PasswordHash: hash,
-		Bio:          bio,
-		TenantID:     tenantID,
+		UserName:            userName,
+		Email:               email,
+		PasswordHash:        hash,
+		Bio:                 bio,
+		TenantID:            tenantID,
+		Admin:               admin,
+		PermissionUsers:     permissionUsers,
+		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
+		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
+		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
 	}
 	id, err := us.queries.CreateUser(ctx, args)
 	if err != nil {
@@ -72,19 +82,25 @@ func (us *UserService) UpdateUser(ctx context.Context,
 	userName, email, password, bio string,
 	admin int32,
 	permissionUsers int32,
+	permissionCategoria int32,
+	permissionProduto int32,
+	permissionAdicional int32,
 ) (pgstore.UpdateUserRow, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return pgstore.UpdateUserRow{}, err
 	}
 	args := pgstore.UpdateUserParams{
-		ID:              id,
-		UserName:        userName,
-		Email:           email,
-		PasswordHash:    hash,
-		Bio:             bio,
-		Admin:           admin,
-		PermissionUsers: permissionUsers,
+		ID:                  id,
+		UserName:            userName,
+		Email:               email,
+		PasswordHash:        hash,
+		Bio:                 bio,
+		Admin:               admin,
+		PermissionUsers:     permissionUsers,
+		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
+		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
+		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
 	}
 	user, err := us.queries.UpdateUser(ctx, args)
 	if err != nil {
@@ -106,15 +122,21 @@ func (us *UserService) UpdateUserNoPassword(ctx context.Context,
 	userName, email, bio string,
 	admin int32,
 	permissionUsers int32,
+	permissionCategoria int32,
+	permissionProduto int32,
+	permissionAdicional int32,
 ) (pgstore.UpdateUserNoPasswordRow, error) {
 
 	args := pgstore.UpdateUserNoPasswordParams{
-		ID:              id,
-		UserName:        userName,
-		Email:           email,
-		Bio:             bio,
-		Admin:           admin,
-		PermissionUsers: permissionUsers,
+		ID:                  id,
+		UserName:            userName,
+		Email:               email,
+		Bio:                 bio,
+		Admin:               admin,
+		PermissionUsers:     permissionUsers,
+		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
+		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
+		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
 	}
 	user, err := us.queries.UpdateUserNoPassword(ctx, args)
 	if err != nil {

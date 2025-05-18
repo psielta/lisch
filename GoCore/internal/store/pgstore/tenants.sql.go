@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createProduct = `-- name: CreateProduct :one
@@ -89,19 +90,22 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 
 const createUser = `-- name: CreateUser :one
 
-INSERT INTO users (user_name, email, password_hash, bio, tenant_id, admin, permission_users)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO users (user_name, email, password_hash, bio, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id
 `
 
 type CreateUserParams struct {
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	PasswordHash    []byte    `json:"password_hash"`
-	Bio             string    `json:"bio"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	PasswordHash        []byte      `json:"password_hash"`
+	Bio                 string      `json:"bio"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 type CreateUserRow struct {
@@ -126,6 +130,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.TenantID,
 		arg.Admin,
 		arg.PermissionUsers,
+		arg.PermissionCategoria,
+		arg.PermissionProduto,
+		arg.PermissionAdicional,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -214,7 +221,7 @@ func (q *Queries) GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error) {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, user_name, email, password_hash, bio, created_at, updated_at, tenant_id, admin, permission_users
+SELECT id, user_name, email, password_hash, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
 FROM users
 WHERE email = $1
 `
@@ -233,26 +240,32 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.TenantID,
 		&i.Admin,
 		&i.PermissionUsers,
+		&i.PermissionCategoria,
+		&i.PermissionProduto,
+		&i.PermissionAdicional,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users
+SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
 FROM users
 WHERE id = $1
 `
 
 type GetUserByIDRow struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
@@ -268,6 +281,9 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.TenantID,
 		&i.Admin,
 		&i.PermissionUsers,
+		&i.PermissionCategoria,
+		&i.PermissionProduto,
+		&i.PermissionAdicional,
 	)
 	return i, err
 }
@@ -354,22 +370,25 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users
+SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
 FROM users
 WHERE tenant_id = $1
 ORDER BY email
 `
 
 type ListUsersRow struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, tenantID uuid.UUID) ([]ListUsersRow, error) {
@@ -391,6 +410,9 @@ func (q *Queries) ListUsers(ctx context.Context, tenantID uuid.UUID) ([]ListUser
 			&i.TenantID,
 			&i.Admin,
 			&i.PermissionUsers,
+			&i.PermissionCategoria,
+			&i.PermissionProduto,
+			&i.PermissionAdicional,
 		); err != nil {
 			return nil, err
 		}
@@ -488,31 +510,40 @@ SET user_name = $2,
     password_hash = $5,
     admin = $6,
     permission_users = $7,
+    permission_categoria = $8,
+    permission_produto = $9,
+    permission_adicional = $10,
     updated_at = now()
 WHERE id = $1
-RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users
+RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
 `
 
 type UpdateUserParams struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	PasswordHash    []byte    `json:"password_hash"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	PasswordHash        []byte      `json:"password_hash"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 type UpdateUserRow struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
@@ -524,6 +555,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		arg.PasswordHash,
 		arg.Admin,
 		arg.PermissionUsers,
+		arg.PermissionCategoria,
+		arg.PermissionProduto,
+		arg.PermissionAdicional,
 	)
 	var i UpdateUserRow
 	err := row.Scan(
@@ -536,6 +570,9 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.TenantID,
 		&i.Admin,
 		&i.PermissionUsers,
+		&i.PermissionCategoria,
+		&i.PermissionProduto,
+		&i.PermissionAdicional,
 	)
 	return i, err
 }
@@ -547,30 +584,39 @@ SET user_name = $2,
     bio = $4,
     admin = $5,
     permission_users = $6,
+    permission_categoria = $7,
+    permission_produto = $8,
+    permission_adicional = $9,
     updated_at = now()
 WHERE id = $1
-RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users
+RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
 `
 
 type UpdateUserNoPasswordParams struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 type UpdateUserNoPasswordRow struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	Bio             string    `json:"bio"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	Bio                 string      `json:"bio"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }
 
 func (q *Queries) UpdateUserNoPassword(ctx context.Context, arg UpdateUserNoPasswordParams) (UpdateUserNoPasswordRow, error) {
@@ -581,6 +627,9 @@ func (q *Queries) UpdateUserNoPassword(ctx context.Context, arg UpdateUserNoPass
 		arg.Bio,
 		arg.Admin,
 		arg.PermissionUsers,
+		arg.PermissionCategoria,
+		arg.PermissionProduto,
+		arg.PermissionAdicional,
 	)
 	var i UpdateUserNoPasswordRow
 	err := row.Scan(
@@ -593,6 +642,9 @@ func (q *Queries) UpdateUserNoPassword(ctx context.Context, arg UpdateUserNoPass
 		&i.TenantID,
 		&i.Admin,
 		&i.PermissionUsers,
+		&i.PermissionCategoria,
+		&i.PermissionProduto,
+		&i.PermissionAdicional,
 	)
 	return i, err
 }

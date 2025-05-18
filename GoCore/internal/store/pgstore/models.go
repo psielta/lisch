@@ -255,14 +255,17 @@ type Tenant struct {
 }
 
 type User struct {
-	ID              uuid.UUID `json:"id"`
-	UserName        string    `json:"user_name"`
-	Email           string    `json:"email"`
-	PasswordHash    []byte    `json:"password_hash"`
-	Bio             string    `json:"bio"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	TenantID        uuid.UUID `json:"tenant_id"`
-	Admin           int32     `json:"admin"`
-	PermissionUsers int32     `json:"permission_users"`
+	ID                  uuid.UUID   `json:"id"`
+	UserName            string      `json:"user_name"`
+	Email               string      `json:"email"`
+	PasswordHash        []byte      `json:"password_hash"`
+	Bio                 string      `json:"bio"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	Admin               int32       `json:"admin"`
+	PermissionUsers     int32       `json:"permission_users"`
+	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
+	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
+	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
 }

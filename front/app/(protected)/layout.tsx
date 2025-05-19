@@ -28,7 +28,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
 
         {/* 3) Conteúdo: cresce e encolhe → flex-1  +  min-w-0 */}
         <main className="flex flex-col flex-1 min-w-0">
-          <Header />
+          {/* <Header /> */}
           {/* 4) wrapper scrollável do seu DataGrid / páginas */}
           <div className="flex-1 overflow-auto p-6">{children}</div>
         </main>

@@ -62,6 +62,7 @@ import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import AddCardIcon from "@mui/icons-material/AddCard";
 import { useGridApiRef } from "@mui/x-data-grid";
+import { ModeToggle } from "./mode-toggle";
 /* -------------------------------------------------------------------------- */
 /* Configurações gerais                                                       */
 /* -------------------------------------------------------------------------- */
@@ -594,7 +595,10 @@ export default function AppSidebarMui() {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={handleGetMe}>Minha Conta</MenuItem>
+          {/* <MenuItem onClick={handleGetMe}>Minha Conta</MenuItem> */}
+          <MenuItem>
+            <ModeToggle />
+          </MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
             <ListItemIcon>

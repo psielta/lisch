@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
-import { IconButton, Menu, MenuItem } from "@mui/material";
+import { Button, IconButton, Menu, MenuItem } from "@mui/material";
 import { LightMode, DarkMode, Settings } from "@mui/icons-material";
 
 export function ModeToggle() {
@@ -20,20 +20,26 @@ export function ModeToggle() {
 
   return (
     <>
-      <IconButton
+      <Button
         onClick={handleClick}
         size="small"
-        sx={{ ml: 2 }}
         aria-controls={open ? "theme-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
+        color="secondary"
       >
         {theme === "dark" ? (
-          <DarkMode sx={{ fontSize: "2.3rem" }} />
+          <>
+            <DarkMode sx={{ fontSize: "2.3rem", marginRight: "10px" }} /> Modo
+            Escuro
+          </>
         ) : (
-          <LightMode sx={{ fontSize: "2.3rem" }} />
+          <>
+            <LightMode sx={{ fontSize: "2.3rem", marginRight: "10px" }} /> Modo
+            Claro
+          </>
         )}
-      </IconButton>
+      </Button>
 
       <Menu
         anchorEl={anchorEl}

@@ -4,8 +4,7 @@ import { User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, Package, Menu, X } from "lucide-react";
+import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 
 function Vendas({
   produtos,
@@ -15,6 +14,7 @@ function Vendas({
   user: User;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   return (
     <div className="h-full flex">
@@ -70,41 +70,43 @@ function Vendas({
             </h2>
           </div>
 
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-2">
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-2 space-y-1">
               {produtos && produtos.length > 0 ? (
-                produtos.map((produto) => (
-                  <Card
-                    key={produto.id}
-                    className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{produto.nome}</h3>
-                          {produto.precos && produto.precos.length > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              R${" "}
-                              {parseFloat(produto.precos[0].preco_base).toFixed(
-                                2
-                              )}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                          {produto.status === 1 ? "Disponível" : "Indisponível"}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                produtos
+                  .filter((produto) =>
+                    produto.nome
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                  )
+                  .map((produto) => (
+                    <div
+                      key={produto.id}
+                      className="px-3 py-2 cursor-pointer hover:bg-accent/50 transition-colors rounded text-sm"
+                    >
+                      {produto.nome}
+                    </div>
+                  ))
               ) : (
                 <div className="text-center py-10 text-muted-foreground">
                   Nenhum produto encontrado
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
+
+          <div className="p-3 border-t border-border">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar produtos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-accent/30 border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+            </div>
+          </div>
         </div>
       </aside>
     </div>

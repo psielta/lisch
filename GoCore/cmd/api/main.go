@@ -8,6 +8,7 @@ import (
 	"gobid/internal/database"
 	"gobid/internal/logging"
 	"gobid/internal/services"
+	"gobid/internal/validation"
 	"net/http"
 	"os"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -74,17 +74,18 @@ func main() {
 	if jwtSecret == "" {
 		panic("GOBID_JWT_SECRET não configurado")
 	}
-	validate := validator.New()
+	validate := validation.Init()
 
 	api := api.Api{
-		Router:      chi.NewMux(),
-		Logger:      logger,
-		UserService: services.NewUserService(pool),
-		Sessions:    s,
-		JWTSecret:   []byte(jwtSecret),
-		Validate:    validate,
-		DBPool:      pool,
-		SQLBoilerDB: sqlBoilerDB, // Use o adaptador SQLBoiler
+		Router:         chi.NewMux(),
+		Logger:         logger,
+		UserService:    services.NewUserService(pool),
+		ClienteService: services.NewClienteService(pool),
+		Sessions:       s,
+		JWTSecret:      []byte(jwtSecret),
+		Validate:       validate,
+		DBPool:         pool,
+		SQLBoilerDB:    sqlBoilerDB, // Use o adaptador SQLBoiler
 	}
 
 	api.BindRoutes()

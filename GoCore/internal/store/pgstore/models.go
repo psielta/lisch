@@ -163,6 +163,32 @@ type CategoriasView struct {
 	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type Cliente struct {
+	ID              uuid.UUID   `json:"id"`
+	TenantID        uuid.UUID   `json:"tenant_id"`
+	TipoPessoa      string      `json:"tipo_pessoa"`
+	NomeRazaoSocial string      `json:"nome_razao_social"`
+	NomeFantasia    pgtype.Text `json:"nome_fantasia"`
+	Cpf             pgtype.Text `json:"cpf"`
+	Cnpj            pgtype.Text `json:"cnpj"`
+	Rg              pgtype.Text `json:"rg"`
+	Ie              pgtype.Text `json:"ie"`
+	Im              pgtype.Text `json:"im"`
+	DataNascimento  pgtype.Date `json:"data_nascimento"`
+	Email           pgtype.Text `json:"email"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Celular         pgtype.Text `json:"celular"`
+	Cep             pgtype.Text `json:"cep"`
+	Logradouro      pgtype.Text `json:"logradouro"`
+	Numero          pgtype.Text `json:"numero"`
+	Complemento     pgtype.Text `json:"complemento"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
+	Uf              pgtype.Text `json:"uf"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
+}
+
 type Culinaria struct {
 	IDCulinaria int32  `json:"id_culinaria"`
 	Nome        string `json:"nome"`

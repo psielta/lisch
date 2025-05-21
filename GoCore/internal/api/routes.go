@@ -81,6 +81,25 @@ func (api *Api) BindRoutes() {
 				})
 			})
 
+			r.Route("/clientes", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+
+					// CRUD básico
+					r.Get("/", api.handleListClientes)             // GET /api/v1/clientes - lista paginada com filtros
+					r.Get("/simple", api.handleListClientesSimple) // GET /api/v1/clientes/simple - lista simples com limit/offset
+					r.Get("/count", api.handleCountClientes)       // GET /api/v1/clientes/count - contagem total
+					r.Get("/{id}", api.handleGetCliente)           // GET /api/v1/clientes/{id}
+					r.Post("/", api.handleCreateCliente)           // POST /api/v1/clientes
+					r.Put("/{id}", api.handleUpdateCliente)        // PUT /api/v1/clientes/{id}
+					r.Delete("/{id}", api.handleDeleteCliente)     // DELETE /api/v1/clientes/{id}
+
+					// Busca por documento
+					r.Get("/cpf/{cpf}", api.handleGetClienteByCPF)    // GET /api/v1/clientes/cpf/{cpf}
+					r.Get("/cnpj/{cnpj}", api.handleGetClienteByCNPJ) // GET /api/v1/clientes/cnpj/{cnpj}
+				})
+			})
+
 			r.Route("/categoria-adicionais", func(r chi.Router) {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)

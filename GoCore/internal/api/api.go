@@ -23,6 +23,7 @@ type Api struct {
 	Router          *chi.Mux
 	Logger          *zap.Logger
 	UserService     services.UserService
+	ClienteService  services.ClienteService
 	Sessions        *scs.SessionManager
 	JWTSecret       []byte
 	tenantCache     sync.Map
@@ -48,6 +49,7 @@ type cacheEntry struct {
 func NewApi(router *chi.Mux,
 	logger *zap.Logger,
 	userService services.UserService,
+	clienteService services.ClienteService,
 	sessions *scs.SessionManager, jwtSecret []byte,
 	validate *validator.Validate,
 	pool *pgxpool.Pool,
@@ -56,6 +58,7 @@ func NewApi(router *chi.Mux,
 		Router:          router,
 		Logger:          logger,
 		UserService:     userService,
+		ClienteService:  clienteService,
 		Sessions:        sessions,
 		JWTSecret:       jwtSecret,
 		cacheExpiration: 15 * time.Minute, // Cache expira em 15 minutos

@@ -33,18 +33,18 @@ WHERE c.tenant_id = $1
   AND ($2 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR 
        LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
-       c.cpf LIKE '%' || $2 || '%' OR
-       c.cnpj LIKE '%' || $2 || '%')
+       regexp_replace(c.cpf, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
+       regexp_replace(c.cnpj, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%')
   -- Filtros específicos
   AND ($3 = '' OR LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%')
   AND ($4 = '' OR LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($4)) || '%')
-  AND ($5 = '' OR c.cpf = $5)
-  AND ($6 = '' OR c.cnpj = $6)
+  AND ($5 = '' OR regexp_replace(c.cpf, '[^0-9]', '', 'g') = regexp_replace($5, '[^0-9]', '', 'g'))
+  AND ($6 = '' OR regexp_replace(c.cnpj, '[^0-9]', '', 'g') = regexp_replace($6, '[^0-9]', '', 'g'))
   AND ($7 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($7)) || '%')
   AND ($8 = '' OR c.uf = $8)
   AND ($9 = '' OR c.tipo_pessoa = $9)
-  AND ($10 = '' OR c.telefone LIKE '%' || $10 || '%')
-  AND ($11 = '' OR c.celular LIKE '%' || $11 || '%')
+  AND ($10 = '' OR regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($10, '[^0-9]', '', 'g') || '%')
+  AND ($11 = '' OR regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($11, '[^0-9]', '', 'g') || '%')
 `
 
 type CountClientesPaginatedParams struct {
@@ -399,18 +399,18 @@ WHERE c.tenant_id = $1
   AND ($5 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($5)) || '%' OR 
        LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($5)) || '%' OR
-       c.cpf LIKE '%' || $5 || '%' OR
-       c.cnpj LIKE '%' || $5 || '%')
+       regexp_replace(c.cpf, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%' OR
+       regexp_replace(c.cnpj, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%')
   -- Filtros específicos
   AND ($6 = '' OR LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($6)) || '%')
   AND ($7 = '' OR LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($7)) || '%')
-  AND ($8 = '' OR c.cpf = $8)
-  AND ($9 = '' OR c.cnpj = $9)
+  AND ($8 = '' OR regexp_replace(c.cpf, '[^0-9]', '', 'g') = regexp_replace($8, '[^0-9]', '', 'g'))
+  AND ($9 = '' OR regexp_replace(c.cnpj, '[^0-9]', '', 'g') = regexp_replace($9, '[^0-9]', '', 'g'))
   AND ($10 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($10)) || '%')
   AND ($11 = '' OR c.uf = $11)
   AND ($12 = '' OR c.tipo_pessoa = $12)
-  AND ($13 = '' OR c.telefone LIKE '%' || $13 || '%')
-  AND ($14 = '' OR c.celular LIKE '%' || $14 || '%')
+  AND ($13 = '' OR regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($13, '[^0-9]', '', 'g') || '%')
+  AND ($14 = '' OR regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($14, '[^0-9]', '', 'g') || '%')
 ORDER BY 
   CASE WHEN $3 = 'nome' AND $4 = 'asc' THEN c.nome_razao_social END ASC,
   CASE WHEN $3 = 'nome' AND $4 = 'desc' THEN c.nome_razao_social END DESC,

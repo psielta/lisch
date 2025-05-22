@@ -78,6 +78,7 @@ export const cadastrosItems = [
     icon: WorkspacesIcon,
   },
   { title: "Produtos", url: "/cadastros/produtos", icon: RedeemIcon },
+  { title: "Clientes", url: "/cadastros/clientes", icon: PersonOutline },
 ] as const;
 
 export const movimentoItems = [

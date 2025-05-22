@@ -37,6 +37,7 @@ type User struct {
 	PermissionCategoria null.Int  `boil:"permission_categoria" json:"permission_categoria,omitempty" toml:"permission_categoria" yaml:"permission_categoria,omitempty"`
 	PermissionProduto   null.Int  `boil:"permission_produto" json:"permission_produto,omitempty" toml:"permission_produto" yaml:"permission_produto,omitempty"`
 	PermissionAdicional null.Int  `boil:"permission_adicional" json:"permission_adicional,omitempty" toml:"permission_adicional" yaml:"permission_adicional,omitempty"`
+	PermissionCliente   null.Int  `boil:"permission_cliente" json:"permission_cliente,omitempty" toml:"permission_cliente" yaml:"permission_cliente,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -56,6 +57,7 @@ var UserColumns = struct {
 	PermissionCategoria string
 	PermissionProduto   string
 	PermissionAdicional string
+	PermissionCliente   string
 }{
 	ID:                  "id",
 	UserName:            "user_name",
@@ -70,6 +72,7 @@ var UserColumns = struct {
 	PermissionCategoria: "permission_categoria",
 	PermissionProduto:   "permission_produto",
 	PermissionAdicional: "permission_adicional",
+	PermissionCliente:   "permission_cliente",
 }
 
 var UserTableColumns = struct {
@@ -86,6 +89,7 @@ var UserTableColumns = struct {
 	PermissionCategoria string
 	PermissionProduto   string
 	PermissionAdicional string
+	PermissionCliente   string
 }{
 	ID:                  "users.id",
 	UserName:            "users.user_name",
@@ -100,6 +104,7 @@ var UserTableColumns = struct {
 	PermissionCategoria: "users.permission_categoria",
 	PermissionProduto:   "users.permission_produto",
 	PermissionAdicional: "users.permission_adicional",
+	PermissionCliente:   "users.permission_cliente",
 }
 
 // Generated where
@@ -118,6 +123,7 @@ var UserWhere = struct {
 	PermissionCategoria whereHelpernull_Int
 	PermissionProduto   whereHelpernull_Int
 	PermissionAdicional whereHelpernull_Int
+	PermissionCliente   whereHelpernull_Int
 }{
 	ID:                  whereHelperstring{field: "\"users\".\"id\""},
 	UserName:            whereHelperstring{field: "\"users\".\"user_name\""},
@@ -132,6 +138,7 @@ var UserWhere = struct {
 	PermissionCategoria: whereHelpernull_Int{field: "\"users\".\"permission_categoria\""},
 	PermissionProduto:   whereHelpernull_Int{field: "\"users\".\"permission_produto\""},
 	PermissionAdicional: whereHelpernull_Int{field: "\"users\".\"permission_adicional\""},
+	PermissionCliente:   whereHelpernull_Int{field: "\"users\".\"permission_cliente\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -172,9 +179,9 @@ func (r *userR) GetSellerProducts() ProductSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "user_name", "email", "password_hash", "bio", "created_at", "updated_at", "tenant_id", "admin", "permission_users", "permission_categoria", "permission_produto", "permission_adicional"}
+	userAllColumns            = []string{"id", "user_name", "email", "password_hash", "bio", "created_at", "updated_at", "tenant_id", "admin", "permission_users", "permission_categoria", "permission_produto", "permission_adicional", "permission_cliente"}
 	userColumnsWithoutDefault = []string{"user_name", "email", "password_hash", "bio", "tenant_id", "admin", "permission_users"}
-	userColumnsWithDefault    = []string{"id", "created_at", "updated_at", "permission_categoria", "permission_produto", "permission_adicional"}
+	userColumnsWithDefault    = []string{"id", "created_at", "updated_at", "permission_categoria", "permission_produto", "permission_adicional", "permission_cliente"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )

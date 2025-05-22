@@ -41,6 +41,7 @@ func (us *UserService) CreateUser(
 	permissionCategoria int32,
 	permissionProduto int32,
 	permissionAdicional int32,
+	permissionCliente int32,
 ) (uuid.UUID, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
@@ -61,6 +62,7 @@ func (us *UserService) CreateUser(
 		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
 		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
 		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
+		PermissionCliente:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCliente))),
 	}
 	id, err := us.queries.CreateUser(ctx, args)
 	if err != nil {
@@ -85,6 +87,7 @@ func (us *UserService) UpdateUser(ctx context.Context,
 	permissionCategoria int32,
 	permissionProduto int32,
 	permissionAdicional int32,
+	permissionCliente int32,
 ) (pgstore.UpdateUserRow, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
@@ -101,6 +104,7 @@ func (us *UserService) UpdateUser(ctx context.Context,
 		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
 		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
 		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
+		PermissionCliente:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCliente))),
 	}
 	user, err := us.queries.UpdateUser(ctx, args)
 	if err != nil {
@@ -125,6 +129,7 @@ func (us *UserService) UpdateUserNoPassword(ctx context.Context,
 	permissionCategoria int32,
 	permissionProduto int32,
 	permissionAdicional int32,
+	permissionCliente int32,
 ) (pgstore.UpdateUserNoPasswordRow, error) {
 
 	args := pgstore.UpdateUserNoPasswordParams{
@@ -137,6 +142,7 @@ func (us *UserService) UpdateUserNoPassword(ctx context.Context,
 		PermissionCategoria: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCategoria))),
 		PermissionProduto:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionProduto))),
 		PermissionAdicional: helpers.StringToPgTypeInt(strconv.Itoa(int(permissionAdicional))),
+		PermissionCliente:   helpers.StringToPgTypeInt(strconv.Itoa(int(permissionCliente))),
 	}
 	user, err := us.queries.UpdateUserNoPassword(ctx, args)
 	if err != nil {

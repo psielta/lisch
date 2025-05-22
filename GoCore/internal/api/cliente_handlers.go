@@ -4,6 +4,7 @@ import (
 	"gobid/internal/dto"
 	"gobid/internal/jsonutils"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -301,7 +302,13 @@ func (api *Api) handleListClientes(w http.ResponseWriter, r *http.Request) {
 	nome := query.Get("nome")
 	nomeFantasia := query.Get("fantasia")
 	cpf := query.Get("cpf")
+	if cpf != "" {
+		cpf = regexp.MustCompile(`[^\d]`).ReplaceAllString(cpf, "")
+	}
 	cnpj := query.Get("cnpj")
+	if cnpj != "" {
+		cnpj = regexp.MustCompile(`[^\d]`).ReplaceAllString(cnpj, "")
+	}
 	cidade := query.Get("cidade")
 	uf := query.Get("uf")
 	tipoPessoa := query.Get("tipo_pessoa")

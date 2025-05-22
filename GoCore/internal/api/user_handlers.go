@@ -33,6 +33,7 @@ func (api *Api) handleSignupUser(w http.ResponseWriter, r *http.Request) {
 		data.PermissionCategoria,
 		data.PermissionProduto,
 		data.PermissionAdicional,
+		data.PermissionCliente,
 	)
 
 	if err != nil {
@@ -85,6 +86,7 @@ func (api *Api) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		data.PermissionCategoria,
 		data.PermissionProduto,
 		data.PermissionAdicional,
+		data.PermissionCliente,
 	)
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicatedEmailOrUsername) {
@@ -133,6 +135,7 @@ func (api *Api) handleUpdateUserNoPassword(w http.ResponseWriter, r *http.Reques
 		data.PermissionCategoria,
 		data.PermissionProduto,
 		data.PermissionAdicional,
+		data.PermissionCliente,
 	)
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicatedEmailOrUsername) {

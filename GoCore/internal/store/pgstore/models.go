@@ -294,4 +294,5 @@ type User struct {
 	PermissionCategoria pgtype.Int4 `json:"permission_categoria"`
 	PermissionProduto   pgtype.Int4 `json:"permission_produto"`
 	PermissionAdicional pgtype.Int4 `json:"permission_adicional"`
+	PermissionCliente   pgtype.Int4 `json:"permission_cliente"`
 }

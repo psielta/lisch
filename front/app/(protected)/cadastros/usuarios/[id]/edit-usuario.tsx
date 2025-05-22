@@ -69,6 +69,7 @@ const userSchema = z.object({
   permission_categoria: z.boolean().optional(),
   permission_produto: z.boolean().optional(),
   permission_adicional: z.boolean().optional(),
+  permission_cliente: z.boolean().optional(),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -104,6 +105,7 @@ function EditUsuario({
       permission_categoria: initial.permission_categoria === 1,
       permission_produto: initial.permission_produto === 1,
       permission_adicional: initial.permission_adicional === 1,
+      permission_cliente: initial.permission_cliente === 1,
     },
   });
 
@@ -122,6 +124,7 @@ function EditUsuario({
         permission_categoria: data.permission_categoria ? 1 : 0,
         permission_produto: data.permission_produto ? 1 : 0,
         permission_adicional: data.permission_adicional ? 1 : 0,
+        permission_cliente: data.permission_cliente ? 1 : 0,
       });
 
       if (response.status === 200) {
@@ -311,6 +314,11 @@ function EditUsuario({
                     name: "permission_adicional",
                     label: "Adicional",
                     description: "Permite gerenciar adicionais.",
+                  },
+                  {
+                    name: "permission_cliente",
+                    label: "Cliente",
+                    description: "Permite gerenciar clientes.",
                   },
                 ].map((permission) => (
                   <FormField

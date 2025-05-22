@@ -16,6 +16,7 @@ type CreateUserReq struct {
 	PermissionCategoria int32  `json:"permission_categoria"`
 	PermissionProduto   int32  `json:"permission_produto"`
 	PermissionAdicional int32  `json:"permission_adicional"`
+	PermissionCliente   int32  `json:"permission_cliente"`
 }
 
 type UpdateUserReq struct {
@@ -30,6 +31,7 @@ type UpdateUserReq struct {
 	PermissionCategoria int32  `json:"permission_categoria"`
 	PermissionProduto   int32  `json:"permission_produto"`
 	PermissionAdicional int32  `json:"permission_adicional"`
+	PermissionCliente   int32  `json:"permission_cliente"`
 }
 type UpdateUserReqNoPassword struct {
 	ID                  string `json:"id"`
@@ -42,6 +44,7 @@ type UpdateUserReqNoPassword struct {
 	PermissionCategoria int32  `json:"permission_categoria"`
 	PermissionProduto   int32  `json:"permission_produto"`
 	PermissionAdicional int32  `json:"permission_adicional"`
+	PermissionCliente   int32  `json:"permission_cliente"`
 }
 
 func (req CreateUserReq) Valid(ctx context.Context) validator.Evaluator {

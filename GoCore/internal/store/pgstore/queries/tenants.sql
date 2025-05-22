@@ -36,22 +36,22 @@ WHERE id = $1;
 -- ***********************
 
 -- name: CreateUser :one
-INSERT INTO users (user_name, email, password_hash, bio, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO users (user_name, email, password_hash, bio, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id;
 
 -- name: GetUserByID :one
-SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
+SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente
 FROM users
 WHERE id = $1;
 
 -- name: GetUserByEmail :one
-SELECT id, user_name, email, password_hash, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
+SELECT id, user_name, email, password_hash, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente
 FROM users
 WHERE email = $1;
 
 -- name: ListUsers :many
-SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional
+SELECT id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente
 FROM users
 WHERE tenant_id = $1
 ORDER BY email;
@@ -67,9 +67,10 @@ SET user_name = $2,
     permission_categoria = $8,
     permission_produto = $9,
     permission_adicional = $10,
+    permission_cliente = $11,
     updated_at = now()
 WHERE id = $1
-RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional;
+RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente;
 
 -- name: UpdateUserNoPassword :one
 UPDATE users
@@ -81,9 +82,10 @@ SET user_name = $2,
     permission_categoria = $7,
     permission_produto = $8,
     permission_adicional = $9,
+    permission_cliente = $10,
     updated_at = now()
 WHERE id = $1
-RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional;
+RETURNING id, user_name, email, bio, created_at, updated_at, tenant_id, admin, permission_users, permission_categoria, permission_produto, permission_adicional, permission_cliente;
 
 -- name: DeleteUser :exec
 DELETE FROM users

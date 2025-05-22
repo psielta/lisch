@@ -331,34 +331,3 @@ export class ProdutoService {
     }
   }
 }
-
-// Usage example:
-/*
-const produtoService = new ProdutoService(axiosInstance);
-
-// List products
-produtoService.listProdutos('some-category-id', 20, 0).then(response => {
-  console.log(response.produtos);
-}).catch(error => {
-  console.error(error.message);
-});
-
-// Create a product
-const newProduto: CreateProdutoRequest = {
-  id_categoria: 'uuid-of-category',
-  nome: 'New Product',
-  status: 1,
-  precos: [
-    {
-      id_categoria_opcao: 'uuid-of-option',
-      preco_base: '10.99',
-      disponivel: 1,
-    },
-  ],
-};
-produtoService.createProduto(newProduto).then(response => {
-  console.log(response);
-}).catch(error => {
-  console.error(error.message);
-});
-*/

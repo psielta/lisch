@@ -18,93 +18,97 @@ import { z } from "zod";
 import { Button } from "../catalyst-ui-kit/button";
 import { toast } from "sonner";
 
+// Função para validar CPF
+function validarCPF(cpf: string): boolean {
+  cpf = cpf.replace(/[^\d]+/g, "");
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += Number(cpf.charAt(i)) * (10 - i);
+  let resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== Number(cpf.charAt(9))) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += Number(cpf.charAt(i)) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  return resto === Number(cpf.charAt(10));
+}
+
+// Função para validar CNPJ
+function validarCNPJ(cnpj: string): boolean {
+  cnpj = cnpj.replace(/[^\d]+/g, "");
+  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
+  const t = cnpj.length - 2;
+  const d = cnpj.substring(t);
+  const calc = (x: number[]) =>
+    x.reduce((a, b, i) => a + b * Number(cnpj.charAt(i)), 0);
+  const dv = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  let d1 = calc(dv.slice(1)) % 11;
+  d1 = d1 < 2 ? 0 : 11 - d1;
+  if (d1 !== Number(d.charAt(0))) return false;
+  let d2 = calc(dv) % 11;
+  d2 = d2 < 2 ? 0 : 11 - d2;
+  return d2 === Number(d.charAt(1));
+}
+
 // Schema de validação com Zod para Clientes
-const clienteSchema = z
-  .object({
-    id: z.string().uuid().optional(),
-    tenant_id: z.string().uuid("Tenant ID é obrigatório"),
-    tipo_pessoa: z.enum(["F", "J"], {
-      required_error: "Tipo de pessoa é obrigatório",
+const clienteSchema = z.object({
+  id: z.string().uuid().optional(),
+  tenant_id: z.string().uuid("Tenant ID é obrigatório"),
+  tipo_pessoa: z.enum(["F", "J"], {
+    required_error: "Tipo de pessoa é obrigatório",
+  }),
+  nome_razao_social: z
+    .string()
+    .min(3, "Mín. 3 caracteres")
+    .max(255, "Máx. 255 caracteres"),
+  nome_fantasia: z.string().max(255, "Máx. 255 caracteres").optional(),
+  cpf: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || validarCPF(val), {
+      message: "CPF inválido",
     }),
-    nome_razao_social: z
-      .string()
-      .min(3, "Mín. 3 caracteres")
-      .max(255, "Máx. 255 caracteres"),
-    nome_fantasia: z.string().max(255, "Máx. 255 caracteres").optional(),
-    cpf: z
-      .string()
-      .regex(/^\d{11}$/, "CPF deve ter 11 dígitos")
-      .optional()
-      .or(z.literal("")),
-    cnpj: z
-      .string()
-      .regex(/^\d{14}$/, "CNPJ deve ter 14 dígitos")
-      .optional()
-      .or(z.literal("")),
-    rg: z.string().max(20, "Máx. 20 caracteres").optional(),
-    ie: z.string().max(20, "Máx. 20 caracteres").optional(),
-    im: z.string().max(20, "Máx. 20 caracteres").optional(),
-    data_nascimento: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
-      .optional()
-      .or(z.literal("")),
-    email: z
-      .string()
-      .email("E-mail inválido")
-      .max(255, "Máx. 255 caracteres")
-      .optional()
-      .or(z.literal("")),
-    telefone: z.string().max(20, "Máx. 20 caracteres").optional(),
-    celular: z.string().max(20, "Máx. 20 caracteres").optional(),
-    cep: z
-      .string()
-      .regex(/^\d{8}$/, "CEP deve ter 8 dígitos")
-      .optional()
-      .or(z.literal("")),
-    logradouro: z.string().max(255, "Máx. 255 caracteres").optional(),
-    numero: z.string().max(10, "Máx. 10 caracteres").optional(),
-    complemento: z.string().max(100, "Máx. 100 caracteres").optional(),
-    bairro: z.string().max(100, "Máx. 100 caracteres").optional(),
-    cidade: z.string().max(100, "Máx. 100 caracteres").optional(),
-    uf: z
-      .string()
-      .length(2, "UF deve ter 2 caracteres")
-      .optional()
-      .or(z.literal("")),
-  })
-  .superRefine((data, ctx) => {
-    // Validação condicional: se for pessoa física, CPF é obrigatório
-    if (data.tipo_pessoa === "F" && (!data.cpf || data.cpf === "")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "CPF é obrigatório para pessoa física",
-        path: ["cpf"],
-      });
-    }
-
-    // Validação condicional: se for pessoa jurídica, CNPJ é obrigatório
-    if (data.tipo_pessoa === "J" && (!data.cnpj || data.cnpj === "")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "CNPJ é obrigatório para pessoa jurídica",
-        path: ["cnpj"],
-      });
-    }
-
-    // Se for pessoa jurídica, nome fantasia é obrigatório
-    if (
-      data.tipo_pessoa === "J" &&
-      (!data.nome_fantasia || data.nome_fantasia === "")
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Nome fantasia é obrigatório para pessoa jurídica",
-        path: ["nome_fantasia"],
-      });
-    }
-  });
-
+  cnpj: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || validarCNPJ(val), {
+      message: "CNPJ inválido",
+    }),
+  rg: z.string().max(20, "Máx. 20 caracteres").optional(),
+  ie: z.string().max(20, "Máx. 20 caracteres").optional(),
+  im: z.string().max(20, "Máx. 20 caracteres").optional(),
+  data_nascimento: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+    .optional()
+    .or(z.literal("")),
+  email: z
+    .string()
+    .email("E-mail inválido")
+    .max(255, "Máx. 255 caracteres")
+    .optional()
+    .or(z.literal("")),
+  telefone: z.string().max(20, "Máx. 20 caracteres").optional(),
+  celular: z.string().max(20, "Máx. 20 caracteres").optional(),
+  cep: z
+    .string()
+    .regex(/^\d{8}$/, "CEP deve ter 8 dígitos")
+    .optional()
+    .or(z.literal("")),
+  logradouro: z.string().max(255, "Máx. 255 caracteres").optional(),
+  numero: z.string().max(10, "Máx. 10 caracteres").optional(),
+  complemento: z.string().max(100, "Máx. 100 caracteres").optional(),
+  bairro: z.string().max(100, "Máx. 100 caracteres").optional(),
+  cidade: z.string().max(100, "Máx. 100 caracteres").optional(),
+  uf: z
+    .string()
+    .length(2, "UF deve ter 2 caracteres")
+    .optional()
+    .or(z.literal("")),
+});
 type ClienteFormValues = z.infer<typeof clienteSchema>;
 
 // Estados brasileiros

@@ -12,6 +12,7 @@ import {
   removeClienteByIdAction,
 } from "./cliente.action";
 import { ClienteService } from "./cliente.service";
+import { toast } from "sonner";
 
 const listClientes: Epic<any, any, RootState> = (action$, state) =>
   action$.pipe(
@@ -83,6 +84,7 @@ const postOrPutCliente: Epic<any, any, RootState> = (action$) =>
           map((response) => postOrPutClienteAction.success(response)),
           catchError((err) => {
             console.error("Erro ao atualizar cliente", err);
+            toast.error("Erro: " + err.message);
             return of(postOrPutClienteAction.failure());
           })
         );
@@ -91,6 +93,7 @@ const postOrPutCliente: Epic<any, any, RootState> = (action$) =>
           map((response) => postOrPutClienteAction.success(response)),
           catchError((err) => {
             console.error("Erro ao criar cliente", err);
+            toast.error("Erro: " + err.message);
             return of(postOrPutClienteAction.failure());
           })
         );

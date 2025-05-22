@@ -147,8 +147,8 @@ var CategoriaAdicionalOpcaoRels = struct {
 
 // categoriaAdicionalOpcaoR is where relationships are stored.
 type categoriaAdicionalOpcaoR struct {
-	IDCategoriaAdicionalCategoriaAdicionais *CategoriaAdicional       `boil:"IDCategoriaAdicionalCategoriaAdicionais" json:"IDCategoriaAdicionalCategoriaAdicionais" toml:"IDCategoriaAdicionalCategoriaAdicionais" yaml:"IDCategoriaAdicionalCategoriaAdicionais"`
-	IDAdicionalOpcaoPedidoItemAdicionais    PedidoItemAdicionaisSlice `boil:"IDAdicionalOpcaoPedidoItemAdicionais" json:"IDAdicionalOpcaoPedidoItemAdicionais" toml:"IDAdicionalOpcaoPedidoItemAdicionais" yaml:"IDAdicionalOpcaoPedidoItemAdicionais"`
+	IDCategoriaAdicionalCategoriaAdicionais *CategoriaAdicional      `boil:"IDCategoriaAdicionalCategoriaAdicionais" json:"IDCategoriaAdicionalCategoriaAdicionais" toml:"IDCategoriaAdicionalCategoriaAdicionais" yaml:"IDCategoriaAdicionalCategoriaAdicionais"`
+	IDAdicionalOpcaoPedidoItemAdicionais    PedidoItemAdicionalSlice `boil:"IDAdicionalOpcaoPedidoItemAdicionais" json:"IDAdicionalOpcaoPedidoItemAdicionais" toml:"IDAdicionalOpcaoPedidoItemAdicionais" yaml:"IDAdicionalOpcaoPedidoItemAdicionais"`
 }
 
 // NewStruct creates a new relationship struct
@@ -163,7 +163,7 @@ func (r *categoriaAdicionalOpcaoR) GetIDCategoriaAdicionalCategoriaAdicionais() 
 	return r.IDCategoriaAdicionalCategoriaAdicionais
 }
 
-func (r *categoriaAdicionalOpcaoR) GetIDAdicionalOpcaoPedidoItemAdicionais() PedidoItemAdicionaisSlice {
+func (r *categoriaAdicionalOpcaoR) GetIDAdicionalOpcaoPedidoItemAdicionais() PedidoItemAdicionalSlice {
 	if r == nil {
 		return nil
 	}
@@ -498,7 +498,7 @@ func (o *CategoriaAdicionalOpcao) IDCategoriaAdicionalCategoriaAdicionais(mods .
 }
 
 // IDAdicionalOpcaoPedidoItemAdicionais retrieves all the pedido_item_adicionais's PedidoItemAdicionais with an executor via id_adicional_opcao column.
-func (o *CategoriaAdicionalOpcao) IDAdicionalOpcaoPedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionaisQuery {
+func (o *CategoriaAdicionalOpcao) IDAdicionalOpcaoPedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionalQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
@@ -698,7 +698,7 @@ func (categoriaAdicionalOpcaoL) LoadIDAdicionalOpcaoPedidoItemAdicionais(ctx con
 		return errors.Wrap(err, "failed to eager load pedido_item_adicionais")
 	}
 
-	var resultSlice []*PedidoItemAdicionais
+	var resultSlice []*PedidoItemAdicional
 	if err = queries.Bind(results, &resultSlice); err != nil {
 		return errors.Wrap(err, "failed to bind eager loaded slice pedido_item_adicionais")
 	}
@@ -710,7 +710,7 @@ func (categoriaAdicionalOpcaoL) LoadIDAdicionalOpcaoPedidoItemAdicionais(ctx con
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_item_adicionais")
 	}
 
-	if len(pedidoItemAdicionaisAfterSelectHooks) != 0 {
+	if len(pedidoItemAdicionalAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -721,7 +721,7 @@ func (categoriaAdicionalOpcaoL) LoadIDAdicionalOpcaoPedidoItemAdicionais(ctx con
 		object.R.IDAdicionalOpcaoPedidoItemAdicionais = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &pedidoItemAdicionaisR{}
+				foreign.R = &pedidoItemAdicionalR{}
 			}
 			foreign.R.IDAdicionalOpcaoCategoriaAdicionalOpco = object
 		}
@@ -733,7 +733,7 @@ func (categoriaAdicionalOpcaoL) LoadIDAdicionalOpcaoPedidoItemAdicionais(ctx con
 			if local.ID == foreign.IDAdicionalOpcao {
 				local.R.IDAdicionalOpcaoPedidoItemAdicionais = append(local.R.IDAdicionalOpcaoPedidoItemAdicionais, foreign)
 				if foreign.R == nil {
-					foreign.R = &pedidoItemAdicionaisR{}
+					foreign.R = &pedidoItemAdicionalR{}
 				}
 				foreign.R.IDAdicionalOpcaoCategoriaAdicionalOpco = local
 				break
@@ -795,7 +795,7 @@ func (o *CategoriaAdicionalOpcao) SetIDCategoriaAdicionalCategoriaAdicionais(ctx
 // of the categoria_adicional_opco, optionally inserting them as new records.
 // Appends related to o.R.IDAdicionalOpcaoPedidoItemAdicionais.
 // Sets related.R.IDAdicionalOpcaoCategoriaAdicionalOpco appropriately.
-func (o *CategoriaAdicionalOpcao) AddIDAdicionalOpcaoPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItemAdicionais) error {
+func (o *CategoriaAdicionalOpcao) AddIDAdicionalOpcaoPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItemAdicional) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -807,7 +807,7 @@ func (o *CategoriaAdicionalOpcao) AddIDAdicionalOpcaoPedidoItemAdicionais(ctx co
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"id_adicional_opcao"}),
-				strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionaisPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionalPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -834,7 +834,7 @@ func (o *CategoriaAdicionalOpcao) AddIDAdicionalOpcaoPedidoItemAdicionais(ctx co
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &pedidoItemAdicionaisR{
+			rel.R = &pedidoItemAdicionalR{
 				IDAdicionalOpcaoCategoriaAdicionalOpco: o,
 			}
 		} else {

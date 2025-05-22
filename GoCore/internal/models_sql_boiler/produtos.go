@@ -195,8 +195,8 @@ var ProdutoRels = struct {
 // produtoR is where relationships are stored.
 type produtoR struct {
 	IDCategorium           *Categoria        `boil:"IDCategorium" json:"IDCategorium" toml:"IDCategorium" yaml:"IDCategorium"`
-	IDProdutoPedidoItens   PedidoItenSlice   `boil:"IDProdutoPedidoItens" json:"IDProdutoPedidoItens" toml:"IDProdutoPedidoItens" yaml:"IDProdutoPedidoItens"`
-	IDProduto2PedidoItens  PedidoItenSlice   `boil:"IDProduto2PedidoItens" json:"IDProduto2PedidoItens" toml:"IDProduto2PedidoItens" yaml:"IDProduto2PedidoItens"`
+	IDProdutoPedidoItens   PedidoItemSlice   `boil:"IDProdutoPedidoItens" json:"IDProdutoPedidoItens" toml:"IDProdutoPedidoItens" yaml:"IDProdutoPedidoItens"`
+	IDProduto2PedidoItens  PedidoItemSlice   `boil:"IDProduto2PedidoItens" json:"IDProduto2PedidoItens" toml:"IDProduto2PedidoItens" yaml:"IDProduto2PedidoItens"`
 	IDProdutoProdutoPrecos ProdutoPrecoSlice `boil:"IDProdutoProdutoPrecos" json:"IDProdutoProdutoPrecos" toml:"IDProdutoProdutoPrecos" yaml:"IDProdutoProdutoPrecos"`
 }
 
@@ -212,14 +212,14 @@ func (r *produtoR) GetIDCategorium() *Categoria {
 	return r.IDCategorium
 }
 
-func (r *produtoR) GetIDProdutoPedidoItens() PedidoItenSlice {
+func (r *produtoR) GetIDProdutoPedidoItens() PedidoItemSlice {
 	if r == nil {
 		return nil
 	}
 	return r.IDProdutoPedidoItens
 }
 
-func (r *produtoR) GetIDProduto2PedidoItens() PedidoItenSlice {
+func (r *produtoR) GetIDProduto2PedidoItens() PedidoItemSlice {
 	if r == nil {
 		return nil
 	}
@@ -561,7 +561,7 @@ func (o *Produto) IDCategorium(mods ...qm.QueryMod) categoriaQuery {
 }
 
 // IDProdutoPedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_produto column.
-func (o *Produto) IDProdutoPedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+func (o *Produto) IDProdutoPedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
@@ -575,7 +575,7 @@ func (o *Produto) IDProdutoPedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
 }
 
 // IDProduto2PedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_produto_2 column.
-func (o *Produto) IDProduto2PedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+func (o *Produto) IDProduto2PedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
@@ -789,7 +789,7 @@ func (produtoL) LoadIDProdutoPedidoItens(ctx context.Context, e boil.ContextExec
 		return errors.Wrap(err, "failed to eager load pedido_itens")
 	}
 
-	var resultSlice []*PedidoIten
+	var resultSlice []*PedidoItem
 	if err = queries.Bind(results, &resultSlice); err != nil {
 		return errors.Wrap(err, "failed to bind eager loaded slice pedido_itens")
 	}
@@ -801,7 +801,7 @@ func (produtoL) LoadIDProdutoPedidoItens(ctx context.Context, e boil.ContextExec
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
 	}
 
-	if len(pedidoItenAfterSelectHooks) != 0 {
+	if len(pedidoItemAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -812,7 +812,7 @@ func (produtoL) LoadIDProdutoPedidoItens(ctx context.Context, e boil.ContextExec
 		object.R.IDProdutoPedidoItens = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &pedidoItenR{}
+				foreign.R = &pedidoItemR{}
 			}
 			foreign.R.IDProdutoProduto = object
 		}
@@ -824,7 +824,7 @@ func (produtoL) LoadIDProdutoPedidoItens(ctx context.Context, e boil.ContextExec
 			if local.ID == foreign.IDProduto {
 				local.R.IDProdutoPedidoItens = append(local.R.IDProdutoPedidoItens, foreign)
 				if foreign.R == nil {
-					foreign.R = &pedidoItenR{}
+					foreign.R = &pedidoItemR{}
 				}
 				foreign.R.IDProdutoProduto = local
 				break
@@ -902,7 +902,7 @@ func (produtoL) LoadIDProduto2PedidoItens(ctx context.Context, e boil.ContextExe
 		return errors.Wrap(err, "failed to eager load pedido_itens")
 	}
 
-	var resultSlice []*PedidoIten
+	var resultSlice []*PedidoItem
 	if err = queries.Bind(results, &resultSlice); err != nil {
 		return errors.Wrap(err, "failed to bind eager loaded slice pedido_itens")
 	}
@@ -914,7 +914,7 @@ func (produtoL) LoadIDProduto2PedidoItens(ctx context.Context, e boil.ContextExe
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
 	}
 
-	if len(pedidoItenAfterSelectHooks) != 0 {
+	if len(pedidoItemAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -925,7 +925,7 @@ func (produtoL) LoadIDProduto2PedidoItens(ctx context.Context, e boil.ContextExe
 		object.R.IDProduto2PedidoItens = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &pedidoItenR{}
+				foreign.R = &pedidoItemR{}
 			}
 			foreign.R.IDProduto2Produto = object
 		}
@@ -937,7 +937,7 @@ func (produtoL) LoadIDProduto2PedidoItens(ctx context.Context, e boil.ContextExe
 			if queries.Equal(local.ID, foreign.IDProduto2) {
 				local.R.IDProduto2PedidoItens = append(local.R.IDProduto2PedidoItens, foreign)
 				if foreign.R == nil {
-					foreign.R = &pedidoItenR{}
+					foreign.R = &pedidoItemR{}
 				}
 				foreign.R.IDProduto2Produto = local
 				break
@@ -1112,7 +1112,7 @@ func (o *Produto) SetIDCategorium(ctx context.Context, exec boil.ContextExecutor
 // of the produto, optionally inserting them as new records.
 // Appends related to o.R.IDProdutoPedidoItens.
 // Sets related.R.IDProdutoProduto appropriately.
-func (o *Produto) AddIDProdutoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+func (o *Produto) AddIDProdutoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItem) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -1124,7 +1124,7 @@ func (o *Produto) AddIDProdutoPedidoItens(ctx context.Context, exec boil.Context
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"pedido_itens\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"id_produto"}),
-				strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -1151,7 +1151,7 @@ func (o *Produto) AddIDProdutoPedidoItens(ctx context.Context, exec boil.Context
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &pedidoItenR{
+			rel.R = &pedidoItemR{
 				IDProdutoProduto: o,
 			}
 		} else {
@@ -1165,7 +1165,7 @@ func (o *Produto) AddIDProdutoPedidoItens(ctx context.Context, exec boil.Context
 // of the produto, optionally inserting them as new records.
 // Appends related to o.R.IDProduto2PedidoItens.
 // Sets related.R.IDProduto2Produto appropriately.
-func (o *Produto) AddIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+func (o *Produto) AddIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItem) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -1177,7 +1177,7 @@ func (o *Produto) AddIDProduto2PedidoItens(ctx context.Context, exec boil.Contex
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"pedido_itens\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"id_produto_2"}),
-				strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -1204,7 +1204,7 @@ func (o *Produto) AddIDProduto2PedidoItens(ctx context.Context, exec boil.Contex
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &pedidoItenR{
+			rel.R = &pedidoItemR{
 				IDProduto2Produto: o,
 			}
 		} else {
@@ -1220,7 +1220,7 @@ func (o *Produto) AddIDProduto2PedidoItens(ctx context.Context, exec boil.Contex
 // Sets o.R.IDProduto2Produto's IDProduto2PedidoItens accordingly.
 // Replaces o.R.IDProduto2PedidoItens with related.
 // Sets related.R.IDProduto2Produto's IDProduto2PedidoItens accordingly.
-func (o *Produto) SetIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+func (o *Produto) SetIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItem) error {
 	query := "update \"pedido_itens\" set \"id_produto_2\" = null where \"id_produto_2\" = $1"
 	values := []interface{}{o.ID}
 	if boil.IsDebug(ctx) {
@@ -1251,7 +1251,7 @@ func (o *Produto) SetIDProduto2PedidoItens(ctx context.Context, exec boil.Contex
 // RemoveIDProduto2PedidoItens relationships from objects passed in.
 // Removes related items from R.IDProduto2PedidoItens (uses pointer comparison, removal does not keep order)
 // Sets related.R.IDProduto2Produto.
-func (o *Produto) RemoveIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, related ...*PedidoIten) error {
+func (o *Produto) RemoveIDProduto2PedidoItens(ctx context.Context, exec boil.ContextExecutor, related ...*PedidoItem) error {
 	if len(related) == 0 {
 		return nil
 	}

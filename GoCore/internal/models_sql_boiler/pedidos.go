@@ -270,7 +270,7 @@ type pedidoR struct {
 	IDClienteCliente     *Cliente        `boil:"IDClienteCliente" json:"IDClienteCliente" toml:"IDClienteCliente" yaml:"IDClienteCliente"`
 	IDStatusPedidoStatus *PedidoStatus   `boil:"IDStatusPedidoStatus" json:"IDStatusPedidoStatus" toml:"IDStatusPedidoStatus" yaml:"IDStatusPedidoStatus"`
 	Tenant               *Tenant         `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
-	IDPedidoPedidoItens  PedidoItenSlice `boil:"IDPedidoPedidoItens" json:"IDPedidoPedidoItens" toml:"IDPedidoPedidoItens" yaml:"IDPedidoPedidoItens"`
+	IDPedidoPedidoItens  PedidoItemSlice `boil:"IDPedidoPedidoItens" json:"IDPedidoPedidoItens" toml:"IDPedidoPedidoItens" yaml:"IDPedidoPedidoItens"`
 }
 
 // NewStruct creates a new relationship struct
@@ -299,7 +299,7 @@ func (r *pedidoR) GetTenant() *Tenant {
 	return r.Tenant
 }
 
-func (r *pedidoR) GetIDPedidoPedidoItens() PedidoItenSlice {
+func (r *pedidoR) GetIDPedidoPedidoItens() PedidoItemSlice {
 	if r == nil {
 		return nil
 	}
@@ -656,7 +656,7 @@ func (o *Pedido) Tenant(mods ...qm.QueryMod) tenantQuery {
 }
 
 // IDPedidoPedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_pedido column.
-func (o *Pedido) IDPedidoPedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+func (o *Pedido) IDPedidoPedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
@@ -1096,7 +1096,7 @@ func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecut
 		return errors.Wrap(err, "failed to eager load pedido_itens")
 	}
 
-	var resultSlice []*PedidoIten
+	var resultSlice []*PedidoItem
 	if err = queries.Bind(results, &resultSlice); err != nil {
 		return errors.Wrap(err, "failed to bind eager loaded slice pedido_itens")
 	}
@@ -1108,7 +1108,7 @@ func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecut
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
 	}
 
-	if len(pedidoItenAfterSelectHooks) != 0 {
+	if len(pedidoItemAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -1119,7 +1119,7 @@ func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecut
 		object.R.IDPedidoPedidoItens = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &pedidoItenR{}
+				foreign.R = &pedidoItemR{}
 			}
 			foreign.R.IDPedidoPedido = object
 		}
@@ -1131,7 +1131,7 @@ func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecut
 			if local.ID == foreign.IDPedido {
 				local.R.IDPedidoPedidoItens = append(local.R.IDPedidoPedidoItens, foreign)
 				if foreign.R == nil {
-					foreign.R = &pedidoItenR{}
+					foreign.R = &pedidoItemR{}
 				}
 				foreign.R.IDPedidoPedido = local
 				break
@@ -1287,7 +1287,7 @@ func (o *Pedido) SetTenant(ctx context.Context, exec boil.ContextExecutor, inser
 // of the pedido, optionally inserting them as new records.
 // Appends related to o.R.IDPedidoPedidoItens.
 // Sets related.R.IDPedidoPedido appropriately.
-func (o *Pedido) AddIDPedidoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+func (o *Pedido) AddIDPedidoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItem) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -1299,7 +1299,7 @@ func (o *Pedido) AddIDPedidoPedidoItens(ctx context.Context, exec boil.ContextEx
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"pedido_itens\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido"}),
-				strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -1326,7 +1326,7 @@ func (o *Pedido) AddIDPedidoPedidoItens(ctx context.Context, exec boil.ContextEx
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &pedidoItenR{
+			rel.R = &pedidoItemR{
 				IDPedidoPedido: o,
 			}
 		} else {

@@ -23,8 +23,8 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// PedidoIten is an object representing the database table.
-type PedidoIten struct {
+// PedidoItem is an object representing the database table.
+type PedidoItem struct {
 	ID               string        `boil:"id" json:"id" toml:"id" yaml:"id"`
 	SeqID            int64         `boil:"seq_id" json:"seq_id" toml:"seq_id" yaml:"seq_id"`
 	IDPedido         string        `boil:"id_pedido" json:"id_pedido" toml:"id_pedido" yaml:"id_pedido"`
@@ -39,11 +39,11 @@ type PedidoIten struct {
 	UpdatedAt        time.Time     `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt        null.Time     `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
-	R *pedidoItenR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L pedidoItenL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *pedidoItemR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L pedidoItemL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var PedidoItenColumns = struct {
+var PedidoItemColumns = struct {
 	ID               string
 	SeqID            string
 	IDPedido         string
@@ -73,7 +73,7 @@ var PedidoItenColumns = struct {
 	DeletedAt:        "deleted_at",
 }
 
-var PedidoItenTableColumns = struct {
+var PedidoItemTableColumns = struct {
 	ID               string
 	SeqID            string
 	IDPedido         string
@@ -105,7 +105,7 @@ var PedidoItenTableColumns = struct {
 
 // Generated where
 
-var PedidoItenWhere = struct {
+var PedidoItemWhere = struct {
 	ID               whereHelperstring
 	SeqID            whereHelperint64
 	IDPedido         whereHelperstring
@@ -135,8 +135,8 @@ var PedidoItenWhere = struct {
 	DeletedAt:        whereHelpernull_Time{field: "\"pedido_itens\".\"deleted_at\""},
 }
 
-// PedidoItenRels is where relationship names are stored.
-var PedidoItenRels = struct {
+// PedidoItemRels is where relationship names are stored.
+var PedidoItemRels = struct {
 	IDCategorium                     string
 	IDCategoriaOpcaoCategoriaOpco    string
 	IDPedidoPedido                   string
@@ -152,97 +152,97 @@ var PedidoItenRels = struct {
 	IDPedidoItemPedidoItemAdicionais: "IDPedidoItemPedidoItemAdicionais",
 }
 
-// pedidoItenR is where relationships are stored.
-type pedidoItenR struct {
-	IDCategorium                     *Categoria                `boil:"IDCategorium" json:"IDCategorium" toml:"IDCategorium" yaml:"IDCategorium"`
-	IDCategoriaOpcaoCategoriaOpco    *CategoriaOpcao           `boil:"IDCategoriaOpcaoCategoriaOpco" json:"IDCategoriaOpcaoCategoriaOpco" toml:"IDCategoriaOpcaoCategoriaOpco" yaml:"IDCategoriaOpcaoCategoriaOpco"`
-	IDPedidoPedido                   *Pedido                   `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
-	IDProdutoProduto                 *Produto                  `boil:"IDProdutoProduto" json:"IDProdutoProduto" toml:"IDProdutoProduto" yaml:"IDProdutoProduto"`
-	IDProduto2Produto                *Produto                  `boil:"IDProduto2Produto" json:"IDProduto2Produto" toml:"IDProduto2Produto" yaml:"IDProduto2Produto"`
-	IDPedidoItemPedidoItemAdicionais PedidoItemAdicionaisSlice `boil:"IDPedidoItemPedidoItemAdicionais" json:"IDPedidoItemPedidoItemAdicionais" toml:"IDPedidoItemPedidoItemAdicionais" yaml:"IDPedidoItemPedidoItemAdicionais"`
+// pedidoItemR is where relationships are stored.
+type pedidoItemR struct {
+	IDCategorium                     *Categoria               `boil:"IDCategorium" json:"IDCategorium" toml:"IDCategorium" yaml:"IDCategorium"`
+	IDCategoriaOpcaoCategoriaOpco    *CategoriaOpcao          `boil:"IDCategoriaOpcaoCategoriaOpco" json:"IDCategoriaOpcaoCategoriaOpco" toml:"IDCategoriaOpcaoCategoriaOpco" yaml:"IDCategoriaOpcaoCategoriaOpco"`
+	IDPedidoPedido                   *Pedido                  `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDProdutoProduto                 *Produto                 `boil:"IDProdutoProduto" json:"IDProdutoProduto" toml:"IDProdutoProduto" yaml:"IDProdutoProduto"`
+	IDProduto2Produto                *Produto                 `boil:"IDProduto2Produto" json:"IDProduto2Produto" toml:"IDProduto2Produto" yaml:"IDProduto2Produto"`
+	IDPedidoItemPedidoItemAdicionais PedidoItemAdicionalSlice `boil:"IDPedidoItemPedidoItemAdicionais" json:"IDPedidoItemPedidoItemAdicionais" toml:"IDPedidoItemPedidoItemAdicionais" yaml:"IDPedidoItemPedidoItemAdicionais"`
 }
 
 // NewStruct creates a new relationship struct
-func (*pedidoItenR) NewStruct() *pedidoItenR {
-	return &pedidoItenR{}
+func (*pedidoItemR) NewStruct() *pedidoItemR {
+	return &pedidoItemR{}
 }
 
-func (r *pedidoItenR) GetIDCategorium() *Categoria {
+func (r *pedidoItemR) GetIDCategorium() *Categoria {
 	if r == nil {
 		return nil
 	}
 	return r.IDCategorium
 }
 
-func (r *pedidoItenR) GetIDCategoriaOpcaoCategoriaOpco() *CategoriaOpcao {
+func (r *pedidoItemR) GetIDCategoriaOpcaoCategoriaOpco() *CategoriaOpcao {
 	if r == nil {
 		return nil
 	}
 	return r.IDCategoriaOpcaoCategoriaOpco
 }
 
-func (r *pedidoItenR) GetIDPedidoPedido() *Pedido {
+func (r *pedidoItemR) GetIDPedidoPedido() *Pedido {
 	if r == nil {
 		return nil
 	}
 	return r.IDPedidoPedido
 }
 
-func (r *pedidoItenR) GetIDProdutoProduto() *Produto {
+func (r *pedidoItemR) GetIDProdutoProduto() *Produto {
 	if r == nil {
 		return nil
 	}
 	return r.IDProdutoProduto
 }
 
-func (r *pedidoItenR) GetIDProduto2Produto() *Produto {
+func (r *pedidoItemR) GetIDProduto2Produto() *Produto {
 	if r == nil {
 		return nil
 	}
 	return r.IDProduto2Produto
 }
 
-func (r *pedidoItenR) GetIDPedidoItemPedidoItemAdicionais() PedidoItemAdicionaisSlice {
+func (r *pedidoItemR) GetIDPedidoItemPedidoItemAdicionais() PedidoItemAdicionalSlice {
 	if r == nil {
 		return nil
 	}
 	return r.IDPedidoItemPedidoItemAdicionais
 }
 
-// pedidoItenL is where Load methods for each relationship are stored.
-type pedidoItenL struct{}
+// pedidoItemL is where Load methods for each relationship are stored.
+type pedidoItemL struct{}
 
 var (
-	pedidoItenAllColumns            = []string{"id", "seq_id", "id_pedido", "id_produto", "id_produto_2", "id_categoria", "id_categoria_opcao", "observacao", "valor_unitario", "quantidade", "created_at", "updated_at", "deleted_at"}
-	pedidoItenColumnsWithoutDefault = []string{"id_pedido", "id_produto", "id_categoria", "valor_unitario", "quantidade"}
-	pedidoItenColumnsWithDefault    = []string{"id", "seq_id", "id_produto_2", "id_categoria_opcao", "observacao", "created_at", "updated_at", "deleted_at"}
-	pedidoItenPrimaryKeyColumns     = []string{"id"}
-	pedidoItenGeneratedColumns      = []string{}
+	pedidoItemAllColumns            = []string{"id", "seq_id", "id_pedido", "id_produto", "id_produto_2", "id_categoria", "id_categoria_opcao", "observacao", "valor_unitario", "quantidade", "created_at", "updated_at", "deleted_at"}
+	pedidoItemColumnsWithoutDefault = []string{"id_pedido", "id_produto", "id_categoria", "valor_unitario", "quantidade"}
+	pedidoItemColumnsWithDefault    = []string{"id", "seq_id", "id_produto_2", "id_categoria_opcao", "observacao", "created_at", "updated_at", "deleted_at"}
+	pedidoItemPrimaryKeyColumns     = []string{"id"}
+	pedidoItemGeneratedColumns      = []string{}
 )
 
 type (
-	// PedidoItenSlice is an alias for a slice of pointers to PedidoIten.
-	// This should almost always be used instead of []PedidoIten.
-	PedidoItenSlice []*PedidoIten
-	// PedidoItenHook is the signature for custom PedidoIten hook methods
-	PedidoItenHook func(context.Context, boil.ContextExecutor, *PedidoIten) error
+	// PedidoItemSlice is an alias for a slice of pointers to PedidoItem.
+	// This should almost always be used instead of []PedidoItem.
+	PedidoItemSlice []*PedidoItem
+	// PedidoItemHook is the signature for custom PedidoItem hook methods
+	PedidoItemHook func(context.Context, boil.ContextExecutor, *PedidoItem) error
 
-	pedidoItenQuery struct {
+	pedidoItemQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	pedidoItenType                 = reflect.TypeOf(&PedidoIten{})
-	pedidoItenMapping              = queries.MakeStructMapping(pedidoItenType)
-	pedidoItenPrimaryKeyMapping, _ = queries.BindMapping(pedidoItenType, pedidoItenMapping, pedidoItenPrimaryKeyColumns)
-	pedidoItenInsertCacheMut       sync.RWMutex
-	pedidoItenInsertCache          = make(map[string]insertCache)
-	pedidoItenUpdateCacheMut       sync.RWMutex
-	pedidoItenUpdateCache          = make(map[string]updateCache)
-	pedidoItenUpsertCacheMut       sync.RWMutex
-	pedidoItenUpsertCache          = make(map[string]insertCache)
+	pedidoItemType                 = reflect.TypeOf(&PedidoItem{})
+	pedidoItemMapping              = queries.MakeStructMapping(pedidoItemType)
+	pedidoItemPrimaryKeyMapping, _ = queries.BindMapping(pedidoItemType, pedidoItemMapping, pedidoItemPrimaryKeyColumns)
+	pedidoItemInsertCacheMut       sync.RWMutex
+	pedidoItemInsertCache          = make(map[string]insertCache)
+	pedidoItemUpdateCacheMut       sync.RWMutex
+	pedidoItemUpdateCache          = make(map[string]updateCache)
+	pedidoItemUpsertCacheMut       sync.RWMutex
+	pedidoItemUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -253,36 +253,36 @@ var (
 	_ = qmhelper.Where
 )
 
-var pedidoItenAfterSelectMu sync.Mutex
-var pedidoItenAfterSelectHooks []PedidoItenHook
+var pedidoItemAfterSelectMu sync.Mutex
+var pedidoItemAfterSelectHooks []PedidoItemHook
 
-var pedidoItenBeforeInsertMu sync.Mutex
-var pedidoItenBeforeInsertHooks []PedidoItenHook
-var pedidoItenAfterInsertMu sync.Mutex
-var pedidoItenAfterInsertHooks []PedidoItenHook
+var pedidoItemBeforeInsertMu sync.Mutex
+var pedidoItemBeforeInsertHooks []PedidoItemHook
+var pedidoItemAfterInsertMu sync.Mutex
+var pedidoItemAfterInsertHooks []PedidoItemHook
 
-var pedidoItenBeforeUpdateMu sync.Mutex
-var pedidoItenBeforeUpdateHooks []PedidoItenHook
-var pedidoItenAfterUpdateMu sync.Mutex
-var pedidoItenAfterUpdateHooks []PedidoItenHook
+var pedidoItemBeforeUpdateMu sync.Mutex
+var pedidoItemBeforeUpdateHooks []PedidoItemHook
+var pedidoItemAfterUpdateMu sync.Mutex
+var pedidoItemAfterUpdateHooks []PedidoItemHook
 
-var pedidoItenBeforeDeleteMu sync.Mutex
-var pedidoItenBeforeDeleteHooks []PedidoItenHook
-var pedidoItenAfterDeleteMu sync.Mutex
-var pedidoItenAfterDeleteHooks []PedidoItenHook
+var pedidoItemBeforeDeleteMu sync.Mutex
+var pedidoItemBeforeDeleteHooks []PedidoItemHook
+var pedidoItemAfterDeleteMu sync.Mutex
+var pedidoItemAfterDeleteHooks []PedidoItemHook
 
-var pedidoItenBeforeUpsertMu sync.Mutex
-var pedidoItenBeforeUpsertHooks []PedidoItenHook
-var pedidoItenAfterUpsertMu sync.Mutex
-var pedidoItenAfterUpsertHooks []PedidoItenHook
+var pedidoItemBeforeUpsertMu sync.Mutex
+var pedidoItemBeforeUpsertHooks []PedidoItemHook
+var pedidoItemAfterUpsertMu sync.Mutex
+var pedidoItemAfterUpsertHooks []PedidoItemHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *PedidoIten) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenAfterSelectHooks {
+	for _, hook := range pedidoItemAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -292,12 +292,12 @@ func (o *PedidoIten) doAfterSelectHooks(ctx context.Context, exec boil.ContextEx
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *PedidoIten) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenBeforeInsertHooks {
+	for _, hook := range pedidoItemBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -307,12 +307,12 @@ func (o *PedidoIten) doBeforeInsertHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *PedidoIten) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenAfterInsertHooks {
+	for _, hook := range pedidoItemAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -322,12 +322,12 @@ func (o *PedidoIten) doAfterInsertHooks(ctx context.Context, exec boil.ContextEx
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *PedidoIten) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenBeforeUpdateHooks {
+	for _, hook := range pedidoItemBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -337,12 +337,12 @@ func (o *PedidoIten) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *PedidoIten) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenAfterUpdateHooks {
+	for _, hook := range pedidoItemAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -352,12 +352,12 @@ func (o *PedidoIten) doAfterUpdateHooks(ctx context.Context, exec boil.ContextEx
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *PedidoIten) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenBeforeDeleteHooks {
+	for _, hook := range pedidoItemBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -367,12 +367,12 @@ func (o *PedidoIten) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *PedidoIten) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenAfterDeleteHooks {
+	for _, hook := range pedidoItemAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -382,12 +382,12 @@ func (o *PedidoIten) doAfterDeleteHooks(ctx context.Context, exec boil.ContextEx
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *PedidoIten) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenBeforeUpsertHooks {
+	for _, hook := range pedidoItemBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -397,12 +397,12 @@ func (o *PedidoIten) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextE
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *PedidoIten) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItem) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItenAfterUpsertHooks {
+	for _, hook := range pedidoItemAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -411,51 +411,51 @@ func (o *PedidoIten) doAfterUpsertHooks(ctx context.Context, exec boil.ContextEx
 	return nil
 }
 
-// AddPedidoItenHook registers your hook function for all future operations.
-func AddPedidoItenHook(hookPoint boil.HookPoint, pedidoItenHook PedidoItenHook) {
+// AddPedidoItemHook registers your hook function for all future operations.
+func AddPedidoItemHook(hookPoint boil.HookPoint, pedidoItemHook PedidoItemHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		pedidoItenAfterSelectMu.Lock()
-		pedidoItenAfterSelectHooks = append(pedidoItenAfterSelectHooks, pedidoItenHook)
-		pedidoItenAfterSelectMu.Unlock()
+		pedidoItemAfterSelectMu.Lock()
+		pedidoItemAfterSelectHooks = append(pedidoItemAfterSelectHooks, pedidoItemHook)
+		pedidoItemAfterSelectMu.Unlock()
 	case boil.BeforeInsertHook:
-		pedidoItenBeforeInsertMu.Lock()
-		pedidoItenBeforeInsertHooks = append(pedidoItenBeforeInsertHooks, pedidoItenHook)
-		pedidoItenBeforeInsertMu.Unlock()
+		pedidoItemBeforeInsertMu.Lock()
+		pedidoItemBeforeInsertHooks = append(pedidoItemBeforeInsertHooks, pedidoItemHook)
+		pedidoItemBeforeInsertMu.Unlock()
 	case boil.AfterInsertHook:
-		pedidoItenAfterInsertMu.Lock()
-		pedidoItenAfterInsertHooks = append(pedidoItenAfterInsertHooks, pedidoItenHook)
-		pedidoItenAfterInsertMu.Unlock()
+		pedidoItemAfterInsertMu.Lock()
+		pedidoItemAfterInsertHooks = append(pedidoItemAfterInsertHooks, pedidoItemHook)
+		pedidoItemAfterInsertMu.Unlock()
 	case boil.BeforeUpdateHook:
-		pedidoItenBeforeUpdateMu.Lock()
-		pedidoItenBeforeUpdateHooks = append(pedidoItenBeforeUpdateHooks, pedidoItenHook)
-		pedidoItenBeforeUpdateMu.Unlock()
+		pedidoItemBeforeUpdateMu.Lock()
+		pedidoItemBeforeUpdateHooks = append(pedidoItemBeforeUpdateHooks, pedidoItemHook)
+		pedidoItemBeforeUpdateMu.Unlock()
 	case boil.AfterUpdateHook:
-		pedidoItenAfterUpdateMu.Lock()
-		pedidoItenAfterUpdateHooks = append(pedidoItenAfterUpdateHooks, pedidoItenHook)
-		pedidoItenAfterUpdateMu.Unlock()
+		pedidoItemAfterUpdateMu.Lock()
+		pedidoItemAfterUpdateHooks = append(pedidoItemAfterUpdateHooks, pedidoItemHook)
+		pedidoItemAfterUpdateMu.Unlock()
 	case boil.BeforeDeleteHook:
-		pedidoItenBeforeDeleteMu.Lock()
-		pedidoItenBeforeDeleteHooks = append(pedidoItenBeforeDeleteHooks, pedidoItenHook)
-		pedidoItenBeforeDeleteMu.Unlock()
+		pedidoItemBeforeDeleteMu.Lock()
+		pedidoItemBeforeDeleteHooks = append(pedidoItemBeforeDeleteHooks, pedidoItemHook)
+		pedidoItemBeforeDeleteMu.Unlock()
 	case boil.AfterDeleteHook:
-		pedidoItenAfterDeleteMu.Lock()
-		pedidoItenAfterDeleteHooks = append(pedidoItenAfterDeleteHooks, pedidoItenHook)
-		pedidoItenAfterDeleteMu.Unlock()
+		pedidoItemAfterDeleteMu.Lock()
+		pedidoItemAfterDeleteHooks = append(pedidoItemAfterDeleteHooks, pedidoItemHook)
+		pedidoItemAfterDeleteMu.Unlock()
 	case boil.BeforeUpsertHook:
-		pedidoItenBeforeUpsertMu.Lock()
-		pedidoItenBeforeUpsertHooks = append(pedidoItenBeforeUpsertHooks, pedidoItenHook)
-		pedidoItenBeforeUpsertMu.Unlock()
+		pedidoItemBeforeUpsertMu.Lock()
+		pedidoItemBeforeUpsertHooks = append(pedidoItemBeforeUpsertHooks, pedidoItemHook)
+		pedidoItemBeforeUpsertMu.Unlock()
 	case boil.AfterUpsertHook:
-		pedidoItenAfterUpsertMu.Lock()
-		pedidoItenAfterUpsertHooks = append(pedidoItenAfterUpsertHooks, pedidoItenHook)
-		pedidoItenAfterUpsertMu.Unlock()
+		pedidoItemAfterUpsertMu.Lock()
+		pedidoItemAfterUpsertHooks = append(pedidoItemAfterUpsertHooks, pedidoItemHook)
+		pedidoItemAfterUpsertMu.Unlock()
 	}
 }
 
-// One returns a single pedidoIten record from the query.
-func (q pedidoItenQuery) One(ctx context.Context, exec boil.ContextExecutor) (*PedidoIten, error) {
-	o := &PedidoIten{}
+// One returns a single pedidoItem record from the query.
+func (q pedidoItemQuery) One(ctx context.Context, exec boil.ContextExecutor) (*PedidoItem, error) {
+	o := &PedidoItem{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -474,16 +474,16 @@ func (q pedidoItenQuery) One(ctx context.Context, exec boil.ContextExecutor) (*P
 	return o, nil
 }
 
-// All returns all PedidoIten records from the query.
-func (q pedidoItenQuery) All(ctx context.Context, exec boil.ContextExecutor) (PedidoItenSlice, error) {
-	var o []*PedidoIten
+// All returns all PedidoItem records from the query.
+func (q pedidoItemQuery) All(ctx context.Context, exec boil.ContextExecutor) (PedidoItemSlice, error) {
+	var o []*PedidoItem
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models_sql_boiler: failed to assign all query results to PedidoIten slice")
+		return nil, errors.Wrap(err, "models_sql_boiler: failed to assign all query results to PedidoItem slice")
 	}
 
-	if len(pedidoItenAfterSelectHooks) != 0 {
+	if len(pedidoItemAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -494,8 +494,8 @@ func (q pedidoItenQuery) All(ctx context.Context, exec boil.ContextExecutor) (Pe
 	return o, nil
 }
 
-// Count returns the count of all PedidoIten records in the query.
-func (q pedidoItenQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all PedidoItem records in the query.
+func (q pedidoItemQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -510,7 +510,7 @@ func (q pedidoItenQuery) Count(ctx context.Context, exec boil.ContextExecutor) (
 }
 
 // Exists checks if the row exists in the table.
-func (q pedidoItenQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q pedidoItemQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -526,7 +526,7 @@ func (q pedidoItenQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 }
 
 // IDCategorium pointed to by the foreign key.
-func (o *PedidoIten) IDCategorium(mods ...qm.QueryMod) categoriaQuery {
+func (o *PedidoItem) IDCategorium(mods ...qm.QueryMod) categoriaQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDCategoria),
 	}
@@ -537,7 +537,7 @@ func (o *PedidoIten) IDCategorium(mods ...qm.QueryMod) categoriaQuery {
 }
 
 // IDCategoriaOpcaoCategoriaOpco pointed to by the foreign key.
-func (o *PedidoIten) IDCategoriaOpcaoCategoriaOpco(mods ...qm.QueryMod) categoriaOpcaoQuery {
+func (o *PedidoItem) IDCategoriaOpcaoCategoriaOpco(mods ...qm.QueryMod) categoriaOpcaoQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDCategoriaOpcao),
 	}
@@ -548,7 +548,7 @@ func (o *PedidoIten) IDCategoriaOpcaoCategoriaOpco(mods ...qm.QueryMod) categori
 }
 
 // IDPedidoPedido pointed to by the foreign key.
-func (o *PedidoIten) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
+func (o *PedidoItem) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDPedido),
 	}
@@ -559,7 +559,7 @@ func (o *PedidoIten) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 }
 
 // IDProdutoProduto pointed to by the foreign key.
-func (o *PedidoIten) IDProdutoProduto(mods ...qm.QueryMod) produtoQuery {
+func (o *PedidoItem) IDProdutoProduto(mods ...qm.QueryMod) produtoQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDProduto),
 	}
@@ -570,7 +570,7 @@ func (o *PedidoIten) IDProdutoProduto(mods ...qm.QueryMod) produtoQuery {
 }
 
 // IDProduto2Produto pointed to by the foreign key.
-func (o *PedidoIten) IDProduto2Produto(mods ...qm.QueryMod) produtoQuery {
+func (o *PedidoItem) IDProduto2Produto(mods ...qm.QueryMod) produtoQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDProduto2),
 	}
@@ -581,7 +581,7 @@ func (o *PedidoIten) IDProduto2Produto(mods ...qm.QueryMod) produtoQuery {
 }
 
 // IDPedidoItemPedidoItemAdicionais retrieves all the pedido_item_adicionais's PedidoItemAdicionais with an executor via id_pedido_item column.
-func (o *PedidoIten) IDPedidoItemPedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionaisQuery {
+func (o *PedidoItem) IDPedidoItemPedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionalQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
@@ -596,28 +596,28 @@ func (o *PedidoIten) IDPedidoItemPedidoItemAdicionais(mods ...qm.QueryMod) pedid
 
 // LoadIDCategorium allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItenL) LoadIDCategorium(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDCategorium(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -625,14 +625,14 @@ func (pedidoItenL) LoadIDCategorium(ctx context.Context, e boil.ContextExecutor,
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		args[object.IDCategoria] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 
 			args[obj.IDCategoria] = struct{}{}
@@ -716,28 +716,28 @@ func (pedidoItenL) LoadIDCategorium(ctx context.Context, e boil.ContextExecutor,
 
 // LoadIDCategoriaOpcaoCategoriaOpco allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItenL) LoadIDCategoriaOpcaoCategoriaOpco(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDCategoriaOpcaoCategoriaOpco(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -745,7 +745,7 @@ func (pedidoItenL) LoadIDCategoriaOpcaoCategoriaOpco(ctx context.Context, e boil
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		if !queries.IsNil(object.IDCategoriaOpcao) {
 			args[object.IDCategoriaOpcao] = struct{}{}
@@ -754,7 +754,7 @@ func (pedidoItenL) LoadIDCategoriaOpcaoCategoriaOpco(ctx context.Context, e boil
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 
 			if !queries.IsNil(obj.IDCategoriaOpcao) {
@@ -840,28 +840,28 @@ func (pedidoItenL) LoadIDCategoriaOpcaoCategoriaOpco(ctx context.Context, e boil
 
 // LoadIDPedidoPedido allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItenL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -869,14 +869,14 @@ func (pedidoItenL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExecuto
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		args[object.IDPedido] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 
 			args[obj.IDPedido] = struct{}{}
@@ -960,28 +960,28 @@ func (pedidoItenL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExecuto
 
 // LoadIDProdutoProduto allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItenL) LoadIDProdutoProduto(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDProdutoProduto(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -989,14 +989,14 @@ func (pedidoItenL) LoadIDProdutoProduto(ctx context.Context, e boil.ContextExecu
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		args[object.IDProduto] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 
 			args[obj.IDProduto] = struct{}{}
@@ -1080,28 +1080,28 @@ func (pedidoItenL) LoadIDProdutoProduto(ctx context.Context, e boil.ContextExecu
 
 // LoadIDProduto2Produto allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItenL) LoadIDProduto2Produto(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDProduto2Produto(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -1109,7 +1109,7 @@ func (pedidoItenL) LoadIDProduto2Produto(ctx context.Context, e boil.ContextExec
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		if !queries.IsNil(object.IDProduto2) {
 			args[object.IDProduto2] = struct{}{}
@@ -1118,7 +1118,7 @@ func (pedidoItenL) LoadIDProduto2Produto(ctx context.Context, e boil.ContextExec
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 
 			if !queries.IsNil(obj.IDProduto2) {
@@ -1204,28 +1204,28 @@ func (pedidoItenL) LoadIDProduto2Produto(ctx context.Context, e boil.ContextExec
 
 // LoadIDPedidoItemPedidoItemAdicionais allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoIten interface{}, mods queries.Applicator) error {
-	var slice []*PedidoIten
-	var object *PedidoIten
+func (pedidoItemL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItem interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItem
+	var object *PedidoItem
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoIten.(*PedidoIten)
+		object, ok = maybePedidoItem.(*PedidoItem)
 		if !ok {
-			object = new(PedidoIten)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoIten)
+			object = new(PedidoItem)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItem))
 			}
 		}
 	} else {
-		s, ok := maybePedidoIten.(*[]*PedidoIten)
+		s, ok := maybePedidoItem.(*[]*PedidoItem)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoIten)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItem)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoIten))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItem))
 			}
 		}
 	}
@@ -1233,13 +1233,13 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItenR{}
+			object.R = &pedidoItemR{}
 		}
 		args[object.ID] = struct{}{}
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItenR{}
+				obj.R = &pedidoItemR{}
 			}
 			args[obj.ID] = struct{}{}
 		}
@@ -1269,7 +1269,7 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 		return errors.Wrap(err, "failed to eager load pedido_item_adicionais")
 	}
 
-	var resultSlice []*PedidoItemAdicionais
+	var resultSlice []*PedidoItemAdicional
 	if err = queries.Bind(results, &resultSlice); err != nil {
 		return errors.Wrap(err, "failed to bind eager loaded slice pedido_item_adicionais")
 	}
@@ -1281,7 +1281,7 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_item_adicionais")
 	}
 
-	if len(pedidoItemAdicionaisAfterSelectHooks) != 0 {
+	if len(pedidoItemAdicionalAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -1292,7 +1292,7 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 		object.R.IDPedidoItemPedidoItemAdicionais = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &pedidoItemAdicionaisR{}
+				foreign.R = &pedidoItemAdicionalR{}
 			}
 			foreign.R.IDPedidoItemPedidoIten = object
 		}
@@ -1304,7 +1304,7 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 			if local.ID == foreign.IDPedidoItem {
 				local.R.IDPedidoItemPedidoItemAdicionais = append(local.R.IDPedidoItemPedidoItemAdicionais, foreign)
 				if foreign.R == nil {
-					foreign.R = &pedidoItemAdicionaisR{}
+					foreign.R = &pedidoItemAdicionalR{}
 				}
 				foreign.R.IDPedidoItemPedidoIten = local
 				break
@@ -1315,10 +1315,10 @@ func (pedidoItenL) LoadIDPedidoItemPedidoItemAdicionais(ctx context.Context, e b
 	return nil
 }
 
-// SetIDCategorium of the pedidoIten to the related item.
+// SetIDCategorium of the pedidoItem to the related item.
 // Sets o.R.IDCategorium to related.
 // Adds o to related.R.IDCategoriumPedidoItens.
-func (o *PedidoIten) SetIDCategorium(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Categoria) error {
+func (o *PedidoItem) SetIDCategorium(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Categoria) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1329,7 +1329,7 @@ func (o *PedidoIten) SetIDCategorium(ctx context.Context, exec boil.ContextExecu
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_categoria"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -1344,7 +1344,7 @@ func (o *PedidoIten) SetIDCategorium(ctx context.Context, exec boil.ContextExecu
 
 	o.IDCategoria = related.ID
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDCategorium: related,
 		}
 	} else {
@@ -1353,7 +1353,7 @@ func (o *PedidoIten) SetIDCategorium(ctx context.Context, exec boil.ContextExecu
 
 	if related.R == nil {
 		related.R = &categoriaR{
-			IDCategoriumPedidoItens: PedidoItenSlice{o},
+			IDCategoriumPedidoItens: PedidoItemSlice{o},
 		}
 	} else {
 		related.R.IDCategoriumPedidoItens = append(related.R.IDCategoriumPedidoItens, o)
@@ -1362,10 +1362,10 @@ func (o *PedidoIten) SetIDCategorium(ctx context.Context, exec boil.ContextExecu
 	return nil
 }
 
-// SetIDCategoriaOpcaoCategoriaOpco of the pedidoIten to the related item.
+// SetIDCategoriaOpcaoCategoriaOpco of the pedidoItem to the related item.
 // Sets o.R.IDCategoriaOpcaoCategoriaOpco to related.
 // Adds o to related.R.IDCategoriaOpcaoPedidoItens.
-func (o *PedidoIten) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CategoriaOpcao) error {
+func (o *PedidoItem) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CategoriaOpcao) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1376,7 +1376,7 @@ func (o *PedidoIten) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_categoria_opcao"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -1391,7 +1391,7 @@ func (o *PedidoIten) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec 
 
 	queries.Assign(&o.IDCategoriaOpcao, related.ID)
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDCategoriaOpcaoCategoriaOpco: related,
 		}
 	} else {
@@ -1400,7 +1400,7 @@ func (o *PedidoIten) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec 
 
 	if related.R == nil {
 		related.R = &categoriaOpcaoR{
-			IDCategoriaOpcaoPedidoItens: PedidoItenSlice{o},
+			IDCategoriaOpcaoPedidoItens: PedidoItemSlice{o},
 		}
 	} else {
 		related.R.IDCategoriaOpcaoPedidoItens = append(related.R.IDCategoriaOpcaoPedidoItens, o)
@@ -1412,7 +1412,7 @@ func (o *PedidoIten) SetIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec 
 // RemoveIDCategoriaOpcaoCategoriaOpco relationship.
 // Sets o.R.IDCategoriaOpcaoCategoriaOpco to nil.
 // Removes o from all passed in related items' relationships struct.
-func (o *PedidoIten) RemoveIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec boil.ContextExecutor, related *CategoriaOpcao) error {
+func (o *PedidoItem) RemoveIDCategoriaOpcaoCategoriaOpco(ctx context.Context, exec boil.ContextExecutor, related *CategoriaOpcao) error {
 	var err error
 
 	queries.SetScanner(&o.IDCategoriaOpcao, nil)
@@ -1442,10 +1442,10 @@ func (o *PedidoIten) RemoveIDCategoriaOpcaoCategoriaOpco(ctx context.Context, ex
 	return nil
 }
 
-// SetIDPedidoPedido of the pedidoIten to the related item.
+// SetIDPedidoPedido of the pedidoItem to the related item.
 // Sets o.R.IDPedidoPedido to related.
 // Adds o to related.R.IDPedidoPedidoItens.
-func (o *PedidoIten) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Pedido) error {
+func (o *PedidoItem) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Pedido) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1456,7 +1456,7 @@ func (o *PedidoIten) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExe
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -1471,7 +1471,7 @@ func (o *PedidoIten) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExe
 
 	o.IDPedido = related.ID
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDPedidoPedido: related,
 		}
 	} else {
@@ -1480,7 +1480,7 @@ func (o *PedidoIten) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExe
 
 	if related.R == nil {
 		related.R = &pedidoR{
-			IDPedidoPedidoItens: PedidoItenSlice{o},
+			IDPedidoPedidoItens: PedidoItemSlice{o},
 		}
 	} else {
 		related.R.IDPedidoPedidoItens = append(related.R.IDPedidoPedidoItens, o)
@@ -1489,10 +1489,10 @@ func (o *PedidoIten) SetIDPedidoPedido(ctx context.Context, exec boil.ContextExe
 	return nil
 }
 
-// SetIDProdutoProduto of the pedidoIten to the related item.
+// SetIDProdutoProduto of the pedidoItem to the related item.
 // Sets o.R.IDProdutoProduto to related.
 // Adds o to related.R.IDProdutoPedidoItens.
-func (o *PedidoIten) SetIDProdutoProduto(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Produto) error {
+func (o *PedidoItem) SetIDProdutoProduto(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Produto) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1503,7 +1503,7 @@ func (o *PedidoIten) SetIDProdutoProduto(ctx context.Context, exec boil.ContextE
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_produto"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -1518,7 +1518,7 @@ func (o *PedidoIten) SetIDProdutoProduto(ctx context.Context, exec boil.ContextE
 
 	o.IDProduto = related.ID
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDProdutoProduto: related,
 		}
 	} else {
@@ -1527,7 +1527,7 @@ func (o *PedidoIten) SetIDProdutoProduto(ctx context.Context, exec boil.ContextE
 
 	if related.R == nil {
 		related.R = &produtoR{
-			IDProdutoPedidoItens: PedidoItenSlice{o},
+			IDProdutoPedidoItens: PedidoItemSlice{o},
 		}
 	} else {
 		related.R.IDProdutoPedidoItens = append(related.R.IDProdutoPedidoItens, o)
@@ -1536,10 +1536,10 @@ func (o *PedidoIten) SetIDProdutoProduto(ctx context.Context, exec boil.ContextE
 	return nil
 }
 
-// SetIDProduto2Produto of the pedidoIten to the related item.
+// SetIDProduto2Produto of the pedidoItem to the related item.
 // Sets o.R.IDProduto2Produto to related.
 // Adds o to related.R.IDProduto2PedidoItens.
-func (o *PedidoIten) SetIDProduto2Produto(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Produto) error {
+func (o *PedidoItem) SetIDProduto2Produto(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Produto) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -1550,7 +1550,7 @@ func (o *PedidoIten) SetIDProduto2Produto(ctx context.Context, exec boil.Context
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_produto_2"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -1565,7 +1565,7 @@ func (o *PedidoIten) SetIDProduto2Produto(ctx context.Context, exec boil.Context
 
 	queries.Assign(&o.IDProduto2, related.ID)
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDProduto2Produto: related,
 		}
 	} else {
@@ -1574,7 +1574,7 @@ func (o *PedidoIten) SetIDProduto2Produto(ctx context.Context, exec boil.Context
 
 	if related.R == nil {
 		related.R = &produtoR{
-			IDProduto2PedidoItens: PedidoItenSlice{o},
+			IDProduto2PedidoItens: PedidoItemSlice{o},
 		}
 	} else {
 		related.R.IDProduto2PedidoItens = append(related.R.IDProduto2PedidoItens, o)
@@ -1586,7 +1586,7 @@ func (o *PedidoIten) SetIDProduto2Produto(ctx context.Context, exec boil.Context
 // RemoveIDProduto2Produto relationship.
 // Sets o.R.IDProduto2Produto to nil.
 // Removes o from all passed in related items' relationships struct.
-func (o *PedidoIten) RemoveIDProduto2Produto(ctx context.Context, exec boil.ContextExecutor, related *Produto) error {
+func (o *PedidoItem) RemoveIDProduto2Produto(ctx context.Context, exec boil.ContextExecutor, related *Produto) error {
 	var err error
 
 	queries.SetScanner(&o.IDProduto2, nil)
@@ -1620,7 +1620,7 @@ func (o *PedidoIten) RemoveIDProduto2Produto(ctx context.Context, exec boil.Cont
 // of the pedido_iten, optionally inserting them as new records.
 // Appends related to o.R.IDPedidoItemPedidoItemAdicionais.
 // Sets related.R.IDPedidoItemPedidoIten appropriately.
-func (o *PedidoIten) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItemAdicionais) error {
+func (o *PedidoItem) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoItemAdicional) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -1632,7 +1632,7 @@ func (o *PedidoIten) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, ex
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 				strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido_item"}),
-				strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionaisPrimaryKeyColumns),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionalPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
 
@@ -1650,7 +1650,7 @@ func (o *PedidoIten) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, ex
 	}
 
 	if o.R == nil {
-		o.R = &pedidoItenR{
+		o.R = &pedidoItemR{
 			IDPedidoItemPedidoItemAdicionais: related,
 		}
 	} else {
@@ -1659,7 +1659,7 @@ func (o *PedidoIten) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, ex
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &pedidoItemAdicionaisR{
+			rel.R = &pedidoItemAdicionalR{
 				IDPedidoItemPedidoIten: o,
 			}
 		} else {
@@ -1670,20 +1670,20 @@ func (o *PedidoIten) AddIDPedidoItemPedidoItemAdicionais(ctx context.Context, ex
 }
 
 // PedidoItens retrieves all the records using an executor.
-func PedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+func PedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	mods = append(mods, qm.From("\"pedido_itens\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
 		queries.SetSelect(q, []string{"\"pedido_itens\".*"})
 	}
 
-	return pedidoItenQuery{q}
+	return pedidoItemQuery{q}
 }
 
-// FindPedidoIten retrieves a single record by ID with an executor.
+// FindPedidoItem retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPedidoIten(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*PedidoIten, error) {
-	pedidoItenObj := &PedidoIten{}
+func FindPedidoItem(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*PedidoItem, error) {
+	pedidoItemObj := &PedidoItem{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
@@ -1695,7 +1695,7 @@ func FindPedidoIten(ctx context.Context, exec boil.ContextExecutor, iD string, s
 
 	q := queries.Raw(query, iD)
 
-	err := q.Bind(ctx, exec, pedidoItenObj)
+	err := q.Bind(ctx, exec, pedidoItemObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -1703,16 +1703,16 @@ func FindPedidoIten(ctx context.Context, exec boil.ContextExecutor, iD string, s
 		return nil, errors.Wrap(err, "models_sql_boiler: unable to select from pedido_itens")
 	}
 
-	if err = pedidoItenObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return pedidoItenObj, err
+	if err = pedidoItemObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return pedidoItemObj, err
 	}
 
-	return pedidoItenObj, nil
+	return pedidoItemObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *PedidoIten) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *PedidoItem) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
 		return errors.New("models_sql_boiler: no pedido_itens provided for insertion")
 	}
@@ -1733,26 +1733,26 @@ func (o *PedidoIten) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(pedidoItenColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(pedidoItemColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	pedidoItenInsertCacheMut.RLock()
-	cache, cached := pedidoItenInsertCache[key]
-	pedidoItenInsertCacheMut.RUnlock()
+	pedidoItemInsertCacheMut.RLock()
+	cache, cached := pedidoItemInsertCache[key]
+	pedidoItemInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			pedidoItenAllColumns,
-			pedidoItenColumnsWithDefault,
-			pedidoItenColumnsWithoutDefault,
+			pedidoItemAllColumns,
+			pedidoItemColumnsWithDefault,
+			pedidoItemColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(pedidoItenType, pedidoItenMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(pedidoItemType, pedidoItemMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(pedidoItenType, pedidoItenMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(pedidoItemType, pedidoItemMapping, returnColumns)
 		if err != nil {
 			return err
 		}
@@ -1791,18 +1791,18 @@ func (o *PedidoIten) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 	}
 
 	if !cached {
-		pedidoItenInsertCacheMut.Lock()
-		pedidoItenInsertCache[key] = cache
-		pedidoItenInsertCacheMut.Unlock()
+		pedidoItemInsertCacheMut.Lock()
+		pedidoItemInsertCache[key] = cache
+		pedidoItemInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the PedidoIten.
+// Update uses an executor to update the PedidoItem.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *PedidoIten) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *PedidoItem) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -1814,14 +1814,14 @@ func (o *PedidoIten) Update(ctx context.Context, exec boil.ContextExecutor, colu
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	pedidoItenUpdateCacheMut.RLock()
-	cache, cached := pedidoItenUpdateCache[key]
-	pedidoItenUpdateCacheMut.RUnlock()
+	pedidoItemUpdateCacheMut.RLock()
+	cache, cached := pedidoItemUpdateCache[key]
+	pedidoItemUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			pedidoItenAllColumns,
-			pedidoItenPrimaryKeyColumns,
+			pedidoItemAllColumns,
+			pedidoItemPrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
@@ -1833,9 +1833,9 @@ func (o *PedidoIten) Update(ctx context.Context, exec boil.ContextExecutor, colu
 
 		cache.query = fmt.Sprintf("UPDATE \"pedido_itens\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, pedidoItenPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, pedidoItemPrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(pedidoItenType, pedidoItenMapping, append(wl, pedidoItenPrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(pedidoItemType, pedidoItemMapping, append(wl, pedidoItemPrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -1860,16 +1860,16 @@ func (o *PedidoIten) Update(ctx context.Context, exec boil.ContextExecutor, colu
 	}
 
 	if !cached {
-		pedidoItenUpdateCacheMut.Lock()
-		pedidoItenUpdateCache[key] = cache
-		pedidoItenUpdateCacheMut.Unlock()
+		pedidoItemUpdateCacheMut.Lock()
+		pedidoItemUpdateCache[key] = cache
+		pedidoItemUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q pedidoItenQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q pedidoItemQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
@@ -1886,7 +1886,7 @@ func (q pedidoItenQuery) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o PedidoItenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o PedidoItemSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -1908,13 +1908,13 @@ func (o PedidoItenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItenPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := fmt.Sprintf("UPDATE \"pedido_itens\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, pedidoItenPrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, pedidoItemPrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1923,19 +1923,19 @@ func (o PedidoItenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to update all in pedidoIten slice")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to update all in pedidoItem slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to retrieve rows affected all in update all pedidoIten")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to retrieve rows affected all in update all pedidoItem")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *PedidoIten) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
+func (o *PedidoItem) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models_sql_boiler: no pedido_itens provided for upsert")
 	}
@@ -1952,7 +1952,7 @@ func (o *PedidoIten) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(pedidoItenColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(pedidoItemColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -1982,48 +1982,48 @@ func (o *PedidoIten) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	pedidoItenUpsertCacheMut.RLock()
-	cache, cached := pedidoItenUpsertCache[key]
-	pedidoItenUpsertCacheMut.RUnlock()
+	pedidoItemUpsertCacheMut.RLock()
+	cache, cached := pedidoItemUpsertCache[key]
+	pedidoItemUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, _ := insertColumns.InsertColumnSet(
-			pedidoItenAllColumns,
-			pedidoItenColumnsWithDefault,
-			pedidoItenColumnsWithoutDefault,
+			pedidoItemAllColumns,
+			pedidoItemColumnsWithDefault,
+			pedidoItemColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			pedidoItenAllColumns,
-			pedidoItenPrimaryKeyColumns,
+			pedidoItemAllColumns,
+			pedidoItemPrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
 			return errors.New("models_sql_boiler: unable to upsert pedido_itens, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(pedidoItenAllColumns, strmangle.SetIntersect(insert, update))
+		ret := strmangle.SetComplement(pedidoItemAllColumns, strmangle.SetIntersect(insert, update))
 
 		conflict := conflictColumns
 		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
-			if len(pedidoItenPrimaryKeyColumns) == 0 {
+			if len(pedidoItemPrimaryKeyColumns) == 0 {
 				return errors.New("models_sql_boiler: unable to upsert pedido_itens, could not build conflict column list")
 			}
 
-			conflict = make([]string, len(pedidoItenPrimaryKeyColumns))
-			copy(conflict, pedidoItenPrimaryKeyColumns)
+			conflict = make([]string, len(pedidoItemPrimaryKeyColumns))
+			copy(conflict, pedidoItemPrimaryKeyColumns)
 		}
 		cache.query = buildUpsertQueryPostgres(dialect, "\"pedido_itens\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
-		cache.valueMapping, err = queries.BindMapping(pedidoItenType, pedidoItenMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(pedidoItemType, pedidoItemMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(pedidoItenType, pedidoItenMapping, ret)
+			cache.retMapping, err = queries.BindMapping(pedidoItemType, pedidoItemMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -2055,26 +2055,26 @@ func (o *PedidoIten) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	}
 
 	if !cached {
-		pedidoItenUpsertCacheMut.Lock()
-		pedidoItenUpsertCache[key] = cache
-		pedidoItenUpsertCacheMut.Unlock()
+		pedidoItemUpsertCacheMut.Lock()
+		pedidoItemUpsertCache[key] = cache
+		pedidoItemUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single PedidoIten record with an executor.
+// Delete deletes a single PedidoItem record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *PedidoIten) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *PedidoItem) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models_sql_boiler: no PedidoIten provided for delete")
+		return 0, errors.New("models_sql_boiler: no PedidoItem provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), pedidoItenPrimaryKeyMapping)
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), pedidoItemPrimaryKeyMapping)
 	sql := "DELETE FROM \"pedido_itens\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
@@ -2100,9 +2100,9 @@ func (o *PedidoIten) Delete(ctx context.Context, exec boil.ContextExecutor) (int
 }
 
 // DeleteAll deletes all matching rows.
-func (q pedidoItenQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q pedidoItemQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models_sql_boiler: no pedidoItenQuery provided for delete all")
+		return 0, errors.New("models_sql_boiler: no pedidoItemQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
@@ -2121,12 +2121,12 @@ func (q pedidoItenQuery) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o PedidoItenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o PedidoItemSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(pedidoItenBeforeDeleteHooks) != 0 {
+	if len(pedidoItemBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -2136,12 +2136,12 @@ func (o PedidoItenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItenPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := "DELETE FROM \"pedido_itens\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItenPrimaryKeyColumns, len(o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -2150,7 +2150,7 @@ func (o PedidoItenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to delete all from pedidoIten slice")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to delete all from pedidoItem slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
@@ -2158,7 +2158,7 @@ func (o PedidoItenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 		return 0, errors.Wrap(err, "models_sql_boiler: failed to get rows affected by deleteall for pedido_itens")
 	}
 
-	if len(pedidoItenAfterDeleteHooks) != 0 {
+	if len(pedidoItemAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -2171,8 +2171,8 @@ func (o PedidoItenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *PedidoIten) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindPedidoIten(ctx, exec, o.ID)
+func (o *PedidoItem) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindPedidoItem(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -2183,26 +2183,26 @@ func (o *PedidoIten) Reload(ctx context.Context, exec boil.ContextExecutor) erro
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *PedidoItenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *PedidoItemSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := PedidoItenSlice{}
+	slice := PedidoItemSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItenPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := "SELECT \"pedido_itens\".* FROM \"pedido_itens\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItenPrimaryKeyColumns, len(*o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models_sql_boiler: unable to reload all in PedidoItenSlice")
+		return errors.Wrap(err, "models_sql_boiler: unable to reload all in PedidoItemSlice")
 	}
 
 	*o = slice
@@ -2210,8 +2210,8 @@ func (o *PedidoItenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 	return nil
 }
 
-// PedidoItenExists checks if the PedidoIten row exists.
-func PedidoItenExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
+// PedidoItemExists checks if the PedidoItem row exists.
+func PedidoItemExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"pedido_itens\" where \"id\"=$1 limit 1)"
 
@@ -2230,7 +2230,7 @@ func PedidoItenExists(ctx context.Context, exec boil.ContextExecutor, iD string)
 	return exists, nil
 }
 
-// Exists checks if the PedidoIten row exists.
-func (o *PedidoIten) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return PedidoItenExists(ctx, exec, o.ID)
+// Exists checks if the PedidoItem row exists.
+func (o *PedidoItem) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+	return PedidoItemExists(ctx, exec, o.ID)
 }

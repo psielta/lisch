@@ -23,8 +23,8 @@ import (
 	"github.com/volatiletech/strmangle"
 )
 
-// PedidoItemAdicionais is an object representing the database table.
-type PedidoItemAdicionais struct {
+// PedidoItemAdicional is an object representing the database table.
+type PedidoItemAdicional struct {
 	ID               string        `boil:"id" json:"id" toml:"id" yaml:"id"`
 	SeqID            int64         `boil:"seq_id" json:"seq_id" toml:"seq_id" yaml:"seq_id"`
 	IDPedidoItem     string        `boil:"id_pedido_item" json:"id_pedido_item" toml:"id_pedido_item" yaml:"id_pedido_item"`
@@ -35,11 +35,11 @@ type PedidoItemAdicionais struct {
 	UpdatedAt        time.Time     `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt        null.Time     `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
-	R *pedidoItemAdicionaisR `boil:"-" json:"-" toml:"-" yaml:"-"`
-	L pedidoItemAdicionaisL  `boil:"-" json:"-" toml:"-" yaml:"-"`
+	R *pedidoItemAdicionalR `boil:"-" json:"-" toml:"-" yaml:"-"`
+	L pedidoItemAdicionalL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
-var PedidoItemAdicionaisColumns = struct {
+var PedidoItemAdicionalColumns = struct {
 	ID               string
 	SeqID            string
 	IDPedidoItem     string
@@ -61,7 +61,7 @@ var PedidoItemAdicionaisColumns = struct {
 	DeletedAt:        "deleted_at",
 }
 
-var PedidoItemAdicionaisTableColumns = struct {
+var PedidoItemAdicionalTableColumns = struct {
 	ID               string
 	SeqID            string
 	IDPedidoItem     string
@@ -85,7 +85,7 @@ var PedidoItemAdicionaisTableColumns = struct {
 
 // Generated where
 
-var PedidoItemAdicionaisWhere = struct {
+var PedidoItemAdicionalWhere = struct {
 	ID               whereHelperstring
 	SeqID            whereHelperint64
 	IDPedidoItem     whereHelperstring
@@ -107,8 +107,8 @@ var PedidoItemAdicionaisWhere = struct {
 	DeletedAt:        whereHelpernull_Time{field: "\"pedido_item_adicionais\".\"deleted_at\""},
 }
 
-// PedidoItemAdicionaisRels is where relationship names are stored.
-var PedidoItemAdicionaisRels = struct {
+// PedidoItemAdicionalRels is where relationship names are stored.
+var PedidoItemAdicionalRels = struct {
 	IDAdicionalOpcaoCategoriaAdicionalOpco string
 	IDPedidoItemPedidoIten                 string
 }{
@@ -116,65 +116,65 @@ var PedidoItemAdicionaisRels = struct {
 	IDPedidoItemPedidoIten:                 "IDPedidoItemPedidoIten",
 }
 
-// pedidoItemAdicionaisR is where relationships are stored.
-type pedidoItemAdicionaisR struct {
+// pedidoItemAdicionalR is where relationships are stored.
+type pedidoItemAdicionalR struct {
 	IDAdicionalOpcaoCategoriaAdicionalOpco *CategoriaAdicionalOpcao `boil:"IDAdicionalOpcaoCategoriaAdicionalOpco" json:"IDAdicionalOpcaoCategoriaAdicionalOpco" toml:"IDAdicionalOpcaoCategoriaAdicionalOpco" yaml:"IDAdicionalOpcaoCategoriaAdicionalOpco"`
-	IDPedidoItemPedidoIten                 *PedidoIten              `boil:"IDPedidoItemPedidoIten" json:"IDPedidoItemPedidoIten" toml:"IDPedidoItemPedidoIten" yaml:"IDPedidoItemPedidoIten"`
+	IDPedidoItemPedidoIten                 *PedidoItem              `boil:"IDPedidoItemPedidoIten" json:"IDPedidoItemPedidoIten" toml:"IDPedidoItemPedidoIten" yaml:"IDPedidoItemPedidoIten"`
 }
 
 // NewStruct creates a new relationship struct
-func (*pedidoItemAdicionaisR) NewStruct() *pedidoItemAdicionaisR {
-	return &pedidoItemAdicionaisR{}
+func (*pedidoItemAdicionalR) NewStruct() *pedidoItemAdicionalR {
+	return &pedidoItemAdicionalR{}
 }
 
-func (r *pedidoItemAdicionaisR) GetIDAdicionalOpcaoCategoriaAdicionalOpco() *CategoriaAdicionalOpcao {
+func (r *pedidoItemAdicionalR) GetIDAdicionalOpcaoCategoriaAdicionalOpco() *CategoriaAdicionalOpcao {
 	if r == nil {
 		return nil
 	}
 	return r.IDAdicionalOpcaoCategoriaAdicionalOpco
 }
 
-func (r *pedidoItemAdicionaisR) GetIDPedidoItemPedidoIten() *PedidoIten {
+func (r *pedidoItemAdicionalR) GetIDPedidoItemPedidoIten() *PedidoItem {
 	if r == nil {
 		return nil
 	}
 	return r.IDPedidoItemPedidoIten
 }
 
-// pedidoItemAdicionaisL is where Load methods for each relationship are stored.
-type pedidoItemAdicionaisL struct{}
+// pedidoItemAdicionalL is where Load methods for each relationship are stored.
+type pedidoItemAdicionalL struct{}
 
 var (
-	pedidoItemAdicionaisAllColumns            = []string{"id", "seq_id", "id_pedido_item", "id_adicional_opcao", "valor", "quantidade", "created_at", "updated_at", "deleted_at"}
-	pedidoItemAdicionaisColumnsWithoutDefault = []string{"id_pedido_item", "id_adicional_opcao", "valor", "quantidade"}
-	pedidoItemAdicionaisColumnsWithDefault    = []string{"id", "seq_id", "created_at", "updated_at", "deleted_at"}
-	pedidoItemAdicionaisPrimaryKeyColumns     = []string{"id"}
-	pedidoItemAdicionaisGeneratedColumns      = []string{}
+	pedidoItemAdicionalAllColumns            = []string{"id", "seq_id", "id_pedido_item", "id_adicional_opcao", "valor", "quantidade", "created_at", "updated_at", "deleted_at"}
+	pedidoItemAdicionalColumnsWithoutDefault = []string{"id_pedido_item", "id_adicional_opcao", "valor", "quantidade"}
+	pedidoItemAdicionalColumnsWithDefault    = []string{"id", "seq_id", "created_at", "updated_at", "deleted_at"}
+	pedidoItemAdicionalPrimaryKeyColumns     = []string{"id"}
+	pedidoItemAdicionalGeneratedColumns      = []string{}
 )
 
 type (
-	// PedidoItemAdicionaisSlice is an alias for a slice of pointers to PedidoItemAdicionais.
-	// This should almost always be used instead of []PedidoItemAdicionais.
-	PedidoItemAdicionaisSlice []*PedidoItemAdicionais
-	// PedidoItemAdicionaisHook is the signature for custom PedidoItemAdicionais hook methods
-	PedidoItemAdicionaisHook func(context.Context, boil.ContextExecutor, *PedidoItemAdicionais) error
+	// PedidoItemAdicionalSlice is an alias for a slice of pointers to PedidoItemAdicional.
+	// This should almost always be used instead of []PedidoItemAdicional.
+	PedidoItemAdicionalSlice []*PedidoItemAdicional
+	// PedidoItemAdicionalHook is the signature for custom PedidoItemAdicional hook methods
+	PedidoItemAdicionalHook func(context.Context, boil.ContextExecutor, *PedidoItemAdicional) error
 
-	pedidoItemAdicionaisQuery struct {
+	pedidoItemAdicionalQuery struct {
 		*queries.Query
 	}
 )
 
 // Cache for insert, update and upsert
 var (
-	pedidoItemAdicionaisType                 = reflect.TypeOf(&PedidoItemAdicionais{})
-	pedidoItemAdicionaisMapping              = queries.MakeStructMapping(pedidoItemAdicionaisType)
-	pedidoItemAdicionaisPrimaryKeyMapping, _ = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, pedidoItemAdicionaisPrimaryKeyColumns)
-	pedidoItemAdicionaisInsertCacheMut       sync.RWMutex
-	pedidoItemAdicionaisInsertCache          = make(map[string]insertCache)
-	pedidoItemAdicionaisUpdateCacheMut       sync.RWMutex
-	pedidoItemAdicionaisUpdateCache          = make(map[string]updateCache)
-	pedidoItemAdicionaisUpsertCacheMut       sync.RWMutex
-	pedidoItemAdicionaisUpsertCache          = make(map[string]insertCache)
+	pedidoItemAdicionalType                 = reflect.TypeOf(&PedidoItemAdicional{})
+	pedidoItemAdicionalMapping              = queries.MakeStructMapping(pedidoItemAdicionalType)
+	pedidoItemAdicionalPrimaryKeyMapping, _ = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, pedidoItemAdicionalPrimaryKeyColumns)
+	pedidoItemAdicionalInsertCacheMut       sync.RWMutex
+	pedidoItemAdicionalInsertCache          = make(map[string]insertCache)
+	pedidoItemAdicionalUpdateCacheMut       sync.RWMutex
+	pedidoItemAdicionalUpdateCache          = make(map[string]updateCache)
+	pedidoItemAdicionalUpsertCacheMut       sync.RWMutex
+	pedidoItemAdicionalUpsertCache          = make(map[string]insertCache)
 )
 
 var (
@@ -185,36 +185,36 @@ var (
 	_ = qmhelper.Where
 )
 
-var pedidoItemAdicionaisAfterSelectMu sync.Mutex
-var pedidoItemAdicionaisAfterSelectHooks []PedidoItemAdicionaisHook
+var pedidoItemAdicionalAfterSelectMu sync.Mutex
+var pedidoItemAdicionalAfterSelectHooks []PedidoItemAdicionalHook
 
-var pedidoItemAdicionaisBeforeInsertMu sync.Mutex
-var pedidoItemAdicionaisBeforeInsertHooks []PedidoItemAdicionaisHook
-var pedidoItemAdicionaisAfterInsertMu sync.Mutex
-var pedidoItemAdicionaisAfterInsertHooks []PedidoItemAdicionaisHook
+var pedidoItemAdicionalBeforeInsertMu sync.Mutex
+var pedidoItemAdicionalBeforeInsertHooks []PedidoItemAdicionalHook
+var pedidoItemAdicionalAfterInsertMu sync.Mutex
+var pedidoItemAdicionalAfterInsertHooks []PedidoItemAdicionalHook
 
-var pedidoItemAdicionaisBeforeUpdateMu sync.Mutex
-var pedidoItemAdicionaisBeforeUpdateHooks []PedidoItemAdicionaisHook
-var pedidoItemAdicionaisAfterUpdateMu sync.Mutex
-var pedidoItemAdicionaisAfterUpdateHooks []PedidoItemAdicionaisHook
+var pedidoItemAdicionalBeforeUpdateMu sync.Mutex
+var pedidoItemAdicionalBeforeUpdateHooks []PedidoItemAdicionalHook
+var pedidoItemAdicionalAfterUpdateMu sync.Mutex
+var pedidoItemAdicionalAfterUpdateHooks []PedidoItemAdicionalHook
 
-var pedidoItemAdicionaisBeforeDeleteMu sync.Mutex
-var pedidoItemAdicionaisBeforeDeleteHooks []PedidoItemAdicionaisHook
-var pedidoItemAdicionaisAfterDeleteMu sync.Mutex
-var pedidoItemAdicionaisAfterDeleteHooks []PedidoItemAdicionaisHook
+var pedidoItemAdicionalBeforeDeleteMu sync.Mutex
+var pedidoItemAdicionalBeforeDeleteHooks []PedidoItemAdicionalHook
+var pedidoItemAdicionalAfterDeleteMu sync.Mutex
+var pedidoItemAdicionalAfterDeleteHooks []PedidoItemAdicionalHook
 
-var pedidoItemAdicionaisBeforeUpsertMu sync.Mutex
-var pedidoItemAdicionaisBeforeUpsertHooks []PedidoItemAdicionaisHook
-var pedidoItemAdicionaisAfterUpsertMu sync.Mutex
-var pedidoItemAdicionaisAfterUpsertHooks []PedidoItemAdicionaisHook
+var pedidoItemAdicionalBeforeUpsertMu sync.Mutex
+var pedidoItemAdicionalBeforeUpsertHooks []PedidoItemAdicionalHook
+var pedidoItemAdicionalAfterUpsertMu sync.Mutex
+var pedidoItemAdicionalAfterUpsertHooks []PedidoItemAdicionalHook
 
 // doAfterSelectHooks executes all "after Select" hooks.
-func (o *PedidoItemAdicionais) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doAfterSelectHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisAfterSelectHooks {
+	for _, hook := range pedidoItemAdicionalAfterSelectHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -224,12 +224,12 @@ func (o *PedidoItemAdicionais) doAfterSelectHooks(ctx context.Context, exec boil
 }
 
 // doBeforeInsertHooks executes all "before insert" hooks.
-func (o *PedidoItemAdicionais) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doBeforeInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisBeforeInsertHooks {
+	for _, hook := range pedidoItemAdicionalBeforeInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -239,12 +239,12 @@ func (o *PedidoItemAdicionais) doBeforeInsertHooks(ctx context.Context, exec boi
 }
 
 // doAfterInsertHooks executes all "after Insert" hooks.
-func (o *PedidoItemAdicionais) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doAfterInsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisAfterInsertHooks {
+	for _, hook := range pedidoItemAdicionalAfterInsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -254,12 +254,12 @@ func (o *PedidoItemAdicionais) doAfterInsertHooks(ctx context.Context, exec boil
 }
 
 // doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *PedidoItemAdicionais) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doBeforeUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisBeforeUpdateHooks {
+	for _, hook := range pedidoItemAdicionalBeforeUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -269,12 +269,12 @@ func (o *PedidoItemAdicionais) doBeforeUpdateHooks(ctx context.Context, exec boi
 }
 
 // doAfterUpdateHooks executes all "after Update" hooks.
-func (o *PedidoItemAdicionais) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doAfterUpdateHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisAfterUpdateHooks {
+	for _, hook := range pedidoItemAdicionalAfterUpdateHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -284,12 +284,12 @@ func (o *PedidoItemAdicionais) doAfterUpdateHooks(ctx context.Context, exec boil
 }
 
 // doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *PedidoItemAdicionais) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doBeforeDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisBeforeDeleteHooks {
+	for _, hook := range pedidoItemAdicionalBeforeDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -299,12 +299,12 @@ func (o *PedidoItemAdicionais) doBeforeDeleteHooks(ctx context.Context, exec boi
 }
 
 // doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *PedidoItemAdicionais) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doAfterDeleteHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisAfterDeleteHooks {
+	for _, hook := range pedidoItemAdicionalAfterDeleteHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -314,12 +314,12 @@ func (o *PedidoItemAdicionais) doAfterDeleteHooks(ctx context.Context, exec boil
 }
 
 // doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *PedidoItemAdicionais) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doBeforeUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisBeforeUpsertHooks {
+	for _, hook := range pedidoItemAdicionalBeforeUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -329,12 +329,12 @@ func (o *PedidoItemAdicionais) doBeforeUpsertHooks(ctx context.Context, exec boi
 }
 
 // doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *PedidoItemAdicionais) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
+func (o *PedidoItemAdicional) doAfterUpsertHooks(ctx context.Context, exec boil.ContextExecutor) (err error) {
 	if boil.HooksAreSkipped(ctx) {
 		return nil
 	}
 
-	for _, hook := range pedidoItemAdicionaisAfterUpsertHooks {
+	for _, hook := range pedidoItemAdicionalAfterUpsertHooks {
 		if err := hook(ctx, exec, o); err != nil {
 			return err
 		}
@@ -343,51 +343,51 @@ func (o *PedidoItemAdicionais) doAfterUpsertHooks(ctx context.Context, exec boil
 	return nil
 }
 
-// AddPedidoItemAdicionaisHook registers your hook function for all future operations.
-func AddPedidoItemAdicionaisHook(hookPoint boil.HookPoint, pedidoItemAdicionaisHook PedidoItemAdicionaisHook) {
+// AddPedidoItemAdicionalHook registers your hook function for all future operations.
+func AddPedidoItemAdicionalHook(hookPoint boil.HookPoint, pedidoItemAdicionalHook PedidoItemAdicionalHook) {
 	switch hookPoint {
 	case boil.AfterSelectHook:
-		pedidoItemAdicionaisAfterSelectMu.Lock()
-		pedidoItemAdicionaisAfterSelectHooks = append(pedidoItemAdicionaisAfterSelectHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisAfterSelectMu.Unlock()
+		pedidoItemAdicionalAfterSelectMu.Lock()
+		pedidoItemAdicionalAfterSelectHooks = append(pedidoItemAdicionalAfterSelectHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalAfterSelectMu.Unlock()
 	case boil.BeforeInsertHook:
-		pedidoItemAdicionaisBeforeInsertMu.Lock()
-		pedidoItemAdicionaisBeforeInsertHooks = append(pedidoItemAdicionaisBeforeInsertHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisBeforeInsertMu.Unlock()
+		pedidoItemAdicionalBeforeInsertMu.Lock()
+		pedidoItemAdicionalBeforeInsertHooks = append(pedidoItemAdicionalBeforeInsertHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalBeforeInsertMu.Unlock()
 	case boil.AfterInsertHook:
-		pedidoItemAdicionaisAfterInsertMu.Lock()
-		pedidoItemAdicionaisAfterInsertHooks = append(pedidoItemAdicionaisAfterInsertHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisAfterInsertMu.Unlock()
+		pedidoItemAdicionalAfterInsertMu.Lock()
+		pedidoItemAdicionalAfterInsertHooks = append(pedidoItemAdicionalAfterInsertHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalAfterInsertMu.Unlock()
 	case boil.BeforeUpdateHook:
-		pedidoItemAdicionaisBeforeUpdateMu.Lock()
-		pedidoItemAdicionaisBeforeUpdateHooks = append(pedidoItemAdicionaisBeforeUpdateHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisBeforeUpdateMu.Unlock()
+		pedidoItemAdicionalBeforeUpdateMu.Lock()
+		pedidoItemAdicionalBeforeUpdateHooks = append(pedidoItemAdicionalBeforeUpdateHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalBeforeUpdateMu.Unlock()
 	case boil.AfterUpdateHook:
-		pedidoItemAdicionaisAfterUpdateMu.Lock()
-		pedidoItemAdicionaisAfterUpdateHooks = append(pedidoItemAdicionaisAfterUpdateHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisAfterUpdateMu.Unlock()
+		pedidoItemAdicionalAfterUpdateMu.Lock()
+		pedidoItemAdicionalAfterUpdateHooks = append(pedidoItemAdicionalAfterUpdateHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalAfterUpdateMu.Unlock()
 	case boil.BeforeDeleteHook:
-		pedidoItemAdicionaisBeforeDeleteMu.Lock()
-		pedidoItemAdicionaisBeforeDeleteHooks = append(pedidoItemAdicionaisBeforeDeleteHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisBeforeDeleteMu.Unlock()
+		pedidoItemAdicionalBeforeDeleteMu.Lock()
+		pedidoItemAdicionalBeforeDeleteHooks = append(pedidoItemAdicionalBeforeDeleteHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalBeforeDeleteMu.Unlock()
 	case boil.AfterDeleteHook:
-		pedidoItemAdicionaisAfterDeleteMu.Lock()
-		pedidoItemAdicionaisAfterDeleteHooks = append(pedidoItemAdicionaisAfterDeleteHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisAfterDeleteMu.Unlock()
+		pedidoItemAdicionalAfterDeleteMu.Lock()
+		pedidoItemAdicionalAfterDeleteHooks = append(pedidoItemAdicionalAfterDeleteHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalAfterDeleteMu.Unlock()
 	case boil.BeforeUpsertHook:
-		pedidoItemAdicionaisBeforeUpsertMu.Lock()
-		pedidoItemAdicionaisBeforeUpsertHooks = append(pedidoItemAdicionaisBeforeUpsertHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisBeforeUpsertMu.Unlock()
+		pedidoItemAdicionalBeforeUpsertMu.Lock()
+		pedidoItemAdicionalBeforeUpsertHooks = append(pedidoItemAdicionalBeforeUpsertHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalBeforeUpsertMu.Unlock()
 	case boil.AfterUpsertHook:
-		pedidoItemAdicionaisAfterUpsertMu.Lock()
-		pedidoItemAdicionaisAfterUpsertHooks = append(pedidoItemAdicionaisAfterUpsertHooks, pedidoItemAdicionaisHook)
-		pedidoItemAdicionaisAfterUpsertMu.Unlock()
+		pedidoItemAdicionalAfterUpsertMu.Lock()
+		pedidoItemAdicionalAfterUpsertHooks = append(pedidoItemAdicionalAfterUpsertHooks, pedidoItemAdicionalHook)
+		pedidoItemAdicionalAfterUpsertMu.Unlock()
 	}
 }
 
-// One returns a single pedidoItemAdicionais record from the query.
-func (q pedidoItemAdicionaisQuery) One(ctx context.Context, exec boil.ContextExecutor) (*PedidoItemAdicionais, error) {
-	o := &PedidoItemAdicionais{}
+// One returns a single pedidoItemAdicional record from the query.
+func (q pedidoItemAdicionalQuery) One(ctx context.Context, exec boil.ContextExecutor) (*PedidoItemAdicional, error) {
+	o := &PedidoItemAdicional{}
 
 	queries.SetLimit(q.Query, 1)
 
@@ -406,16 +406,16 @@ func (q pedidoItemAdicionaisQuery) One(ctx context.Context, exec boil.ContextExe
 	return o, nil
 }
 
-// All returns all PedidoItemAdicionais records from the query.
-func (q pedidoItemAdicionaisQuery) All(ctx context.Context, exec boil.ContextExecutor) (PedidoItemAdicionaisSlice, error) {
-	var o []*PedidoItemAdicionais
+// All returns all PedidoItemAdicional records from the query.
+func (q pedidoItemAdicionalQuery) All(ctx context.Context, exec boil.ContextExecutor) (PedidoItemAdicionalSlice, error) {
+	var o []*PedidoItemAdicional
 
 	err := q.Bind(ctx, exec, &o)
 	if err != nil {
-		return nil, errors.Wrap(err, "models_sql_boiler: failed to assign all query results to PedidoItemAdicionais slice")
+		return nil, errors.Wrap(err, "models_sql_boiler: failed to assign all query results to PedidoItemAdicional slice")
 	}
 
-	if len(pedidoItemAdicionaisAfterSelectHooks) != 0 {
+	if len(pedidoItemAdicionalAfterSelectHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterSelectHooks(ctx, exec); err != nil {
 				return o, err
@@ -426,8 +426,8 @@ func (q pedidoItemAdicionaisQuery) All(ctx context.Context, exec boil.ContextExe
 	return o, nil
 }
 
-// Count returns the count of all PedidoItemAdicionais records in the query.
-func (q pedidoItemAdicionaisQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+// Count returns the count of all PedidoItemAdicional records in the query.
+func (q pedidoItemAdicionalQuery) Count(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -442,7 +442,7 @@ func (q pedidoItemAdicionaisQuery) Count(ctx context.Context, exec boil.ContextE
 }
 
 // Exists checks if the row exists in the table.
-func (q pedidoItemAdicionaisQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+func (q pedidoItemAdicionalQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
 	var count int64
 
 	queries.SetSelect(q.Query, nil)
@@ -458,7 +458,7 @@ func (q pedidoItemAdicionaisQuery) Exists(ctx context.Context, exec boil.Context
 }
 
 // IDAdicionalOpcaoCategoriaAdicionalOpco pointed to by the foreign key.
-func (o *PedidoItemAdicionais) IDAdicionalOpcaoCategoriaAdicionalOpco(mods ...qm.QueryMod) categoriaAdicionalOpcaoQuery {
+func (o *PedidoItemAdicional) IDAdicionalOpcaoCategoriaAdicionalOpco(mods ...qm.QueryMod) categoriaAdicionalOpcaoQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDAdicionalOpcao),
 	}
@@ -469,7 +469,7 @@ func (o *PedidoItemAdicionais) IDAdicionalOpcaoCategoriaAdicionalOpco(mods ...qm
 }
 
 // IDPedidoItemPedidoIten pointed to by the foreign key.
-func (o *PedidoItemAdicionais) IDPedidoItemPedidoIten(mods ...qm.QueryMod) pedidoItenQuery {
+func (o *PedidoItemAdicional) IDPedidoItemPedidoIten(mods ...qm.QueryMod) pedidoItemQuery {
 	queryMods := []qm.QueryMod{
 		qm.Where("\"id\" = ?", o.IDPedidoItem),
 	}
@@ -481,28 +481,28 @@ func (o *PedidoItemAdicionais) IDPedidoItemPedidoIten(mods ...qm.QueryMod) pedid
 
 // LoadIDAdicionalOpcaoCategoriaAdicionalOpco allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItemAdicionaisL) LoadIDAdicionalOpcaoCategoriaAdicionalOpco(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItemAdicionais interface{}, mods queries.Applicator) error {
-	var slice []*PedidoItemAdicionais
-	var object *PedidoItemAdicionais
+func (pedidoItemAdicionalL) LoadIDAdicionalOpcaoCategoriaAdicionalOpco(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItemAdicional interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItemAdicional
+	var object *PedidoItemAdicional
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoItemAdicionais.(*PedidoItemAdicionais)
+		object, ok = maybePedidoItemAdicional.(*PedidoItemAdicional)
 		if !ok {
-			object = new(PedidoItemAdicionais)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItemAdicionais)
+			object = new(PedidoItemAdicional)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItemAdicional)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItemAdicionais))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItemAdicional))
 			}
 		}
 	} else {
-		s, ok := maybePedidoItemAdicionais.(*[]*PedidoItemAdicionais)
+		s, ok := maybePedidoItemAdicional.(*[]*PedidoItemAdicional)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItemAdicionais)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItemAdicional)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItemAdicionais))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItemAdicional))
 			}
 		}
 	}
@@ -510,14 +510,14 @@ func (pedidoItemAdicionaisL) LoadIDAdicionalOpcaoCategoriaAdicionalOpco(ctx cont
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItemAdicionaisR{}
+			object.R = &pedidoItemAdicionalR{}
 		}
 		args[object.IDAdicionalOpcao] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItemAdicionaisR{}
+				obj.R = &pedidoItemAdicionalR{}
 			}
 
 			args[obj.IDAdicionalOpcao] = struct{}{}
@@ -601,28 +601,28 @@ func (pedidoItemAdicionaisL) LoadIDAdicionalOpcaoCategoriaAdicionalOpco(ctx cont
 
 // LoadIDPedidoItemPedidoIten allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItemAdicionais interface{}, mods queries.Applicator) error {
-	var slice []*PedidoItemAdicionais
-	var object *PedidoItemAdicionais
+func (pedidoItemAdicionalL) LoadIDPedidoItemPedidoIten(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoItemAdicional interface{}, mods queries.Applicator) error {
+	var slice []*PedidoItemAdicional
+	var object *PedidoItemAdicional
 
 	if singular {
 		var ok bool
-		object, ok = maybePedidoItemAdicionais.(*PedidoItemAdicionais)
+		object, ok = maybePedidoItemAdicional.(*PedidoItemAdicional)
 		if !ok {
-			object = new(PedidoItemAdicionais)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItemAdicionais)
+			object = new(PedidoItemAdicional)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoItemAdicional)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItemAdicionais))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoItemAdicional))
 			}
 		}
 	} else {
-		s, ok := maybePedidoItemAdicionais.(*[]*PedidoItemAdicionais)
+		s, ok := maybePedidoItemAdicional.(*[]*PedidoItemAdicional)
 		if ok {
 			slice = *s
 		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItemAdicionais)
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoItemAdicional)
 			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItemAdicionais))
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoItemAdicional))
 			}
 		}
 	}
@@ -630,14 +630,14 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 	args := make(map[interface{}]struct{})
 	if singular {
 		if object.R == nil {
-			object.R = &pedidoItemAdicionaisR{}
+			object.R = &pedidoItemAdicionalR{}
 		}
 		args[object.IDPedidoItem] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
 			if obj.R == nil {
-				obj.R = &pedidoItemAdicionaisR{}
+				obj.R = &pedidoItemAdicionalR{}
 			}
 
 			args[obj.IDPedidoItem] = struct{}{}
@@ -666,12 +666,12 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load PedidoIten")
+		return errors.Wrap(err, "failed to eager load PedidoItem")
 	}
 
-	var resultSlice []*PedidoIten
+	var resultSlice []*PedidoItem
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice PedidoIten")
+		return errors.Wrap(err, "failed to bind eager loaded slice PedidoItem")
 	}
 
 	if err = results.Close(); err != nil {
@@ -681,7 +681,7 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
 	}
 
-	if len(pedidoItenAfterSelectHooks) != 0 {
+	if len(pedidoItemAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -697,7 +697,7 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 		foreign := resultSlice[0]
 		object.R.IDPedidoItemPedidoIten = foreign
 		if foreign.R == nil {
-			foreign.R = &pedidoItenR{}
+			foreign.R = &pedidoItemR{}
 		}
 		foreign.R.IDPedidoItemPedidoItemAdicionais = append(foreign.R.IDPedidoItemPedidoItemAdicionais, object)
 		return nil
@@ -708,7 +708,7 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 			if local.IDPedidoItem == foreign.ID {
 				local.R.IDPedidoItemPedidoIten = foreign
 				if foreign.R == nil {
-					foreign.R = &pedidoItenR{}
+					foreign.R = &pedidoItemR{}
 				}
 				foreign.R.IDPedidoItemPedidoItemAdicionais = append(foreign.R.IDPedidoItemPedidoItemAdicionais, local)
 				break
@@ -719,10 +719,10 @@ func (pedidoItemAdicionaisL) LoadIDPedidoItemPedidoIten(ctx context.Context, e b
 	return nil
 }
 
-// SetIDAdicionalOpcaoCategoriaAdicionalOpco of the pedidoItemAdicionais to the related item.
+// SetIDAdicionalOpcaoCategoriaAdicionalOpco of the pedidoItemAdicional to the related item.
 // Sets o.R.IDAdicionalOpcaoCategoriaAdicionalOpco to related.
 // Adds o to related.R.IDAdicionalOpcaoPedidoItemAdicionais.
-func (o *PedidoItemAdicionais) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CategoriaAdicionalOpcao) error {
+func (o *PedidoItemAdicional) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CategoriaAdicionalOpcao) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -733,7 +733,7 @@ func (o *PedidoItemAdicionais) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx con
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_adicional_opcao"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionaisPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionalPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -748,7 +748,7 @@ func (o *PedidoItemAdicionais) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx con
 
 	o.IDAdicionalOpcao = related.ID
 	if o.R == nil {
-		o.R = &pedidoItemAdicionaisR{
+		o.R = &pedidoItemAdicionalR{
 			IDAdicionalOpcaoCategoriaAdicionalOpco: related,
 		}
 	} else {
@@ -757,7 +757,7 @@ func (o *PedidoItemAdicionais) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx con
 
 	if related.R == nil {
 		related.R = &categoriaAdicionalOpcaoR{
-			IDAdicionalOpcaoPedidoItemAdicionais: PedidoItemAdicionaisSlice{o},
+			IDAdicionalOpcaoPedidoItemAdicionais: PedidoItemAdicionalSlice{o},
 		}
 	} else {
 		related.R.IDAdicionalOpcaoPedidoItemAdicionais = append(related.R.IDAdicionalOpcaoPedidoItemAdicionais, o)
@@ -766,10 +766,10 @@ func (o *PedidoItemAdicionais) SetIDAdicionalOpcaoCategoriaAdicionalOpco(ctx con
 	return nil
 }
 
-// SetIDPedidoItemPedidoIten of the pedidoItemAdicionais to the related item.
+// SetIDPedidoItemPedidoIten of the pedidoItemAdicional to the related item.
 // Sets o.R.IDPedidoItemPedidoIten to related.
 // Adds o to related.R.IDPedidoItemPedidoItemAdicionais.
-func (o *PedidoItemAdicionais) SetIDPedidoItemPedidoIten(ctx context.Context, exec boil.ContextExecutor, insert bool, related *PedidoIten) error {
+func (o *PedidoItemAdicional) SetIDPedidoItemPedidoIten(ctx context.Context, exec boil.ContextExecutor, insert bool, related *PedidoItem) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -780,7 +780,7 @@ func (o *PedidoItemAdicionais) SetIDPedidoItemPedidoIten(ctx context.Context, ex
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido_item"}),
-		strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionaisPrimaryKeyColumns),
+		strmangle.WhereClause("\"", "\"", 2, pedidoItemAdicionalPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
 
@@ -795,7 +795,7 @@ func (o *PedidoItemAdicionais) SetIDPedidoItemPedidoIten(ctx context.Context, ex
 
 	o.IDPedidoItem = related.ID
 	if o.R == nil {
-		o.R = &pedidoItemAdicionaisR{
+		o.R = &pedidoItemAdicionalR{
 			IDPedidoItemPedidoIten: related,
 		}
 	} else {
@@ -803,8 +803,8 @@ func (o *PedidoItemAdicionais) SetIDPedidoItemPedidoIten(ctx context.Context, ex
 	}
 
 	if related.R == nil {
-		related.R = &pedidoItenR{
-			IDPedidoItemPedidoItemAdicionais: PedidoItemAdicionaisSlice{o},
+		related.R = &pedidoItemR{
+			IDPedidoItemPedidoItemAdicionais: PedidoItemAdicionalSlice{o},
 		}
 	} else {
 		related.R.IDPedidoItemPedidoItemAdicionais = append(related.R.IDPedidoItemPedidoItemAdicionais, o)
@@ -814,20 +814,20 @@ func (o *PedidoItemAdicionais) SetIDPedidoItemPedidoIten(ctx context.Context, ex
 }
 
 // PedidoItemAdicionais retrieves all the records using an executor.
-func PedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionaisQuery {
+func PedidoItemAdicionais(mods ...qm.QueryMod) pedidoItemAdicionalQuery {
 	mods = append(mods, qm.From("\"pedido_item_adicionais\""))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
 		queries.SetSelect(q, []string{"\"pedido_item_adicionais\".*"})
 	}
 
-	return pedidoItemAdicionaisQuery{q}
+	return pedidoItemAdicionalQuery{q}
 }
 
-// FindPedidoItemAdicionais retrieves a single record by ID with an executor.
+// FindPedidoItemAdicional retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*PedidoItemAdicionais, error) {
-	pedidoItemAdicionaisObj := &PedidoItemAdicionais{}
+func FindPedidoItemAdicional(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*PedidoItemAdicional, error) {
+	pedidoItemAdicionalObj := &PedidoItemAdicional{}
 
 	sel := "*"
 	if len(selectCols) > 0 {
@@ -839,7 +839,7 @@ func FindPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, iD
 
 	q := queries.Raw(query, iD)
 
-	err := q.Bind(ctx, exec, pedidoItemAdicionaisObj)
+	err := q.Bind(ctx, exec, pedidoItemAdicionalObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
@@ -847,16 +847,16 @@ func FindPedidoItemAdicionais(ctx context.Context, exec boil.ContextExecutor, iD
 		return nil, errors.Wrap(err, "models_sql_boiler: unable to select from pedido_item_adicionais")
 	}
 
-	if err = pedidoItemAdicionaisObj.doAfterSelectHooks(ctx, exec); err != nil {
-		return pedidoItemAdicionaisObj, err
+	if err = pedidoItemAdicionalObj.doAfterSelectHooks(ctx, exec); err != nil {
+		return pedidoItemAdicionalObj, err
 	}
 
-	return pedidoItemAdicionaisObj, nil
+	return pedidoItemAdicionalObj, nil
 }
 
 // Insert a single record using an executor.
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
-func (o *PedidoItemAdicionais) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
+func (o *PedidoItemAdicional) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
 		return errors.New("models_sql_boiler: no pedido_item_adicionais provided for insertion")
 	}
@@ -877,26 +877,26 @@ func (o *PedidoItemAdicionais) Insert(ctx context.Context, exec boil.ContextExec
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(pedidoItemAdicionaisColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(pedidoItemAdicionalColumnsWithDefault, o)
 
 	key := makeCacheKey(columns, nzDefaults)
-	pedidoItemAdicionaisInsertCacheMut.RLock()
-	cache, cached := pedidoItemAdicionaisInsertCache[key]
-	pedidoItemAdicionaisInsertCacheMut.RUnlock()
+	pedidoItemAdicionalInsertCacheMut.RLock()
+	cache, cached := pedidoItemAdicionalInsertCache[key]
+	pedidoItemAdicionalInsertCacheMut.RUnlock()
 
 	if !cached {
 		wl, returnColumns := columns.InsertColumnSet(
-			pedidoItemAdicionaisAllColumns,
-			pedidoItemAdicionaisColumnsWithDefault,
-			pedidoItemAdicionaisColumnsWithoutDefault,
+			pedidoItemAdicionalAllColumns,
+			pedidoItemAdicionalColumnsWithDefault,
+			pedidoItemAdicionalColumnsWithoutDefault,
 			nzDefaults,
 		)
 
-		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, wl)
+		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, wl)
 		if err != nil {
 			return err
 		}
-		cache.retMapping, err = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, returnColumns)
+		cache.retMapping, err = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, returnColumns)
 		if err != nil {
 			return err
 		}
@@ -935,18 +935,18 @@ func (o *PedidoItemAdicionais) Insert(ctx context.Context, exec boil.ContextExec
 	}
 
 	if !cached {
-		pedidoItemAdicionaisInsertCacheMut.Lock()
-		pedidoItemAdicionaisInsertCache[key] = cache
-		pedidoItemAdicionaisInsertCacheMut.Unlock()
+		pedidoItemAdicionalInsertCacheMut.Lock()
+		pedidoItemAdicionalInsertCache[key] = cache
+		pedidoItemAdicionalInsertCacheMut.Unlock()
 	}
 
 	return o.doAfterInsertHooks(ctx, exec)
 }
 
-// Update uses an executor to update the PedidoItemAdicionais.
+// Update uses an executor to update the PedidoItemAdicional.
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
-func (o *PedidoItemAdicionais) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+func (o *PedidoItemAdicional) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
 	if !boil.TimestampsAreSkipped(ctx) {
 		currTime := time.Now().In(boil.GetLocation())
 
@@ -958,14 +958,14 @@ func (o *PedidoItemAdicionais) Update(ctx context.Context, exec boil.ContextExec
 		return 0, err
 	}
 	key := makeCacheKey(columns, nil)
-	pedidoItemAdicionaisUpdateCacheMut.RLock()
-	cache, cached := pedidoItemAdicionaisUpdateCache[key]
-	pedidoItemAdicionaisUpdateCacheMut.RUnlock()
+	pedidoItemAdicionalUpdateCacheMut.RLock()
+	cache, cached := pedidoItemAdicionalUpdateCache[key]
+	pedidoItemAdicionalUpdateCacheMut.RUnlock()
 
 	if !cached {
 		wl := columns.UpdateColumnSet(
-			pedidoItemAdicionaisAllColumns,
-			pedidoItemAdicionaisPrimaryKeyColumns,
+			pedidoItemAdicionalAllColumns,
+			pedidoItemAdicionalPrimaryKeyColumns,
 		)
 
 		if !columns.IsWhitelist() {
@@ -977,9 +977,9 @@ func (o *PedidoItemAdicionais) Update(ctx context.Context, exec boil.ContextExec
 
 		cache.query = fmt.Sprintf("UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
-			strmangle.WhereClause("\"", "\"", len(wl)+1, pedidoItemAdicionaisPrimaryKeyColumns),
+			strmangle.WhereClause("\"", "\"", len(wl)+1, pedidoItemAdicionalPrimaryKeyColumns),
 		)
-		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, append(wl, pedidoItemAdicionaisPrimaryKeyColumns...))
+		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, append(wl, pedidoItemAdicionalPrimaryKeyColumns...))
 		if err != nil {
 			return 0, err
 		}
@@ -1004,16 +1004,16 @@ func (o *PedidoItemAdicionais) Update(ctx context.Context, exec boil.ContextExec
 	}
 
 	if !cached {
-		pedidoItemAdicionaisUpdateCacheMut.Lock()
-		pedidoItemAdicionaisUpdateCache[key] = cache
-		pedidoItemAdicionaisUpdateCacheMut.Unlock()
+		pedidoItemAdicionalUpdateCacheMut.Lock()
+		pedidoItemAdicionalUpdateCache[key] = cache
+		pedidoItemAdicionalUpdateCacheMut.Unlock()
 	}
 
 	return rowsAff, o.doAfterUpdateHooks(ctx, exec)
 }
 
 // UpdateAll updates all rows with the specified column values.
-func (q pedidoItemAdicionaisQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (q pedidoItemAdicionalQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	queries.SetUpdate(q.Query, cols)
 
 	result, err := q.Query.ExecContext(ctx, exec)
@@ -1030,7 +1030,7 @@ func (q pedidoItemAdicionaisQuery) UpdateAll(ctx context.Context, exec boil.Cont
 }
 
 // UpdateAll updates all rows with the specified column values, using an executor.
-func (o PedidoItemAdicionaisSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
+func (o PedidoItemAdicionalSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, cols M) (int64, error) {
 	ln := int64(len(o))
 	if ln == 0 {
 		return 0, nil
@@ -1052,13 +1052,13 @@ func (o PedidoItemAdicionaisSlice) UpdateAll(ctx context.Context, exec boil.Cont
 
 	// Append all of the primary key values for each column
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionaisPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionalPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := fmt.Sprintf("UPDATE \"pedido_item_adicionais\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, pedidoItemAdicionaisPrimaryKeyColumns, len(o)))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, pedidoItemAdicionalPrimaryKeyColumns, len(o)))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1067,19 +1067,19 @@ func (o PedidoItemAdicionaisSlice) UpdateAll(ctx context.Context, exec boil.Cont
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to update all in pedidoItemAdicionais slice")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to update all in pedidoItemAdicional slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to retrieve rows affected all in update all pedidoItemAdicionais")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to retrieve rows affected all in update all pedidoItemAdicional")
 	}
 	return rowsAff, nil
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
-func (o *PedidoItemAdicionais) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
+func (o *PedidoItemAdicional) Upsert(ctx context.Context, exec boil.ContextExecutor, updateOnConflict bool, conflictColumns []string, updateColumns, insertColumns boil.Columns, opts ...UpsertOptionFunc) error {
 	if o == nil {
 		return errors.New("models_sql_boiler: no pedido_item_adicionais provided for upsert")
 	}
@@ -1096,7 +1096,7 @@ func (o *PedidoItemAdicionais) Upsert(ctx context.Context, exec boil.ContextExec
 		return err
 	}
 
-	nzDefaults := queries.NonZeroDefaultSet(pedidoItemAdicionaisColumnsWithDefault, o)
+	nzDefaults := queries.NonZeroDefaultSet(pedidoItemAdicionalColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs psql problems
 	buf := strmangle.GetBuffer()
@@ -1126,48 +1126,48 @@ func (o *PedidoItemAdicionais) Upsert(ctx context.Context, exec boil.ContextExec
 	key := buf.String()
 	strmangle.PutBuffer(buf)
 
-	pedidoItemAdicionaisUpsertCacheMut.RLock()
-	cache, cached := pedidoItemAdicionaisUpsertCache[key]
-	pedidoItemAdicionaisUpsertCacheMut.RUnlock()
+	pedidoItemAdicionalUpsertCacheMut.RLock()
+	cache, cached := pedidoItemAdicionalUpsertCache[key]
+	pedidoItemAdicionalUpsertCacheMut.RUnlock()
 
 	var err error
 
 	if !cached {
 		insert, _ := insertColumns.InsertColumnSet(
-			pedidoItemAdicionaisAllColumns,
-			pedidoItemAdicionaisColumnsWithDefault,
-			pedidoItemAdicionaisColumnsWithoutDefault,
+			pedidoItemAdicionalAllColumns,
+			pedidoItemAdicionalColumnsWithDefault,
+			pedidoItemAdicionalColumnsWithoutDefault,
 			nzDefaults,
 		)
 
 		update := updateColumns.UpdateColumnSet(
-			pedidoItemAdicionaisAllColumns,
-			pedidoItemAdicionaisPrimaryKeyColumns,
+			pedidoItemAdicionalAllColumns,
+			pedidoItemAdicionalPrimaryKeyColumns,
 		)
 
 		if updateOnConflict && len(update) == 0 {
 			return errors.New("models_sql_boiler: unable to upsert pedido_item_adicionais, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(pedidoItemAdicionaisAllColumns, strmangle.SetIntersect(insert, update))
+		ret := strmangle.SetComplement(pedidoItemAdicionalAllColumns, strmangle.SetIntersect(insert, update))
 
 		conflict := conflictColumns
 		if len(conflict) == 0 && updateOnConflict && len(update) != 0 {
-			if len(pedidoItemAdicionaisPrimaryKeyColumns) == 0 {
+			if len(pedidoItemAdicionalPrimaryKeyColumns) == 0 {
 				return errors.New("models_sql_boiler: unable to upsert pedido_item_adicionais, could not build conflict column list")
 			}
 
-			conflict = make([]string, len(pedidoItemAdicionaisPrimaryKeyColumns))
-			copy(conflict, pedidoItemAdicionaisPrimaryKeyColumns)
+			conflict = make([]string, len(pedidoItemAdicionalPrimaryKeyColumns))
+			copy(conflict, pedidoItemAdicionalPrimaryKeyColumns)
 		}
 		cache.query = buildUpsertQueryPostgres(dialect, "\"pedido_item_adicionais\"", updateOnConflict, ret, update, conflict, insert, opts...)
 
-		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, insert)
+		cache.valueMapping, err = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, insert)
 		if err != nil {
 			return err
 		}
 		if len(ret) != 0 {
-			cache.retMapping, err = queries.BindMapping(pedidoItemAdicionaisType, pedidoItemAdicionaisMapping, ret)
+			cache.retMapping, err = queries.BindMapping(pedidoItemAdicionalType, pedidoItemAdicionalMapping, ret)
 			if err != nil {
 				return err
 			}
@@ -1199,26 +1199,26 @@ func (o *PedidoItemAdicionais) Upsert(ctx context.Context, exec boil.ContextExec
 	}
 
 	if !cached {
-		pedidoItemAdicionaisUpsertCacheMut.Lock()
-		pedidoItemAdicionaisUpsertCache[key] = cache
-		pedidoItemAdicionaisUpsertCacheMut.Unlock()
+		pedidoItemAdicionalUpsertCacheMut.Lock()
+		pedidoItemAdicionalUpsertCache[key] = cache
+		pedidoItemAdicionalUpsertCacheMut.Unlock()
 	}
 
 	return o.doAfterUpsertHooks(ctx, exec)
 }
 
-// Delete deletes a single PedidoItemAdicionais record with an executor.
+// Delete deletes a single PedidoItemAdicional record with an executor.
 // Delete will match against the primary key column to find the record to delete.
-func (o *PedidoItemAdicionais) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o *PedidoItemAdicional) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if o == nil {
-		return 0, errors.New("models_sql_boiler: no PedidoItemAdicionais provided for delete")
+		return 0, errors.New("models_sql_boiler: no PedidoItemAdicional provided for delete")
 	}
 
 	if err := o.doBeforeDeleteHooks(ctx, exec); err != nil {
 		return 0, err
 	}
 
-	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), pedidoItemAdicionaisPrimaryKeyMapping)
+	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), pedidoItemAdicionalPrimaryKeyMapping)
 	sql := "DELETE FROM \"pedido_item_adicionais\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
@@ -1244,9 +1244,9 @@ func (o *PedidoItemAdicionais) Delete(ctx context.Context, exec boil.ContextExec
 }
 
 // DeleteAll deletes all matching rows.
-func (q pedidoItemAdicionaisQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (q pedidoItemAdicionalQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if q.Query == nil {
-		return 0, errors.New("models_sql_boiler: no pedidoItemAdicionaisQuery provided for delete all")
+		return 0, errors.New("models_sql_boiler: no pedidoItemAdicionalQuery provided for delete all")
 	}
 
 	queries.SetDelete(q.Query)
@@ -1265,12 +1265,12 @@ func (q pedidoItemAdicionaisQuery) DeleteAll(ctx context.Context, exec boil.Cont
 }
 
 // DeleteAll deletes all rows in the slice, using an executor.
-func (o PedidoItemAdicionaisSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
+func (o PedidoItemAdicionalSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (int64, error) {
 	if len(o) == 0 {
 		return 0, nil
 	}
 
-	if len(pedidoItemAdicionaisBeforeDeleteHooks) != 0 {
+	if len(pedidoItemAdicionalBeforeDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doBeforeDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1280,12 +1280,12 @@ func (o PedidoItemAdicionaisSlice) DeleteAll(ctx context.Context, exec boil.Cont
 
 	var args []interface{}
 	for _, obj := range o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionaisPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionalPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := "DELETE FROM \"pedido_item_adicionais\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemAdicionaisPrimaryKeyColumns, len(o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemAdicionalPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1294,7 +1294,7 @@ func (o PedidoItemAdicionaisSlice) DeleteAll(ctx context.Context, exec boil.Cont
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "models_sql_boiler: unable to delete all from pedidoItemAdicionais slice")
+		return 0, errors.Wrap(err, "models_sql_boiler: unable to delete all from pedidoItemAdicional slice")
 	}
 
 	rowsAff, err := result.RowsAffected()
@@ -1302,7 +1302,7 @@ func (o PedidoItemAdicionaisSlice) DeleteAll(ctx context.Context, exec boil.Cont
 		return 0, errors.Wrap(err, "models_sql_boiler: failed to get rows affected by deleteall for pedido_item_adicionais")
 	}
 
-	if len(pedidoItemAdicionaisAfterDeleteHooks) != 0 {
+	if len(pedidoItemAdicionalAfterDeleteHooks) != 0 {
 		for _, obj := range o {
 			if err := obj.doAfterDeleteHooks(ctx, exec); err != nil {
 				return 0, err
@@ -1315,8 +1315,8 @@ func (o PedidoItemAdicionaisSlice) DeleteAll(ctx context.Context, exec boil.Cont
 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
-func (o *PedidoItemAdicionais) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindPedidoItemAdicionais(ctx, exec, o.ID)
+func (o *PedidoItemAdicional) Reload(ctx context.Context, exec boil.ContextExecutor) error {
+	ret, err := FindPedidoItemAdicional(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -1327,26 +1327,26 @@ func (o *PedidoItemAdicionais) Reload(ctx context.Context, exec boil.ContextExec
 
 // ReloadAll refetches every row with matching primary key column values
 // and overwrites the original object slice with the newly updated slice.
-func (o *PedidoItemAdicionaisSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
+func (o *PedidoItemAdicionalSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) error {
 	if o == nil || len(*o) == 0 {
 		return nil
 	}
 
-	slice := PedidoItemAdicionaisSlice{}
+	slice := PedidoItemAdicionalSlice{}
 	var args []interface{}
 	for _, obj := range *o {
-		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionaisPrimaryKeyMapping)
+		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), pedidoItemAdicionalPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
 	sql := "SELECT \"pedido_item_adicionais\".* FROM \"pedido_item_adicionais\" WHERE " +
-		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemAdicionaisPrimaryKeyColumns, len(*o))
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, pedidoItemAdicionalPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
 
 	err := q.Bind(ctx, exec, &slice)
 	if err != nil {
-		return errors.Wrap(err, "models_sql_boiler: unable to reload all in PedidoItemAdicionaisSlice")
+		return errors.Wrap(err, "models_sql_boiler: unable to reload all in PedidoItemAdicionalSlice")
 	}
 
 	*o = slice
@@ -1354,8 +1354,8 @@ func (o *PedidoItemAdicionaisSlice) ReloadAll(ctx context.Context, exec boil.Con
 	return nil
 }
 
-// PedidoItemAdicionaisExists checks if the PedidoItemAdicionais row exists.
-func PedidoItemAdicionaisExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
+// PedidoItemAdicionalExists checks if the PedidoItemAdicional row exists.
+func PedidoItemAdicionalExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from \"pedido_item_adicionais\" where \"id\"=$1 limit 1)"
 
@@ -1374,7 +1374,7 @@ func PedidoItemAdicionaisExists(ctx context.Context, exec boil.ContextExecutor, 
 	return exists, nil
 }
 
-// Exists checks if the PedidoItemAdicionais row exists.
-func (o *PedidoItemAdicionais) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return PedidoItemAdicionaisExists(ctx, exec, o.ID)
+// Exists checks if the PedidoItemAdicional row exists.
+func (o *PedidoItemAdicional) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
+	return PedidoItemAdicionalExists(ctx, exec, o.ID)
 }

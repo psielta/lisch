@@ -70,3 +70,29 @@ local   = "CategoriaAdicionais"
 [aliases.tables.categoria_adicional_opcoes.relationships.fk_categoria_adicional_opcoes_categoria_adicionais]
 foreign = "CategoriaAdicional"
 local   = "CategoriaAdicionalOpcoes"
+
+# ---------------------------
+# Pedido itens (corrige 'Iten')
+[aliases.tables.pedido_itens]
+up_singular   = "PedidoItem"
+up_plural     = "PedidoItens"
+down_singular = "pedidoItem"
+down_plural   = "pedidoItens"
+
+# ---------------------------
+# Pedido item adicionais (corrige plural 'Adicionais')
+[aliases.tables.pedido_item_adicionais]
+up_singular   = "PedidoItemAdicional"
+up_plural     = "PedidoItemAdicionais"
+down_singular = "pedidoItemAdicional"
+down_plural   = "pedidoItemAdicionais"
+
+# Nos relacionamentos em que essa tabela aparece:
+# (FKs criadas pelo próprio Postgres)
+[aliases.tables.pedido_item_adicionais.relationships.fk_pedido_item_adicionais_pedido_itens]
+foreign = "PedidoItem"   # novo singular
+local   = "PedidoItemAdicional"
+
+[aliases.tables.pedido_itens.relationships.fk_pedido_itens_pedidos]
+foreign = "Pedido"       # já existe; mantido
+local   = "PedidoItem"

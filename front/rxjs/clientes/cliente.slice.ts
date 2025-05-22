@@ -18,6 +18,8 @@ export type ClienteState = {
   filtroFantasia: string | null;
   filtroCpf: string | null;
   filtroCnpj: string | null;
+  filtroTelefone: string | null;
+  filtroCelular: string | null;
   page: number;
   limit: number;
   sort: string;
@@ -40,6 +42,8 @@ const initialState: ClienteState = {
   filtroFantasia: null,
   filtroCpf: null,
   filtroCnpj: null,
+  filtroTelefone: null,
+  filtroCelular: null,
   page: 1,
   limit: 10,
   sort: "nome",
@@ -66,6 +70,8 @@ export const clienteSlice = createSlice({
       state.filtroFantasia = null;
       state.filtroCpf = null;
       state.filtroCnpj = null;
+      state.filtroTelefone = null;
+      state.filtroCelular = null;
       state.page = 1;
       state.limit = 10;
       state.sort = "nome";
@@ -84,6 +90,8 @@ export const clienteSlice = createSlice({
       state.filtroFantasia = action.payload.filtroFantasia;
       state.filtroCpf = action.payload.filtroCpf;
       state.filtroCnpj = action.payload.filtroCnpj;
+      state.filtroTelefone = action.payload.filtroTelefone;
+      state.filtroCelular = action.payload.filtroCelular;
       state.page = action.payload.page;
       state.limit = action.payload.limit;
       state.sort = action.payload.sort;
@@ -100,6 +108,12 @@ export const clienteSlice = createSlice({
     },
     setFiltroCnpj: (state, action) => {
       state.filtroCnpj = action.payload;
+    },
+    setFiltroTelefone: (state, action) => {
+      state.filtroTelefone = action.payload;
+    },
+    setFiltroCelular: (state, action) => {
+      state.filtroCelular = action.payload;
     },
     setPage: (state, action) => {
       state.page = action.payload;
@@ -219,6 +233,8 @@ export const {
   setFiltroFantasia,
   setFiltroCpf,
   setFiltroCnpj,
+  setFiltroTelefone,
+  setFiltroCelular,
   setPage,
   setLimit,
   setSort,

@@ -34,7 +34,9 @@ export class ClienteService {
     cnpj?: string,
     cidade?: string,
     uf?: string,
-    tipo_pessoa?: "F" | "J"
+    tipo_pessoa?: "F" | "J",
+    telefone?: string,
+    celular?: string
   ): Promise<PaginatedResponse<ClienteResponse>> {
     try {
       const response: AxiosResponse<PaginatedResponse<ClienteResponse>> =
@@ -52,6 +54,8 @@ export class ClienteService {
             cidade,
             uf,
             tipo_pessoa,
+            telefone,
+            celular,
           },
         });
       return response.data;

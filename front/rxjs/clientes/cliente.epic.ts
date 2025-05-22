@@ -26,6 +26,8 @@ const listClientes: Epic<any, any, RootState> = (action$, state) =>
       let limit = currentState.cliente.limit;
       let sort = currentState.cliente.sort;
       let order = currentState.cliente.order;
+      let filtroTelefone = currentState.cliente.filtroTelefone;
+      let filtroCelular = currentState.cliente.filtroCelular;
       let service = new ClienteService(api);
       return from(
         service.listClientes(
@@ -37,7 +39,12 @@ const listClientes: Epic<any, any, RootState> = (action$, state) =>
           filtroNome ?? undefined,
           filtroFantasia ?? undefined,
           filtroCpf ?? undefined,
-          filtroCnpj ?? undefined
+          filtroCnpj ?? undefined,
+          undefined,
+          undefined,
+          undefined,
+          filtroTelefone ?? undefined,
+          filtroCelular ?? undefined
         )
       ).pipe(
         map((data) => listClienteAction.success(data)),

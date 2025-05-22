@@ -16,6 +16,8 @@ import {
   setFiltroFantasia,
   setFiltroCpf,
   setFiltroCnpj,
+  setFiltroTelefone,
+  setFiltroCelular,
   setPage,
   setLimit,
   setSort,
@@ -78,6 +80,8 @@ interface FilterForm {
   fantasia: string;
   cpf: string;
   cnpj: string;
+  telefone: string;
+  celular: string;
 }
 
 function TableCliente({
@@ -108,6 +112,8 @@ function TableCliente({
       fantasia: "",
       cpf: "",
       cnpj: "",
+      telefone: "",
+      celular: "",
     },
   });
 
@@ -116,12 +122,16 @@ function TableCliente({
   const fantasiaValue = watch("fantasia");
   const cpfValue = watch("cpf");
   const cnpjValue = watch("cnpj");
+  const telefoneValue = watch("telefone");
+  const celularValue = watch("celular");
 
   // Debounce filters to reduce dispatch frequency
   const [debouncedNome] = useDebounce(nomeValue, 500);
   const [debouncedFantasia] = useDebounce(fantasiaValue, 500);
   const [debouncedCpf] = useDebounce(cpfValue, 500);
   const [debouncedCnpj] = useDebounce(cnpjValue, 500);
+  const [debouncedTelefone] = useDebounce(telefoneValue, 500);
+  const [debouncedCelular] = useDebounce(celularValue, 500);
 
   // Inicialização do estado com os dados do servidor
   useEffect(() => {
@@ -136,6 +146,8 @@ function TableCliente({
         filtroFantasia: null,
         filtroCpf: null,
         filtroCnpj: null,
+        filtroTelefone: null,
+        filtroCelular: null,
         page: data.current_page,
         limit: data.page_size,
         sort: "nome",
@@ -158,8 +170,18 @@ function TableCliente({
     dispatch(setFiltroFantasia(debouncedFantasia || null));
     dispatch(setFiltroCpf(debouncedCpf || null));
     dispatch(setFiltroCnpj(debouncedCnpj || null));
+    dispatch(setFiltroTelefone(debouncedTelefone || null));
+    dispatch(setFiltroCelular(debouncedCelular || null));
     dispatch(listClienteAction.request());
-  }, [debouncedNome, debouncedFantasia, debouncedCpf, debouncedCnpj, dispatch]);
+  }, [
+    debouncedNome,
+    debouncedFantasia,
+    debouncedCpf,
+    debouncedCnpj,
+    debouncedTelefone,
+    debouncedCelular,
+    dispatch,
+  ]);
 
   // Limpar filtros
   const clearFilters = () => {
@@ -168,11 +190,15 @@ function TableCliente({
       fantasia: "",
       cpf: "",
       cnpj: "",
+      telefone: "",
+      celular: "",
     });
     dispatch(setFiltroNome(null));
     dispatch(setFiltroFantasia(null));
     dispatch(setFiltroCpf(null));
     dispatch(setFiltroCnpj(null));
+    dispatch(setFiltroTelefone(null));
+    dispatch(setFiltroCelular(null));
     dispatch(setPage(1));
     dispatch(setLimit(10));
     dispatch(listClienteAction.request());
@@ -245,6 +271,10 @@ function TableCliente({
     }),
     columnHelper.accessor("telefone", {
       header: "Telefone",
+      cell: (info) => info.getValue() || "-",
+    }),
+    columnHelper.accessor("celular", {
+      header: "Celular",
       cell: (info) => info.getValue() || "-",
     }),
     columnHelper.accessor("cidade", {
@@ -392,7 +422,7 @@ function TableCliente({
       </div>
 
       {/* Filtros de busca */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <MagnifyingGlassIcon
@@ -426,11 +456,29 @@ function TableCliente({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div>
           <input
             type="text"
             {...register("cnpj")}
             placeholder="Buscar por CNPJ..."
+            className="block w-full rounded-md border border-border bg-background py-2 pl-3 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <input
+            type="text"
+            {...register("telefone")}
+            placeholder="Buscar por telefone..."
+            className="block w-full rounded-md border border-border bg-background py-2 pl-3 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            {...register("celular")}
+            placeholder="Buscar por celular..."
             className="flex-1 rounded-md border border-border bg-background py-2 pl-3 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
           <Button outline onClick={clearFilters} className="whitespace-nowrap">

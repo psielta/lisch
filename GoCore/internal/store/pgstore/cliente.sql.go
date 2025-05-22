@@ -43,6 +43,8 @@ WHERE c.tenant_id = $1
   AND ($7 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($7)) || '%')
   AND ($8 = '' OR c.uf = $8)
   AND ($9 = '' OR c.tipo_pessoa = $9)
+  AND ($10 = '' OR c.telefone LIKE '%' || $10 || '%')
+  AND ($11 = '' OR c.celular LIKE '%' || $11 || '%')
 `
 
 type CountClientesPaginatedParams struct {
@@ -55,6 +57,8 @@ type CountClientesPaginatedParams struct {
 	Column7  interface{} `json:"column_7"`
 	Column8  interface{} `json:"column_8"`
 	Column9  interface{} `json:"column_9"`
+	Column10 interface{} `json:"column_10"`
+	Column11 interface{} `json:"column_11"`
 }
 
 func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesPaginatedParams) (int64, error) {
@@ -68,6 +72,8 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 		arg.Column7,
 		arg.Column8,
 		arg.Column9,
+		arg.Column10,
+		arg.Column11,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -403,6 +409,8 @@ WHERE c.tenant_id = $1
   AND ($10 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($10)) || '%')
   AND ($11 = '' OR c.uf = $11)
   AND ($12 = '' OR c.tipo_pessoa = $12)
+  AND ($13 = '' OR c.telefone LIKE '%' || $13 || '%')
+  AND ($14 = '' OR c.celular LIKE '%' || $14 || '%')
 ORDER BY 
   CASE WHEN $3 = 'nome' AND $4 = 'asc' THEN c.nome_razao_social END ASC,
   CASE WHEN $3 = 'nome' AND $4 = 'desc' THEN c.nome_razao_social END DESC,
@@ -415,7 +423,7 @@ ORDER BY
   CASE WHEN $3 = 'ultima_atualizacao' AND $4 = 'asc' THEN c.updated_at END ASC,
   CASE WHEN $3 = 'ultima_atualizacao' AND $4 = 'desc' THEN c.updated_at END DESC,
   CASE WHEN $3 = '' THEN c.nome_razao_social END ASC
-LIMIT $2 OFFSET $13
+LIMIT $2 OFFSET $15
 `
 
 type ListClientesPaginatedParams struct {
@@ -431,6 +439,8 @@ type ListClientesPaginatedParams struct {
 	Column10 interface{} `json:"column_10"`
 	Column11 interface{} `json:"column_11"`
 	Column12 interface{} `json:"column_12"`
+	Column13 interface{} `json:"column_13"`
+	Column14 interface{} `json:"column_14"`
 	Offset   int32       `json:"offset"`
 }
 
@@ -448,6 +458,8 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 		arg.Column10,
 		arg.Column11,
 		arg.Column12,
+		arg.Column13,
+		arg.Column14,
 		arg.Offset,
 	)
 	if err != nil {

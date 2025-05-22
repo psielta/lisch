@@ -309,6 +309,14 @@ func (api *Api) handleListClientes(w http.ResponseWriter, r *http.Request) {
 	if cnpj != "" {
 		cnpj = regexp.MustCompile(`[^\d]`).ReplaceAllString(cnpj, "")
 	}
+	telefone := query.Get("telefone")
+	if telefone != "" {
+		telefone = regexp.MustCompile(`[^\d]`).ReplaceAllString(telefone, "")
+	}
+	celular := query.Get("celular")
+	if celular != "" {
+		celular = regexp.MustCompile(`[^\d]`).ReplaceAllString(celular, "")
+	}
 	cidade := query.Get("cidade")
 	uf := query.Get("uf")
 	tipoPessoa := query.Get("tipo_pessoa")
@@ -328,6 +336,8 @@ func (api *Api) handleListClientes(w http.ResponseWriter, r *http.Request) {
 		cidade,
 		uf,
 		tipoPessoa,
+		telefone,
+		celular,
 	)
 
 	if err != nil {

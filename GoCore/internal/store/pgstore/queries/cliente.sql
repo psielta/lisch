@@ -116,6 +116,8 @@ WHERE c.tenant_id = $1
   AND ($10 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($10)) || '%')
   AND ($11 = '' OR c.uf = $11)
   AND ($12 = '' OR c.tipo_pessoa = $12)
+  AND ($13 = '' OR c.telefone LIKE '%' || $13 || '%')
+  AND ($14 = '' OR c.celular LIKE '%' || $14 || '%')
 ORDER BY 
   CASE WHEN $3 = 'nome' AND $4 = 'asc' THEN c.nome_razao_social END ASC,
   CASE WHEN $3 = 'nome' AND $4 = 'desc' THEN c.nome_razao_social END DESC,
@@ -128,7 +130,7 @@ ORDER BY
   CASE WHEN $3 = 'ultima_atualizacao' AND $4 = 'asc' THEN c.updated_at END ASC,
   CASE WHEN $3 = 'ultima_atualizacao' AND $4 = 'desc' THEN c.updated_at END DESC,
   CASE WHEN $3 = '' THEN c.nome_razao_social END ASC
-LIMIT $2 OFFSET $13;
+LIMIT $2 OFFSET $15;
 
 -- name: CountClientesPaginated :one
 SELECT COUNT(*) 
@@ -147,4 +149,6 @@ WHERE c.tenant_id = $1
   AND ($6 = '' OR c.cnpj = $6)
   AND ($7 = '' OR LOWER(unaccent(c.cidade)) LIKE '%' || LOWER(unaccent($7)) || '%')
   AND ($8 = '' OR c.uf = $8)
-  AND ($9 = '' OR c.tipo_pessoa = $9);
+  AND ($9 = '' OR c.tipo_pessoa = $9)
+  AND ($10 = '' OR c.telefone LIKE '%' || $10 || '%')
+  AND ($11 = '' OR c.celular LIKE '%' || $11 || '%');

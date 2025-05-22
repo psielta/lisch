@@ -122,7 +122,9 @@ func (cs *ClienteService) ListClientesPaginated(
 	cnpj,
 	cidade,
 	uf,
-	tipoPessoa string,
+	tipoPessoa,
+	telefone,
+	celular string,
 ) (dto.PaginatedResponse[dto.ClienteResponse], error) {
 
 	// Calcula o offset baseado na página atual
@@ -139,6 +141,8 @@ func (cs *ClienteService) ListClientesPaginated(
 		Column7:  cidade,
 		Column8:  uf,
 		Column9:  tipoPessoa,
+		Column10: telefone,
+		Column11: celular,
 	}
 
 	// Obtém o total de registros
@@ -161,6 +165,8 @@ func (cs *ClienteService) ListClientesPaginated(
 		Column10: cidade,
 		Column11: uf,
 		Column12: tipoPessoa,
+		Column13: telefone,
+		Column14: celular,
 		Offset:   int32(offset),
 	}
 

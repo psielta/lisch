@@ -422,7 +422,8 @@ function TableCliente({
       </div>
 
       {/* Filtros de busca */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+        {/* Primeira linha em monitores menores */}
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <MagnifyingGlassIcon
@@ -456,7 +457,8 @@ function TableCliente({
           />
         </div>
 
-        <div>
+        {/* Segunda linha em monitores menores */}
+        <div className="lg:col-start-1 2xl:col-start-auto">
           <input
             type="text"
             {...register("cnpj")}

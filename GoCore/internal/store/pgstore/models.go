@@ -195,6 +195,125 @@ type Culinaria struct {
 	MeioMeio    int16  `json:"meio_meio"`
 }
 
+type Pedido struct {
+	ID                 uuid.UUID          `json:"id"`
+	SeqID              int64              `json:"seq_id"`
+	TenantID           uuid.UUID          `json:"tenant_id"`
+	IDCliente          uuid.UUID          `json:"id_cliente"`
+	CodigoPedido       string             `json:"codigo_pedido"`
+	DataPedido         time.Time          `json:"data_pedido"`
+	Gmt                int16              `json:"gmt"`
+	PedidoPronto       int16              `json:"pedido_pronto"`
+	DataPedidoPronto   pgtype.Timestamptz `json:"data_pedido_pronto"`
+	Cupom              pgtype.Text        `json:"cupom"`
+	TipoEntrega        string             `json:"tipo_entrega"`
+	Prazo              pgtype.Int4        `json:"prazo"`
+	PrazoMin           pgtype.Int4        `json:"prazo_min"`
+	PrazoMax           pgtype.Int4        `json:"prazo_max"`
+	CategoriaPagamento pgtype.Text        `json:"categoria_pagamento"`
+	FormaPagamento     pgtype.Text        `json:"forma_pagamento"`
+	ValorTotal         pgtype.Numeric     `json:"valor_total"`
+	Observacao         pgtype.Text        `json:"observacao"`
+	TaxaEntrega        pgtype.Numeric     `json:"taxa_entrega"`
+	NomeTaxaEntrega    pgtype.Text        `json:"nome_taxa_entrega"`
+	IDStatus           int16              `json:"id_status"`
+	Lat                pgtype.Numeric     `json:"lat"`
+	Lng                pgtype.Numeric     `json:"lng"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoItemAdicionai struct {
+	ID               uuid.UUID          `json:"id"`
+	SeqID            int64              `json:"seq_id"`
+	IDPedidoItem     uuid.UUID          `json:"id_pedido_item"`
+	IDAdicionalOpcao uuid.UUID          `json:"id_adicional_opcao"`
+	Valor            pgtype.Numeric     `json:"valor"`
+	Quantidade       int32              `json:"quantidade"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoItemAdicionaisView struct {
+	ID               uuid.UUID          `json:"id"`
+	SeqID            int64              `json:"seq_id"`
+	IDPedidoItem     uuid.UUID          `json:"id_pedido_item"`
+	IDAdicionalOpcao uuid.UUID          `json:"id_adicional_opcao"`
+	Valor            pgtype.Numeric     `json:"valor"`
+	Quantidade       int32              `json:"quantidade"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoIten struct {
+	ID               uuid.UUID          `json:"id"`
+	SeqID            int64              `json:"seq_id"`
+	IDPedido         uuid.UUID          `json:"id_pedido"`
+	IDProduto        uuid.UUID          `json:"id_produto"`
+	IDProduto2       pgtype.UUID        `json:"id_produto_2"`
+	IDCategoria      uuid.UUID          `json:"id_categoria"`
+	IDCategoriaOpcao pgtype.UUID        `json:"id_categoria_opcao"`
+	Observacao       pgtype.Text        `json:"observacao"`
+	ValorUnitario    pgtype.Numeric     `json:"valor_unitario"`
+	Quantidade       int32              `json:"quantidade"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoItensView struct {
+	ID               uuid.UUID          `json:"id"`
+	SeqID            int64              `json:"seq_id"`
+	IDPedido         uuid.UUID          `json:"id_pedido"`
+	IDProduto        uuid.UUID          `json:"id_produto"`
+	IDProduto2       pgtype.UUID        `json:"id_produto_2"`
+	IDCategoria      uuid.UUID          `json:"id_categoria"`
+	IDCategoriaOpcao pgtype.UUID        `json:"id_categoria_opcao"`
+	Observacao       pgtype.Text        `json:"observacao"`
+	ValorUnitario    pgtype.Numeric     `json:"valor_unitario"`
+	Quantidade       int32              `json:"quantidade"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoStatus struct {
+	ID        int16  `json:"id"`
+	Descricao string `json:"descricao"`
+}
+
+type PedidosView struct {
+	ID                 uuid.UUID          `json:"id"`
+	SeqID              int64              `json:"seq_id"`
+	TenantID           uuid.UUID          `json:"tenant_id"`
+	IDCliente          uuid.UUID          `json:"id_cliente"`
+	CodigoPedido       string             `json:"codigo_pedido"`
+	DataPedido         time.Time          `json:"data_pedido"`
+	Gmt                int16              `json:"gmt"`
+	PedidoPronto       int16              `json:"pedido_pronto"`
+	DataPedidoPronto   pgtype.Timestamptz `json:"data_pedido_pronto"`
+	Cupom              pgtype.Text        `json:"cupom"`
+	TipoEntrega        string             `json:"tipo_entrega"`
+	Prazo              pgtype.Int4        `json:"prazo"`
+	PrazoMin           pgtype.Int4        `json:"prazo_min"`
+	PrazoMax           pgtype.Int4        `json:"prazo_max"`
+	CategoriaPagamento pgtype.Text        `json:"categoria_pagamento"`
+	FormaPagamento     pgtype.Text        `json:"forma_pagamento"`
+	ValorTotal         pgtype.Numeric     `json:"valor_total"`
+	Observacao         pgtype.Text        `json:"observacao"`
+	TaxaEntrega        pgtype.Numeric     `json:"taxa_entrega"`
+	NomeTaxaEntrega    pgtype.Text        `json:"nome_taxa_entrega"`
+	IDStatus           int16              `json:"id_status"`
+	Lat                pgtype.Numeric     `json:"lat"`
+	Lng                pgtype.Numeric     `json:"lng"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type Product struct {
 	ID          uuid.UUID `json:"id"`
 	SellerID    uuid.UUID `json:"seller_id"`

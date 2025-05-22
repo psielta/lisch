@@ -108,15 +108,18 @@ var CategoriaOpcaoWhere = struct {
 // CategoriaOpcaoRels is where relationship names are stored.
 var CategoriaOpcaoRels = struct {
 	Categoria                     string
+	IDCategoriaOpcaoPedidoItens   string
 	IDCategoriaOpcaoProdutoPrecos string
 }{
 	Categoria:                     "Categoria",
+	IDCategoriaOpcaoPedidoItens:   "IDCategoriaOpcaoPedidoItens",
 	IDCategoriaOpcaoProdutoPrecos: "IDCategoriaOpcaoProdutoPrecos",
 }
 
 // categoriaOpcaoR is where relationships are stored.
 type categoriaOpcaoR struct {
 	Categoria                     *Categoria        `boil:"Categoria" json:"Categoria" toml:"Categoria" yaml:"Categoria"`
+	IDCategoriaOpcaoPedidoItens   PedidoItenSlice   `boil:"IDCategoriaOpcaoPedidoItens" json:"IDCategoriaOpcaoPedidoItens" toml:"IDCategoriaOpcaoPedidoItens" yaml:"IDCategoriaOpcaoPedidoItens"`
 	IDCategoriaOpcaoProdutoPrecos ProdutoPrecoSlice `boil:"IDCategoriaOpcaoProdutoPrecos" json:"IDCategoriaOpcaoProdutoPrecos" toml:"IDCategoriaOpcaoProdutoPrecos" yaml:"IDCategoriaOpcaoProdutoPrecos"`
 }
 
@@ -130,6 +133,13 @@ func (r *categoriaOpcaoR) GetCategoria() *Categoria {
 		return nil
 	}
 	return r.Categoria
+}
+
+func (r *categoriaOpcaoR) GetIDCategoriaOpcaoPedidoItens() PedidoItenSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDCategoriaOpcaoPedidoItens
 }
 
 func (r *categoriaOpcaoR) GetIDCategoriaOpcaoProdutoPrecos() ProdutoPrecoSlice {
@@ -466,6 +476,20 @@ func (o *CategoriaOpcao) Categoria(mods ...qm.QueryMod) categoriaQuery {
 	return Categorias(queryMods...)
 }
 
+// IDCategoriaOpcaoPedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_categoria_opcao column.
+func (o *CategoriaOpcao) IDCategoriaOpcaoPedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"pedido_itens\".\"id_categoria_opcao\"=?", o.ID),
+	)
+
+	return PedidoItens(queryMods...)
+}
+
 // IDCategoriaOpcaoProdutoPrecos retrieves all the produto_preco's ProdutoPrecos with an executor via id_categoria_opcao column.
 func (o *CategoriaOpcao) IDCategoriaOpcaoProdutoPrecos(mods ...qm.QueryMod) produtoPrecoQuery {
 	var queryMods []qm.QueryMod
@@ -592,6 +616,119 @@ func (categoriaOpcaoL) LoadCategoria(ctx context.Context, e boil.ContextExecutor
 					foreign.R = &categoriaR{}
 				}
 				foreign.R.CategoriaOpcoes = append(foreign.R.CategoriaOpcoes, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadIDCategoriaOpcaoPedidoItens allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (categoriaOpcaoL) LoadIDCategoriaOpcaoPedidoItens(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCategoriaOpcao interface{}, mods queries.Applicator) error {
+	var slice []*CategoriaOpcao
+	var object *CategoriaOpcao
+
+	if singular {
+		var ok bool
+		object, ok = maybeCategoriaOpcao.(*CategoriaOpcao)
+		if !ok {
+			object = new(CategoriaOpcao)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCategoriaOpcao)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCategoriaOpcao))
+			}
+		}
+	} else {
+		s, ok := maybeCategoriaOpcao.(*[]*CategoriaOpcao)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCategoriaOpcao)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCategoriaOpcao))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &categoriaOpcaoR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &categoriaOpcaoR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`pedido_itens`),
+		qm.WhereIn(`pedido_itens.id_categoria_opcao in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load pedido_itens")
+	}
+
+	var resultSlice []*PedidoIten
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice pedido_itens")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on pedido_itens")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
+	}
+
+	if len(pedidoItenAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDCategoriaOpcaoPedidoItens = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &pedidoItenR{}
+			}
+			foreign.R.IDCategoriaOpcaoCategoriaOpco = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.IDCategoriaOpcao) {
+				local.R.IDCategoriaOpcaoPedidoItens = append(local.R.IDCategoriaOpcaoPedidoItens, foreign)
+				if foreign.R == nil {
+					foreign.R = &pedidoItenR{}
+				}
+				foreign.R.IDCategoriaOpcaoCategoriaOpco = local
 				break
 			}
 		}
@@ -755,6 +892,133 @@ func (o *CategoriaOpcao) SetCategoria(ctx context.Context, exec boil.ContextExec
 		}
 	} else {
 		related.R.CategoriaOpcoes = append(related.R.CategoriaOpcoes, o)
+	}
+
+	return nil
+}
+
+// AddIDCategoriaOpcaoPedidoItens adds the given related objects to the existing relationships
+// of the categoria_opco, optionally inserting them as new records.
+// Appends related to o.R.IDCategoriaOpcaoPedidoItens.
+// Sets related.R.IDCategoriaOpcaoCategoriaOpco appropriately.
+func (o *CategoriaOpcao) AddIDCategoriaOpcaoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.IDCategoriaOpcao, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"pedido_itens\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_categoria_opcao"}),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.IDCategoriaOpcao, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &categoriaOpcaoR{
+			IDCategoriaOpcaoPedidoItens: related,
+		}
+	} else {
+		o.R.IDCategoriaOpcaoPedidoItens = append(o.R.IDCategoriaOpcaoPedidoItens, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &pedidoItenR{
+				IDCategoriaOpcaoCategoriaOpco: o,
+			}
+		} else {
+			rel.R.IDCategoriaOpcaoCategoriaOpco = o
+		}
+	}
+	return nil
+}
+
+// SetIDCategoriaOpcaoPedidoItens removes all previously related items of the
+// categoria_opco replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.IDCategoriaOpcaoCategoriaOpco's IDCategoriaOpcaoPedidoItens accordingly.
+// Replaces o.R.IDCategoriaOpcaoPedidoItens with related.
+// Sets related.R.IDCategoriaOpcaoCategoriaOpco's IDCategoriaOpcaoPedidoItens accordingly.
+func (o *CategoriaOpcao) SetIDCategoriaOpcaoPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+	query := "update \"pedido_itens\" set \"id_categoria_opcao\" = null where \"id_categoria_opcao\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.IDCategoriaOpcaoPedidoItens {
+			queries.SetScanner(&rel.IDCategoriaOpcao, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.IDCategoriaOpcaoCategoriaOpco = nil
+		}
+		o.R.IDCategoriaOpcaoPedidoItens = nil
+	}
+
+	return o.AddIDCategoriaOpcaoPedidoItens(ctx, exec, insert, related...)
+}
+
+// RemoveIDCategoriaOpcaoPedidoItens relationships from objects passed in.
+// Removes related items from R.IDCategoriaOpcaoPedidoItens (uses pointer comparison, removal does not keep order)
+// Sets related.R.IDCategoriaOpcaoCategoriaOpco.
+func (o *CategoriaOpcao) RemoveIDCategoriaOpcaoPedidoItens(ctx context.Context, exec boil.ContextExecutor, related ...*PedidoIten) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.IDCategoriaOpcao, nil)
+		if rel.R != nil {
+			rel.R.IDCategoriaOpcaoCategoriaOpco = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("id_categoria_opcao")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.IDCategoriaOpcaoPedidoItens {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.IDCategoriaOpcaoPedidoItens)
+			if ln > 1 && i < ln-1 {
+				o.R.IDCategoriaOpcaoPedidoItens[i] = o.R.IDCategoriaOpcaoPedidoItens[ln-1]
+			}
+			o.R.IDCategoriaOpcaoPedidoItens = o.R.IDCategoriaOpcaoPedidoItens[:ln-1]
+			break
+		}
 	}
 
 	return nil

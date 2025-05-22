@@ -231,12 +231,14 @@ var CategoriaRels = struct {
 	Tenant                          string
 	IDCategoriumCategoriaAdicionais string
 	CategoriaOpcoes                 string
+	IDCategoriumPedidoItens         string
 	IDCategoriumProdutos            string
 }{
 	Culinaria:                       "Culinaria",
 	Tenant:                          "Tenant",
 	IDCategoriumCategoriaAdicionais: "IDCategoriumCategoriaAdicionais",
 	CategoriaOpcoes:                 "CategoriaOpcoes",
+	IDCategoriumPedidoItens:         "IDCategoriumPedidoItens",
 	IDCategoriumProdutos:            "IDCategoriumProdutos",
 }
 
@@ -246,6 +248,7 @@ type categoriaR struct {
 	Tenant                          *Tenant                 `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
 	IDCategoriumCategoriaAdicionais CategoriaAdicionalSlice `boil:"IDCategoriumCategoriaAdicionais" json:"IDCategoriumCategoriaAdicionais" toml:"IDCategoriumCategoriaAdicionais" yaml:"IDCategoriumCategoriaAdicionais"`
 	CategoriaOpcoes                 CategoriaOpcaoSlice     `boil:"CategoriaOpcoes" json:"CategoriaOpcoes" toml:"CategoriaOpcoes" yaml:"CategoriaOpcoes"`
+	IDCategoriumPedidoItens         PedidoItenSlice         `boil:"IDCategoriumPedidoItens" json:"IDCategoriumPedidoItens" toml:"IDCategoriumPedidoItens" yaml:"IDCategoriumPedidoItens"`
 	IDCategoriumProdutos            ProdutoSlice            `boil:"IDCategoriumProdutos" json:"IDCategoriumProdutos" toml:"IDCategoriumProdutos" yaml:"IDCategoriumProdutos"`
 }
 
@@ -280,6 +283,13 @@ func (r *categoriaR) GetCategoriaOpcoes() CategoriaOpcaoSlice {
 		return nil
 	}
 	return r.CategoriaOpcoes
+}
+
+func (r *categoriaR) GetIDCategoriumPedidoItens() PedidoItenSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDCategoriumPedidoItens
 }
 
 func (r *categoriaR) GetIDCategoriumProdutos() ProdutoSlice {
@@ -653,6 +663,20 @@ func (o *Categoria) CategoriaOpcoes(mods ...qm.QueryMod) categoriaOpcaoQuery {
 	)
 
 	return CategoriaOpcoes(queryMods...)
+}
+
+// IDCategoriumPedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_categoria column.
+func (o *Categoria) IDCategoriumPedidoItens(mods ...qm.QueryMod) pedidoItenQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"pedido_itens\".\"id_categoria\"=?", o.ID),
+	)
+
+	return PedidoItens(queryMods...)
 }
 
 // IDCategoriumProdutos retrieves all the produto's Produtos with an executor via id_categoria column.
@@ -1135,6 +1159,119 @@ func (categoriaL) LoadCategoriaOpcoes(ctx context.Context, e boil.ContextExecuto
 	return nil
 }
 
+// LoadIDCategoriumPedidoItens allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (categoriaL) LoadIDCategoriumPedidoItens(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCategoria interface{}, mods queries.Applicator) error {
+	var slice []*Categoria
+	var object *Categoria
+
+	if singular {
+		var ok bool
+		object, ok = maybeCategoria.(*Categoria)
+		if !ok {
+			object = new(Categoria)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCategoria)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCategoria))
+			}
+		}
+	} else {
+		s, ok := maybeCategoria.(*[]*Categoria)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCategoria)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCategoria))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &categoriaR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &categoriaR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`pedido_itens`),
+		qm.WhereIn(`pedido_itens.id_categoria in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load pedido_itens")
+	}
+
+	var resultSlice []*PedidoIten
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice pedido_itens")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on pedido_itens")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_itens")
+	}
+
+	if len(pedidoItenAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDCategoriumPedidoItens = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &pedidoItenR{}
+			}
+			foreign.R.IDCategorium = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.IDCategoria {
+				local.R.IDCategoriumPedidoItens = append(local.R.IDCategoriumPedidoItens, foreign)
+				if foreign.R == nil {
+					foreign.R = &pedidoItenR{}
+				}
+				foreign.R.IDCategorium = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadIDCategoriumProdutos allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (categoriaL) LoadIDCategoriumProdutos(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCategoria interface{}, mods queries.Applicator) error {
@@ -1443,6 +1580,59 @@ func (o *Categoria) AddCategoriaOpcoes(ctx context.Context, exec boil.ContextExe
 			}
 		} else {
 			rel.R.Categoria = o
+		}
+	}
+	return nil
+}
+
+// AddIDCategoriumPedidoItens adds the given related objects to the existing relationships
+// of the categorias, optionally inserting them as new records.
+// Appends related to o.R.IDCategoriumPedidoItens.
+// Sets related.R.IDCategorium appropriately.
+func (o *Categoria) AddIDCategoriumPedidoItens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoIten) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.IDCategoria = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"pedido_itens\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_categoria"}),
+				strmangle.WhereClause("\"", "\"", 2, pedidoItenPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.IDCategoria = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &categoriaR{
+			IDCategoriumPedidoItens: related,
+		}
+	} else {
+		o.R.IDCategoriumPedidoItens = append(o.R.IDCategoriumPedidoItens, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &pedidoItenR{
+				IDCategorium: o,
+			}
+		} else {
+			rel.R.IDCategorium = o
 		}
 	}
 	return nil

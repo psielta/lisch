@@ -206,14 +206,17 @@ var ClienteWhere = struct {
 
 // ClienteRels is where relationship names are stored.
 var ClienteRels = struct {
-	Tenant string
+	Tenant           string
+	IDClientePedidos string
 }{
-	Tenant: "Tenant",
+	Tenant:           "Tenant",
+	IDClientePedidos: "IDClientePedidos",
 }
 
 // clienteR is where relationships are stored.
 type clienteR struct {
-	Tenant *Tenant `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
+	Tenant           *Tenant     `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
+	IDClientePedidos PedidoSlice `boil:"IDClientePedidos" json:"IDClientePedidos" toml:"IDClientePedidos" yaml:"IDClientePedidos"`
 }
 
 // NewStruct creates a new relationship struct
@@ -226,6 +229,13 @@ func (r *clienteR) GetTenant() *Tenant {
 		return nil
 	}
 	return r.Tenant
+}
+
+func (r *clienteR) GetIDClientePedidos() PedidoSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDClientePedidos
 }
 
 // clienteL is where Load methods for each relationship are stored.
@@ -555,6 +565,20 @@ func (o *Cliente) Tenant(mods ...qm.QueryMod) tenantQuery {
 	return Tenants(queryMods...)
 }
 
+// IDClientePedidos retrieves all the pedido's Pedidos with an executor via id_cliente column.
+func (o *Cliente) IDClientePedidos(mods ...qm.QueryMod) pedidoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"pedidos\".\"id_cliente\"=?", o.ID),
+	)
+
+	return Pedidos(queryMods...)
+}
+
 // LoadTenant allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (clienteL) LoadTenant(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCliente interface{}, mods queries.Applicator) error {
@@ -675,6 +699,119 @@ func (clienteL) LoadTenant(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
+// LoadIDClientePedidos allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (clienteL) LoadIDClientePedidos(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCliente interface{}, mods queries.Applicator) error {
+	var slice []*Cliente
+	var object *Cliente
+
+	if singular {
+		var ok bool
+		object, ok = maybeCliente.(*Cliente)
+		if !ok {
+			object = new(Cliente)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCliente)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCliente))
+			}
+		}
+	} else {
+		s, ok := maybeCliente.(*[]*Cliente)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCliente)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCliente))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &clienteR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &clienteR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`pedidos`),
+		qm.WhereIn(`pedidos.id_cliente in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load pedidos")
+	}
+
+	var resultSlice []*Pedido
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice pedidos")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on pedidos")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedidos")
+	}
+
+	if len(pedidoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDClientePedidos = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &pedidoR{}
+			}
+			foreign.R.IDClienteCliente = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.IDCliente {
+				local.R.IDClientePedidos = append(local.R.IDClientePedidos, foreign)
+				if foreign.R == nil {
+					foreign.R = &pedidoR{}
+				}
+				foreign.R.IDClienteCliente = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetTenant of the cliente to the related item.
 // Sets o.R.Tenant to related.
 // Adds o to related.R.Clientes.
@@ -719,6 +856,59 @@ func (o *Cliente) SetTenant(ctx context.Context, exec boil.ContextExecutor, inse
 		related.R.Clientes = append(related.R.Clientes, o)
 	}
 
+	return nil
+}
+
+// AddIDClientePedidos adds the given related objects to the existing relationships
+// of the cliente, optionally inserting them as new records.
+// Appends related to o.R.IDClientePedidos.
+// Sets related.R.IDClienteCliente appropriately.
+func (o *Cliente) AddIDClientePedidos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Pedido) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.IDCliente = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"pedidos\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_cliente"}),
+				strmangle.WhereClause("\"", "\"", 2, pedidoPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.IDCliente = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &clienteR{
+			IDClientePedidos: related,
+		}
+	} else {
+		o.R.IDClientePedidos = append(o.R.IDClientePedidos, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &pedidoR{
+				IDClienteCliente: o,
+			}
+		} else {
+			rel.R.IDClienteCliente = o
+		}
+	}
 	return nil
 }
 

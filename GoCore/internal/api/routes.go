@@ -26,7 +26,6 @@ func (api *Api) BindRoutes() {
 
 	api.Router.Route("/api", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			//r.Get("/csrftoken", api.HandleGetCSRFToken)
 			r.Route("/users", func(r chi.Router) {
 				r.Post("/signup", api.handleSignupUser)
 				r.Post("/login", api.handleLoginUser)
@@ -121,24 +120,12 @@ func (api *Api) BindRoutes() {
 	})
 
 	api.Router.Route("/api/v1/mobile", func(r chi.Router) {
-		// rota de login retorna token JWT
 		r.Post("/login", api.handleLoginToken)
 
-		// grupo protegido por JWT
 		r.Group(func(r chi.Router) {
 			r.Use(api.JWTAuthMiddleware)
 			r.Get("/me", api.handleGetCurrentUserToken)
 		})
-		// r.Route("/clientes", func(r chi.Router) {
-		// 	r.Group(func(r chi.Router) {
-		// 		r.Use(api.JWTAuthMiddleware)
-		// 		r.Get("/", api.handleCliente_ListJwt)
-		// 		r.Get("/{id}", api.handleCliente_GetJwt)
-		// 		r.Post("/", api.handleCliente_PostJwt)
-		// 		r.Put("/{id}", api.handleCliente_PutJwt)
-		// 		r.Delete("/{id}", api.handleCliente_DeleteJwt)
-		// 	})
-		// })
 
 	})
 

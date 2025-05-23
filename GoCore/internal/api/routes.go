@@ -80,6 +80,27 @@ func (api *Api) BindRoutes() {
 				})
 			})
 
+			r.Route("/pedidos", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+
+					// CRUD básico
+					r.Get("/", api.handlePedidos_List)          // GET /api/v1/pedidos - lista paginada com filtros
+					r.Get("/count", api.handlePedidos_Count)    // GET /api/v1/pedidos/count - contagem total com filtros
+					r.Get("/{id}", api.handlePedidos_Get)       // GET /api/v1/pedidos/{id}
+					r.Post("/", api.handlePedidos_Post)         // POST /api/v1/pedidos
+					r.Put("/{id}", api.handlePedidos_Put)       // PUT /api/v1/pedidos/{id}
+					r.Delete("/{id}", api.handlePedidos_Delete) // DELETE /api/v1/pedidos/{id}
+
+					// Operações específicas
+					r.Put("/{id}/status", api.handlePedidos_PutStatus)              // PUT /api/v1/pedidos/{id}/status
+					r.Put("/{id}/pedido-pronto", api.handlePedidos_PutPedidoPronto) // PUT /api/v1/pedidos/{id}/pedido-pronto
+
+					// Busca por código
+					r.Get("/codigo/{codigo}", api.handlePedidos_GetByCodigoPedido) // GET /api/v1/pedidos/codigo/{codigo}
+				})
+			})
+
 			r.Route("/clientes", func(r chi.Router) {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)

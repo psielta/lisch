@@ -215,7 +215,7 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 	createDTO.IDEstabelecimento = tenantID.String()
 
 	// Verificar se o cliente existe e pertence ao tenant
-	cliente, err := models_sql_boiler.Clientes(
+	_, err = models_sql_boiler.Clientes(
 		qm.Where("id = ?", createDTO.IDCliente),
 		qm.Where("id_tenant = ?", tenantID.String()),
 		qm.Where("deleted_at IS NULL"),
@@ -274,7 +274,7 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	// Converter DTO para modelos SQLBoiler
-	pedido, itens, adicionais, err := createDTO.ToModels()
+	pedido, itens, _, err := createDTO.ToModels()
 	if err != nil {
 		api.Logger.Error("erro ao converter DTO para modelo", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid data"})
@@ -443,7 +443,7 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	// Converter DTO para modelos
-	pedido, novosItens, novosAdicionais, err := updateDTO.ToModels()
+	pedido, novosItens, _, err := updateDTO.ToModels()
 	if err != nil {
 		api.Logger.Error("erro ao converter DTO para modelo", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid data"})

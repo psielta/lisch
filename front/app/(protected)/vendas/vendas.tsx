@@ -7,6 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  Box,
+} from "@mui/material";
 
 function Vendas({
   produtos,
@@ -21,6 +29,11 @@ function Vendas({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProdutos =
+    produtos?.filter((produto) =>
+      produto.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   return (
     <div className="h-full flex">
@@ -77,28 +90,68 @@ function Vendas({
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <div className="p-2 space-y-1">
-              {produtos && produtos.length > 0 ? (
-                produtos
-                  .filter((produto) =>
-                    produto.nome
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase())
-                  )
-                  .map((produto) => (
-                    <div
-                      key={produto.id}
-                      className="px-3 py-2 cursor-pointer hover:bg-accent/50 transition-colors rounded text-sm"
-                    >
-                      {produto.nome}
-                    </div>
-                  ))
+            {produtos && produtos.length > 0 ? (
+              filteredProdutos.length > 0 ? (
+                <List sx={{ padding: 0 }}>
+                  {filteredProdutos.map((produto) => (
+                    <ListItem key={produto.id} disablePadding>
+                      <ListItemButton
+                        sx={{
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                          padding: "12px 16px",
+                        }}
+                      >
+                        <ListItemText
+                          primary={produto.nome}
+                          primaryTypographyProps={{
+                            fontSize: "14px",
+                            fontWeight: 400,
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
               ) : (
-                <div className="text-center py-10 text-muted-foreground">
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "200px",
+                    padding: "40px 0",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    textAlign="center"
+                  >
+                    Nenhum produto encontrado
+                  </Typography>
+                </Box>
+              )
+            ) : (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "200px",
+                  padding: "40px 0",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  textAlign="center"
+                >
                   Nenhum produto encontrado
-                </div>
-              )}
-            </div>
+                </Typography>
+              </Box>
+            )}
           </div>
 
           <div className="p-3 border-t border-border">

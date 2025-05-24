@@ -157,6 +157,8 @@ type PedidoResponseDTO struct {
 	CreatedAt          time.Time          `json:"created_at"`
 	UpdatedAt          time.Time          `json:"updated_at"`
 	DeletedAt          *time.Time         `json:"deleted_at,omitempty"`
+	ValorPago          types.Decimal      `json:"valor_pago"`
+	Quitado            *bool              `json:"quitado,omitempty"`
 	// Relacionamentos
 	Status  PedidoStatusDTO         `json:"status"`
 	Cliente PedidoClienteDTO        `json:"cliente"`
@@ -345,6 +347,8 @@ func PedidoModelToResponse(p *models.Pedido) *PedidoResponseDTO {
 		CreatedAt:          p.CreatedAt,
 		UpdatedAt:          p.UpdatedAt,
 		DeletedAt:          nullTimeToPtr(p.DeletedAt),
+		ValorPago:          p.ValorPago,
+		Quitado:            nullBoolToPtr(p.Quitado),
 		Status:             st,
 		Cliente:            cli,
 		Itens:              itens,
@@ -367,6 +371,13 @@ func toNullInt(i *int) null.Int {
 		return null.Int{}
 	}
 	return null.IntFrom(*i)
+}
+
+func nullBoolToPtr(nb null.Bool) *bool {
+	if !nb.Valid {
+		return nil
+	}
+	return &nb.Bool
 }
 
 func derefNullDecimal(nd *types.NullDecimal) types.NullDecimal {

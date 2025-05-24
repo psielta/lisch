@@ -51,6 +51,8 @@ type Pedido struct {
 	CreatedAt          time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt          time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt          null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ValorPago          types.Decimal     `boil:"valor_pago" json:"valor_pago" toml:"valor_pago" yaml:"valor_pago"`
+	Quitado            null.Bool         `boil:"quitado" json:"quitado,omitempty" toml:"quitado" yaml:"quitado,omitempty"`
 
 	R *pedidoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pedidoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -83,6 +85,8 @@ var PedidoColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
+	ValorPago          string
+	Quitado            string
 }{
 	ID:                 "id",
 	SeqID:              "seq_id",
@@ -110,6 +114,8 @@ var PedidoColumns = struct {
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	DeletedAt:          "deleted_at",
+	ValorPago:          "valor_pago",
+	Quitado:            "quitado",
 }
 
 var PedidoTableColumns = struct {
@@ -139,6 +145,8 @@ var PedidoTableColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
+	ValorPago          string
+	Quitado            string
 }{
 	ID:                 "pedidos.id",
 	SeqID:              "pedidos.seq_id",
@@ -166,35 +174,11 @@ var PedidoTableColumns = struct {
 	CreatedAt:          "pedidos.created_at",
 	UpdatedAt:          "pedidos.updated_at",
 	DeletedAt:          "pedidos.deleted_at",
+	ValorPago:          "pedidos.valor_pago",
+	Quitado:            "pedidos.quitado",
 }
 
 // Generated where
-
-type whereHelpertypes_NullDecimal struct{ field string }
-
-func (w whereHelpertypes_NullDecimal) EQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpertypes_NullDecimal) NEQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpertypes_NullDecimal) LT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_NullDecimal) LTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_NullDecimal) GT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_NullDecimal) GTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpertypes_NullDecimal) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
 
 var PedidoWhere = struct {
 	ID                 whereHelperstring
@@ -223,6 +207,8 @@ var PedidoWhere = struct {
 	CreatedAt          whereHelpertime_Time
 	UpdatedAt          whereHelpertime_Time
 	DeletedAt          whereHelpernull_Time
+	ValorPago          whereHelpertypes_Decimal
+	Quitado            whereHelpernull_Bool
 }{
 	ID:                 whereHelperstring{field: "\"pedidos\".\"id\""},
 	SeqID:              whereHelperint64{field: "\"pedidos\".\"seq_id\""},
@@ -250,27 +236,35 @@ var PedidoWhere = struct {
 	CreatedAt:          whereHelpertime_Time{field: "\"pedidos\".\"created_at\""},
 	UpdatedAt:          whereHelpertime_Time{field: "\"pedidos\".\"updated_at\""},
 	DeletedAt:          whereHelpernull_Time{field: "\"pedidos\".\"deleted_at\""},
+	ValorPago:          whereHelpertypes_Decimal{field: "\"pedidos\".\"valor_pago\""},
+	Quitado:            whereHelpernull_Bool{field: "\"pedidos\".\"quitado\""},
 }
 
 // PedidoRels is where relationship names are stored.
 var PedidoRels = struct {
-	IDClienteCliente     string
-	IDStatusPedidoStatus string
-	Tenant               string
-	IDPedidoPedidoItens  string
+	IDClienteCliente         string
+	IDStatusPedidoStatus     string
+	Tenant                   string
+	IDPedidoContasRecebers   string
+	IDPedidoPedidoItens      string
+	IDPedidoPedidoPagamentos string
 }{
-	IDClienteCliente:     "IDClienteCliente",
-	IDStatusPedidoStatus: "IDStatusPedidoStatus",
-	Tenant:               "Tenant",
-	IDPedidoPedidoItens:  "IDPedidoPedidoItens",
+	IDClienteCliente:         "IDClienteCliente",
+	IDStatusPedidoStatus:     "IDStatusPedidoStatus",
+	Tenant:                   "Tenant",
+	IDPedidoContasRecebers:   "IDPedidoContasRecebers",
+	IDPedidoPedidoItens:      "IDPedidoPedidoItens",
+	IDPedidoPedidoPagamentos: "IDPedidoPedidoPagamentos",
 }
 
 // pedidoR is where relationships are stored.
 type pedidoR struct {
-	IDClienteCliente     *Cliente        `boil:"IDClienteCliente" json:"IDClienteCliente" toml:"IDClienteCliente" yaml:"IDClienteCliente"`
-	IDStatusPedidoStatus *PedidoStatus   `boil:"IDStatusPedidoStatus" json:"IDStatusPedidoStatus" toml:"IDStatusPedidoStatus" yaml:"IDStatusPedidoStatus"`
-	Tenant               *Tenant         `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
-	IDPedidoPedidoItens  PedidoItemSlice `boil:"IDPedidoPedidoItens" json:"IDPedidoPedidoItens" toml:"IDPedidoPedidoItens" yaml:"IDPedidoPedidoItens"`
+	IDClienteCliente         *Cliente             `boil:"IDClienteCliente" json:"IDClienteCliente" toml:"IDClienteCliente" yaml:"IDClienteCliente"`
+	IDStatusPedidoStatus     *PedidoStatus        `boil:"IDStatusPedidoStatus" json:"IDStatusPedidoStatus" toml:"IDStatusPedidoStatus" yaml:"IDStatusPedidoStatus"`
+	Tenant                   *Tenant              `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
+	IDPedidoContasRecebers   ContasReceberSlice   `boil:"IDPedidoContasRecebers" json:"IDPedidoContasRecebers" toml:"IDPedidoContasRecebers" yaml:"IDPedidoContasRecebers"`
+	IDPedidoPedidoItens      PedidoItemSlice      `boil:"IDPedidoPedidoItens" json:"IDPedidoPedidoItens" toml:"IDPedidoPedidoItens" yaml:"IDPedidoPedidoItens"`
+	IDPedidoPedidoPagamentos PedidoPagamentoSlice `boil:"IDPedidoPedidoPagamentos" json:"IDPedidoPedidoPagamentos" toml:"IDPedidoPedidoPagamentos" yaml:"IDPedidoPedidoPagamentos"`
 }
 
 // NewStruct creates a new relationship struct
@@ -299,6 +293,13 @@ func (r *pedidoR) GetTenant() *Tenant {
 	return r.Tenant
 }
 
+func (r *pedidoR) GetIDPedidoContasRecebers() ContasReceberSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDPedidoContasRecebers
+}
+
 func (r *pedidoR) GetIDPedidoPedidoItens() PedidoItemSlice {
 	if r == nil {
 		return nil
@@ -306,13 +307,20 @@ func (r *pedidoR) GetIDPedidoPedidoItens() PedidoItemSlice {
 	return r.IDPedidoPedidoItens
 }
 
+func (r *pedidoR) GetIDPedidoPedidoPagamentos() PedidoPagamentoSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDPedidoPedidoPagamentos
+}
+
 // pedidoL is where Load methods for each relationship are stored.
 type pedidoL struct{}
 
 var (
-	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at"}
+	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado"}
 	pedidoColumnsWithoutDefault = []string{"tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "tipo_entrega", "valor_total", "id_status"}
-	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at"}
+	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado"}
 	pedidoPrimaryKeyColumns     = []string{"id"}
 	pedidoGeneratedColumns      = []string{}
 )
@@ -655,6 +663,20 @@ func (o *Pedido) Tenant(mods ...qm.QueryMod) tenantQuery {
 	return Tenants(queryMods...)
 }
 
+// IDPedidoContasRecebers retrieves all the contas_receber's ContasRecebers with an executor via id_pedido column.
+func (o *Pedido) IDPedidoContasRecebers(mods ...qm.QueryMod) contasReceberQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"contas_receber\".\"id_pedido\"=?", o.ID),
+	)
+
+	return ContasRecebers(queryMods...)
+}
+
 // IDPedidoPedidoItens retrieves all the pedido_iten's PedidoItens with an executor via id_pedido column.
 func (o *Pedido) IDPedidoPedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	var queryMods []qm.QueryMod
@@ -667,6 +689,20 @@ func (o *Pedido) IDPedidoPedidoItens(mods ...qm.QueryMod) pedidoItemQuery {
 	)
 
 	return PedidoItens(queryMods...)
+}
+
+// IDPedidoPedidoPagamentos retrieves all the pedido_pagamento's PedidoPagamentos with an executor via id_pedido column.
+func (o *Pedido) IDPedidoPedidoPagamentos(mods ...qm.QueryMod) pedidoPagamentoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"pedido_pagamentos\".\"id_pedido\"=?", o.ID),
+	)
+
+	return PedidoPagamentos(queryMods...)
 }
 
 // LoadIDClienteCliente allows an eager lookup of values, cached into the
@@ -1029,6 +1065,119 @@ func (pedidoL) LoadTenant(ctx context.Context, e boil.ContextExecutor, singular 
 	return nil
 }
 
+// LoadIDPedidoContasRecebers allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (pedidoL) LoadIDPedidoContasRecebers(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedido interface{}, mods queries.Applicator) error {
+	var slice []*Pedido
+	var object *Pedido
+
+	if singular {
+		var ok bool
+		object, ok = maybePedido.(*Pedido)
+		if !ok {
+			object = new(Pedido)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedido)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedido))
+			}
+		}
+	} else {
+		s, ok := maybePedido.(*[]*Pedido)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedido)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedido))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &pedidoR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &pedidoR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`contas_receber`),
+		qm.WhereIn(`contas_receber.id_pedido in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load contas_receber")
+	}
+
+	var resultSlice []*ContasReceber
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice contas_receber")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on contas_receber")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for contas_receber")
+	}
+
+	if len(contasReceberAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDPedidoContasRecebers = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &contasReceberR{}
+			}
+			foreign.R.IDPedidoPedido = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.IDPedido {
+				local.R.IDPedidoContasRecebers = append(local.R.IDPedidoContasRecebers, foreign)
+				if foreign.R == nil {
+					foreign.R = &contasReceberR{}
+				}
+				foreign.R.IDPedidoPedido = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadIDPedidoPedidoItens allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedido interface{}, mods queries.Applicator) error {
@@ -1132,6 +1281,119 @@ func (pedidoL) LoadIDPedidoPedidoItens(ctx context.Context, e boil.ContextExecut
 				local.R.IDPedidoPedidoItens = append(local.R.IDPedidoPedidoItens, foreign)
 				if foreign.R == nil {
 					foreign.R = &pedidoItemR{}
+				}
+				foreign.R.IDPedidoPedido = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadIDPedidoPedidoPagamentos allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (pedidoL) LoadIDPedidoPedidoPagamentos(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedido interface{}, mods queries.Applicator) error {
+	var slice []*Pedido
+	var object *Pedido
+
+	if singular {
+		var ok bool
+		object, ok = maybePedido.(*Pedido)
+		if !ok {
+			object = new(Pedido)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedido)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedido))
+			}
+		}
+	} else {
+		s, ok := maybePedido.(*[]*Pedido)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedido)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedido))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &pedidoR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &pedidoR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`pedido_pagamentos`),
+		qm.WhereIn(`pedido_pagamentos.id_pedido in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load pedido_pagamentos")
+	}
+
+	var resultSlice []*PedidoPagamento
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice pedido_pagamentos")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on pedido_pagamentos")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_pagamentos")
+	}
+
+	if len(pedidoPagamentoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDPedidoPedidoPagamentos = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &pedidoPagamentoR{}
+			}
+			foreign.R.IDPedidoPedido = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.IDPedido {
+				local.R.IDPedidoPedidoPagamentos = append(local.R.IDPedidoPedidoPagamentos, foreign)
+				if foreign.R == nil {
+					foreign.R = &pedidoPagamentoR{}
 				}
 				foreign.R.IDPedidoPedido = local
 				break
@@ -1283,6 +1545,59 @@ func (o *Pedido) SetTenant(ctx context.Context, exec boil.ContextExecutor, inser
 	return nil
 }
 
+// AddIDPedidoContasRecebers adds the given related objects to the existing relationships
+// of the pedido, optionally inserting them as new records.
+// Appends related to o.R.IDPedidoContasRecebers.
+// Sets related.R.IDPedidoPedido appropriately.
+func (o *Pedido) AddIDPedidoContasRecebers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ContasReceber) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.IDPedido = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"contas_receber\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido"}),
+				strmangle.WhereClause("\"", "\"", 2, contasReceberPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.IDPedido = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &pedidoR{
+			IDPedidoContasRecebers: related,
+		}
+	} else {
+		o.R.IDPedidoContasRecebers = append(o.R.IDPedidoContasRecebers, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &contasReceberR{
+				IDPedidoPedido: o,
+			}
+		} else {
+			rel.R.IDPedidoPedido = o
+		}
+	}
+	return nil
+}
+
 // AddIDPedidoPedidoItens adds the given related objects to the existing relationships
 // of the pedido, optionally inserting them as new records.
 // Appends related to o.R.IDPedidoPedidoItens.
@@ -1327,6 +1642,59 @@ func (o *Pedido) AddIDPedidoPedidoItens(ctx context.Context, exec boil.ContextEx
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &pedidoItemR{
+				IDPedidoPedido: o,
+			}
+		} else {
+			rel.R.IDPedidoPedido = o
+		}
+	}
+	return nil
+}
+
+// AddIDPedidoPedidoPagamentos adds the given related objects to the existing relationships
+// of the pedido, optionally inserting them as new records.
+// Appends related to o.R.IDPedidoPedidoPagamentos.
+// Sets related.R.IDPedidoPedido appropriately.
+func (o *Pedido) AddIDPedidoPedidoPagamentos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoPagamento) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.IDPedido = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"pedido_pagamentos\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_pedido"}),
+				strmangle.WhereClause("\"", "\"", 2, pedidoPagamentoPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.IDPedido = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &pedidoR{
+			IDPedidoPedidoPagamentos: related,
+		}
+	} else {
+		o.R.IDPedidoPedidoPagamentos = append(o.R.IDPedidoPedidoPagamentos, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &pedidoPagamentoR{
 				IDPedidoPedido: o,
 			}
 		} else {

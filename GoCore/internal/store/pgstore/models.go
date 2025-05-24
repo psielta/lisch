@@ -189,6 +189,18 @@ type Cliente struct {
 	UpdatedAt       time.Time   `json:"updated_at"`
 }
 
+type ContasReceber struct {
+	ID          uuid.UUID      `json:"id"`
+	IDPedido    uuid.UUID      `json:"id_pedido"`
+	Parcela     int16          `json:"parcela"`
+	Vencimento  pgtype.Date    `json:"vencimento"`
+	ValorDevido pgtype.Numeric `json:"valor_devido"`
+	ValorPago   pgtype.Numeric `json:"valor_pago"`
+	Quitado     pgtype.Bool    `json:"quitado"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
 type Culinaria struct {
 	IDCulinaria int32  `json:"id_culinaria"`
 	Nome        string `json:"nome"`
@@ -222,6 +234,8 @@ type Pedido struct {
 	CreatedAt          time.Time          `json:"created_at"`
 	UpdatedAt          time.Time          `json:"updated_at"`
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	ValorPago          pgtype.Numeric     `json:"valor_pago"`
+	Quitado            pgtype.Bool        `json:"quitado"`
 }
 
 type PedidoItemAdicionai struct {
@@ -278,6 +292,22 @@ type PedidoItensView struct {
 	CreatedAt        time.Time          `json:"created_at"`
 	UpdatedAt        time.Time          `json:"updated_at"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type PedidoPagamento struct {
+	ID                 uuid.UUID          `json:"id"`
+	SeqID              pgtype.Int8        `json:"seq_id"`
+	IDPedido           uuid.UUID          `json:"id_pedido"`
+	IDContaReceber     pgtype.UUID        `json:"id_conta_receber"`
+	CategoriaPagamento pgtype.Text        `json:"categoria_pagamento"`
+	FormaPagamento     string             `json:"forma_pagamento"`
+	ValorPago          pgtype.Numeric     `json:"valor_pago"`
+	Troco              pgtype.Numeric     `json:"troco"`
+	AutorizadoPor      pgtype.UUID        `json:"autorizado_por"`
+	Observacao         pgtype.Text        `json:"observacao"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type PedidoStatus struct {

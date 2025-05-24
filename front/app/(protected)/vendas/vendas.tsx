@@ -102,7 +102,7 @@ function Vendas({
                 placeholder="Buscar produtos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-accent/30 border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
             </div>

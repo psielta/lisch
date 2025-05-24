@@ -105,31 +105,31 @@ export default function FormCategoria({
     ordem: categoria?.ordem === undefined ? undefined : Number(categoria.ordem),
     disponivel_domingo:
       categoria?.disponivel_domingo === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_domingo),
     disponivel_segunda:
       categoria?.disponivel_segunda === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_segunda),
     disponivel_terca:
       categoria?.disponivel_terca === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_terca),
     disponivel_quarta:
       categoria?.disponivel_quarta === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_quarta),
     disponivel_quinta:
       categoria?.disponivel_quinta === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_quinta),
     disponivel_sexta:
       categoria?.disponivel_sexta === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_sexta),
     disponivel_sabado:
       categoria?.disponivel_sabado === undefined
-        ? 0
+        ? 1
         : Number(categoria.disponivel_sabado),
     opcoes: categoria?.opcoes?.map((op) => ({
       id: op.id || undefined,

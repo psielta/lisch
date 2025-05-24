@@ -22,13 +22,13 @@ type PedidoItemAdicionalDTO struct {
 	Quantidade       int           `json:"quantidade"         validate:"required,min=1"`
 }
 
-type PedidoProdutoDTO struct {
+type PedidoItemDTO struct {
 	IDCategoria      string                   `json:"id_categoria"       validate:"required,uuid"`
-	IDCategoriaOpcao *string                  `json:"id_categoria_opcao" validate:"omitempty,uuid"`
+	IDCategoriaOpcao *string                  `json:"id_categoria_opcao" validate:"uuid"`
 	IDProduto        string                   `json:"id_produto"         validate:"required,uuid"`
-	IDProduto2       *string                  `json:"id_produto_2" validate:"omitempty,uuid"`
+	IDProduto2       *string                  `json:"id_produto_2" validate:"uuid"`
 	Observacao       *string                  `json:"observacao"`
-	Valor            types.Decimal            `json:"valor"              validate:"required"`
+	ValorUnitario    types.Decimal            `json:"valor_unitario"     validate:"required"`
 	Quantidade       int                      `json:"quantidade"         validate:"required,min=1"`
 	Adicionais       []PedidoItemAdicionalDTO `json:"adicionais"         validate:"dive"`
 }
@@ -98,10 +98,10 @@ type PedidoItemAdicionalFullDTO struct {
 /* ---------------- CREATE / UPDATE -------------------- */
 
 type PedidoCreateDTO struct {
-	IDEstabelecimento  string             `json:"id_estabelecimento" validate:"required,uuid"`
+	TenantID           string             `json:"tenant_id"          validate:"required,uuid"`
 	IDCliente          string             `json:"id_cliente"         validate:"required,uuid"`
-	CodPedido          string             `json:"cod_pedido"         validate:"required,max=20"`
-	Data               time.Time          `json:"data"               validate:"required"`
+	CodigoPedido       string             `json:"codigo_pedido"      validate:"required,max=20"`
+	DataPedido         time.Time          `json:"data_pedido"        validate:"required"`
 	GMT                int16              `json:"gmt"                validate:"required"`
 	Cupom              *string            `json:"cupom"`
 	TipoEntrega        string             `json:"tipo_entrega"       validate:"required,oneof=Delivery Retirada"`
@@ -116,8 +116,8 @@ type PedidoCreateDTO struct {
 	NomeTaxaEntrega    *string            `json:"nome_taxa_entrega"`
 	IDStatus           int16              `json:"id_status"          validate:"required"`
 	Lat                *types.NullDecimal `json:"lat"`
-	Lng                *types.NullDecimal `json:"lng"`
-	Produtos           []PedidoProdutoDTO `json:"produtos"           validate:"required,dive"`
+	LNG                *types.NullDecimal `json:"lng"`
+	Itens              []PedidoItemDTO    `json:"itens"              validate:"required,dive"`
 }
 
 type PedidoUpdateDTO struct {
@@ -171,10 +171,10 @@ func (d *PedidoCreateDTO) ToModels() (*models.Pedido, []*models.PedidoItem, []*m
 	}
 
 	pedido := &models.Pedido{
-		TenantID:           d.IDEstabelecimento,
+		TenantID:           d.TenantID,
 		IDCliente:          d.IDCliente,
-		CodigoPedido:       d.CodPedido,
-		DataPedido:         d.Data,
+		CodigoPedido:       d.CodigoPedido,
+		DataPedido:         d.DataPedido,
 		GMT:                d.GMT,
 		PedidoPronto:       0,
 		Cupom:              toNullString(d.Cupom),
@@ -190,20 +190,20 @@ func (d *PedidoCreateDTO) ToModels() (*models.Pedido, []*models.PedidoItem, []*m
 		NomeTaxaEntrega:    toNullString(d.NomeTaxaEntrega),
 		IDStatus:           d.IDStatus,
 		Lat:                derefNullDecimal(d.Lat),
-		LNG:                derefNullDecimal(d.Lng),
+		LNG:                derefNullDecimal(d.LNG),
 	}
 
 	var itens []*models.PedidoItem
 	var adds []*models.PedidoItemAdicional
 
-	for _, item := range d.Produtos {
+	for _, item := range d.Itens {
 		it := &models.PedidoItem{
 			IDCategoria:      item.IDCategoria,
 			IDCategoriaOpcao: toNullString(item.IDCategoriaOpcao),
 			IDProduto:        item.IDProduto,
 			IDProduto2:       toNullString(item.IDProduto2),
 			Observacao:       toNullString(item.Observacao),
-			ValorUnitario:    item.Valor,
+			ValorUnitario:    item.ValorUnitario,
 			Quantidade:       item.Quantidade,
 		}
 		itens = append(itens, it)

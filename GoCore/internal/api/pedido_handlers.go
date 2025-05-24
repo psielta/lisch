@@ -229,7 +229,7 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Definir o tenant ID no DTO
-	createDTO.IDEstabelecimento = tenantID.String()
+	createDTO.TenantID = tenantID.String()
 
 	// Verificar se o cliente existe e pertence ao tenant
 	_, err = models_sql_boiler.Clientes(
@@ -265,7 +265,7 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 
 	// Verificar se o código do pedido já existe para este tenant
 	exists, err := models_sql_boiler.Pedidos(
-		qm.Where("codigo_pedido = ?", createDTO.CodPedido),
+		qm.Where("codigo_pedido = ?", createDTO.CodigoPedido),
 		qm.Where("tenant_id = ?", tenantID.String()),
 		qm.Where("deleted_at IS NULL"),
 	).Exists(r.Context(), api.SQLBoilerDB.GetDB())
@@ -321,8 +321,8 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 
 		// Inserir adicionais do item (se houver)
 		produtoIndex := i
-		if produtoIndex < len(createDTO.Produtos) {
-			for _, adicionalDTO := range createDTO.Produtos[produtoIndex].Adicionais {
+		if produtoIndex < len(createDTO.Itens) {
+			for _, adicionalDTO := range createDTO.Itens[produtoIndex].Adicionais {
 				adicional := &models_sql_boiler.PedidoItemAdicional{
 					ID:               uuid.New().String(),
 					IDPedidoItem:     item.ID,
@@ -415,7 +415,7 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 
 	// Definir o ID e tenant no DTO
 	updateDTO.ID = id
-	updateDTO.IDEstabelecimento = tenantID.String()
+	updateDTO.TenantID = tenantID.String()
 
 	// Verificar se o pedido exists e pertence ao tenant
 	pedidoExistente, err := models_sql_boiler.Pedidos(
@@ -446,9 +446,9 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verificar se o código do pedido já existe para outro pedido do mesmo tenant
-	if updateDTO.CodPedido != pedidoExistente.CodigoPedido {
+	if updateDTO.CodigoPedido != pedidoExistente.CodigoPedido {
 		exists, err := models_sql_boiler.Pedidos(
-			qm.Where("codigo_pedido = ?", updateDTO.CodPedido),
+			qm.Where("codigo_pedido = ?", updateDTO.CodigoPedido),
 			qm.Where("tenant_id = ?", tenantID.String()),
 			qm.Where("id != ?", id),
 			qm.Where("deleted_at IS NULL"),
@@ -531,8 +531,8 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 
 		// Inserir adicionais do item
 		produtoIndex := i
-		if produtoIndex < len(updateDTO.Produtos) {
-			for _, adicionalDTO := range updateDTO.Produtos[produtoIndex].Adicionais {
+		if produtoIndex < len(updateDTO.Itens) {
+			for _, adicionalDTO := range updateDTO.Itens[produtoIndex].Adicionais {
 				adicional := &models_sql_boiler.PedidoItemAdicional{
 					ID:               uuid.New().String(),
 					IDPedidoItem:     item.ID,

@@ -175,12 +175,19 @@ func (api *Api) handlePedidos_Get(w http.ResponseWriter, r *http.Request) {
 		qm.Where("pedidos.id = ?", id),
 		qm.Where("pedidos.tenant_id = ?", tenantID.String()),
 		qm.Where("pedidos.deleted_at IS NULL"),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Where("deleted_at IS NULL"),
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
-				qm.Where("deleted_at IS NULL"))),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -343,10 +350,19 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 	// Buscar o pedido completo para resposta
 	pedidoCompleto, err := models_sql_boiler.Pedidos(
 		qm.Where("pedidos.id = ?", pedido.ID),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais)),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -406,10 +422,17 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 		qm.Where("pedidos.id = ?", id),
 		qm.Where("pedidos.tenant_id = ?", tenantID.String()),
 		qm.Where("pedidos.deleted_at IS NULL"),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Where("deleted_at IS NULL"),
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
-				qm.Where("deleted_at IS NULL"))),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -537,12 +560,19 @@ func (api *Api) handlePedidos_Put(w http.ResponseWriter, r *http.Request) {
 	// Buscar pedido atualizado
 	pedidoAtualizado, err := models_sql_boiler.Pedidos(
 		qm.Where("pedidos.id = ?", id),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Where("deleted_at IS NULL"),
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
-				qm.Where("deleted_at IS NULL"))),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {
@@ -842,12 +872,19 @@ func (api *Api) handlePedidos_GetByCodigoPedido(w http.ResponseWriter, r *http.R
 		qm.Where("pedidos.codigo_pedido = ?", codigoPedido),
 		qm.Where("pedidos.tenant_id = ?", tenantID.String()),
 		qm.Where("pedidos.deleted_at IS NULL"),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Where("deleted_at IS NULL"),
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
-				qm.Where("deleted_at IS NULL"))),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {

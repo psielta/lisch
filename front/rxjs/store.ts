@@ -7,6 +7,7 @@ import { categoriaSlice } from "./categoria/categoria.slice";
 import { produtoReducer } from "./produto/produto.slice";
 import { categoriaAdicionalReducer } from "./adicionais/categoria-adicional.slice";
 import clienteReducer from "./clientes/cliente.slice";
+import { pedidoReducer } from "./pedido/pedido.slice";
 const epicMiddleware = createEpicMiddleware();
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     produto: produtoReducer,
     categoriaAdicional: categoriaAdicionalReducer,
     cliente: clienteReducer,
+    pedido: pedidoReducer,
   },
   middleware: (gDM) => gDM().concat(actionTracker).prepend(epicMiddleware),
   devTools: true,

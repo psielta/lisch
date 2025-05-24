@@ -5,13 +5,19 @@ import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
+import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
+import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 
 function Vendas({
   produtos,
   user,
+  categorias,
+  adicionais,
 }: {
   produtos: ProdutoResponse[];
   user: User;
+  categorias: ICoreCategoria[];
+  adicionais: CategoriaAdicionalResponse[];
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -47,7 +53,7 @@ function Vendas({
               <p className="text-muted-foreground">
                 Selecione produtos na barra lateral para começar uma venda.
               </p>
-              {/* Conteúdo principal ficará aqui no futuro */}
+              <main></main>
             </CardContent>
           </Card>
         </div>

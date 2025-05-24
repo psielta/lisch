@@ -129,6 +129,82 @@ func (api *Api) handleCategoriaAdicionais_List(w http.ResponseWriter, r *http.Re
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
 }
 
+// handleCategoriaAdicionais_ListByTenant lista os grupos de adicionais por tenant ID
+func (api *Api) handleCategoriaAdicionais_ListByTenant(w http.ResponseWriter, r *http.Request) {
+	tenantId := chi.URLParam(r, "tenantId")
+	if tenantId == "" {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "tenant_id is required"})
+		return
+	}
+
+	// Validar UUID do tenant
+	_, err := uuid.Parse(tenantId)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid tenant_id format"})
+		return
+	}
+
+	// Parâmetros de paginação
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 100 // limite padrão
+	offset := 0  // offset padrão
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	if offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	// Montar as condições de busca
+	queryMods := []qm.QueryMod{
+		qm.InnerJoin("categorias c on c.id = categoria_adicionais.id_categoria"),
+		qm.Where("c.id_tenant = ? AND c.deleted_at IS NULL", tenantId),
+		qm.Where("categoria_adicionais.deleted_at IS NULL"),
+	}
+
+	// Contar total usando as condições básicas
+	total, err := models_sql_boiler.CategoriaAdicionais(queryMods...).Count(r.Context(), api.SQLBoilerDB.GetDB())
+	if err != nil {
+		api.Logger.Error("erro ao contar adicionais", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// Adicionar ordenação para a consulta principal
+	queryMods = append(queryMods, qm.OrderBy("categoria_adicionais.seq_id"))
+
+	// Carregar relacionamentos
+	queryMods = append(queryMods, qm.Load(models_sql_boiler.CategoriaAdicionalRels.IDCategoriaAdicionalCategoriaAdicionalOpcoes,
+		qm.Where("deleted_at IS NULL"),
+		qm.OrderBy("seq_id"),
+	))
+
+	// Adicionar paginação
+	queryMods = append(queryMods, qm.Limit(limit))
+	queryMods = append(queryMods, qm.Offset(offset))
+
+	// Buscar adicionais paginados
+	adicionais, err := models_sql_boiler.CategoriaAdicionais(queryMods...).All(r.Context(), api.SQLBoilerDB.GetDB())
+	if err != nil {
+		api.Logger.Error("erro ao buscar adicionais", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// Converter para DTO
+	resp := dto.ConvertSQLBoilerCategoriaAdicionaisListToDTO(adicionais, total, int32(limit), int32(offset))
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
+}
+
 // handleCategoriaAdicionais_Get busca um grupo de adicionais por ID
 func (api *Api) handleCategoriaAdicionais_Get(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

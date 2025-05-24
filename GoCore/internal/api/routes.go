@@ -124,6 +124,7 @@ func (api *Api) BindRoutes() {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)
 					r.Get("/", api.handleCategoriaAdicionais_List)
+					r.Get("/tenant/{tenantId}", api.handleCategoriaAdicionais_ListByTenant)
 					r.Get("/{id}", api.handleCategoriaAdicionais_Get)
 					r.Post("/", api.handleCategoriaAdicionais_Post)
 					r.Put("/{id}", api.handleCategoriaAdicionais_Put)

@@ -10,12 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
-import Lisch from "@/public/LischLarge.gif";
 import { toast } from "sonner";
 import Loader from "@/components/my/Loader";
 import { Loader2 } from "lucide-react";
 import LoaderForButton from "@/components/my/LoaderForButton";
 import { Button, Typography } from "@mui/material";
+import LightLogo from "@/public/Light.png";
+import DarkLogo from "@/public/Dark.png";
 
 const fontSans = Lexend({ subsets: ["latin"], variable: "--font-sans" });
 const fontSerif = Newsreader({ subsets: ["latin"], variable: "--font-serif" });
@@ -63,7 +64,20 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 md:p-8">
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col items-center text-center gap-2">
-                    <Image src={Lisch} width={240} height={240} alt="Logo" />
+                    <Image
+                      src={DarkLogo}
+                      alt="Logo"
+                      width={240}
+                      height={240}
+                      className="hidden dark:block"
+                    />
+                    <Image
+                      src={LightLogo}
+                      alt="Logo"
+                      width={240}
+                      height={240}
+                      className="block dark:hidden"
+                    />
                     <div>
                       <h1 className="text-2xl font-bold">Bem-vindo de volta</h1>
                       <p className="text-muted-foreground text-balance">
@@ -104,7 +118,7 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </form>
-              <div className="bg-gradient-to-tl from-red-900 to-red-500 dark:from-zinc-700/50 dark:to-zinc-300/100 relative md:block"></div>
+              <div className="bg-gradient-to-tl from-primary to-primary/50 dark:from-slate-700/50 dark:to-primary/100 relative md:block"></div>
             </CardContent>
           </Card>
         </div>

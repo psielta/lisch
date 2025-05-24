@@ -18,7 +18,7 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-export const metadata: Metadata = { title: "TRX", description: "TRX" };
+export const metadata: Metadata = { title: "LISCH", description: "LISCH" };
 
 export default function RootLayout({
   children,

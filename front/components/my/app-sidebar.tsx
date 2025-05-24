@@ -1,7 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import LightLogo from "@/public/Light.png";
-import DarkLogo from "@/public/Dark.png";
 import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PriceCheckIcon from "@mui/icons-material/PriceCheck";
@@ -30,6 +28,7 @@ import {
   AccordionDetails,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -52,8 +51,6 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import PlaceIcon from "@mui/icons-material/Place";
 import Image from "next/image";
-import LischLarge from "@/public/LischLarge.gif";
-import Lisch from "@/public/Lisch.gif";
 import { useAuth, User } from "@/context/auth-context";
 import RedeemIcon from "@mui/icons-material/Redeem";
 import { getMe } from "@/proxies/users/GetMe";
@@ -63,6 +60,10 @@ import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import AddCardIcon from "@mui/icons-material/AddCard";
 import { useGridApiRef } from "@mui/x-data-grid";
 import { ModeToggle } from "./mode-toggle";
+import LightLogo from "@/public/Light.png";
+import LightPequeno from "@/public/LightPequeno.png";
+import DarkLogo from "@/public/Dark.png";
+import DarkPequeno from "@/public/DarkPequeno.png";
 /* -------------------------------------------------------------------------- */
 /* Configurações gerais                                                       */
 /* -------------------------------------------------------------------------- */
@@ -317,6 +318,8 @@ export default function AppSidebarMui() {
     return () => el.removeEventListener("transitionend", handle);
   }, [collapsed]); // roda toda vez que muda de estado
 
+  const theme = useTheme();
+
   return (
     <>
       {/* BOTÃO COLAPSAR ------------------------------------------------------ */}
@@ -367,12 +370,40 @@ export default function AppSidebarMui() {
         })}
       >
         {/* LOGO ------------------------------------------------------------- */}
-        <div className={`flex items-center justify-center h-[9rem]`}>
+        <div className={`flex items-center justify-center h-[7rem]`}>
           {!collapsed ? (
-            <Image src={LischLarge} alt="Logo" width={240} height={240} />
+            <>
+              <Image
+                src={DarkLogo}
+                alt="Logo"
+                width={240}
+                height={240}
+                className="hidden dark:block"
+              />
+              <Image
+                src={LightLogo}
+                alt="Logo"
+                width={240}
+                height={240}
+                className="block dark:hidden"
+              />
+            </>
           ) : (
             <div>
-              <Image src={Lisch} alt="Logo" width={120} height={120} />
+              <Image
+                src={DarkPequeno}
+                width={120}
+                height={120}
+                alt="Logo"
+                className="hidden dark:block"
+              />
+              <Image
+                src={LightPequeno}
+                width={120}
+                height={120}
+                alt="Logo"
+                className="block dark:hidden"
+              />
             </div>
           )}
         </div>

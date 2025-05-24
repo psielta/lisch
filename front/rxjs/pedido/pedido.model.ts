@@ -85,7 +85,7 @@ interface CreatePedidoRequest {
   data_pedido: string;
   gmt: number;
   cupom?: string;
-  tipo_entrega: "Delivery" | "Retirada";
+  tipo_entrega: "Delivery" | "Retirada" | "Balcão";
   prazo?: number;
   prazo_min?: number;
   prazo_max?: number;
@@ -190,7 +190,7 @@ export class PedidoService {
   public async listPedidos(
     idCliente?: string,
     status?: string,
-    tipoEntrega?: "Delivery" | "Retirada",
+    tipoEntrega?: "Delivery" | "Retirada" | "Balcão",
     dataInicio?: string,
     dataFim?: string,
     codigoPedido?: string,
@@ -223,7 +223,7 @@ export class PedidoService {
   public async countPedidos(
     idCliente?: string,
     status?: string,
-    tipoEntrega?: "Delivery" | "Retirada",
+    tipoEntrega?: "Delivery" | "Retirada" | "Balcão",
     dataInicio?: string,
     dataFim?: string,
     codigoPedido?: string

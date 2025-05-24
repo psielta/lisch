@@ -104,12 +104,22 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 	// Adicionar ordenação e relacionamentos
 	queryMods = append(queryMods, qm.OrderBy("pedidos.data_pedido DESC"))
 	queryMods = append(queryMods,
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			qm.Where("pedido_item_adicionais.deleted_at IS NULL"),
+		),
+		// se quiser filtrar deleted_at dos itens,
+		// faça outro Load só pros itens:
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			qm.Where("pedido_itens.deleted_at IS NULL"),
+		),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
-		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			qm.Where("deleted_at IS NULL"),
-			qm.Load(models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
-				qm.Where("deleted_at IS NULL"))))
+	)
 
 	// Adicionar paginação
 	queryMods = append(queryMods, qm.Limit(limit))

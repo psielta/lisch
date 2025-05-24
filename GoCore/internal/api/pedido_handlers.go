@@ -235,7 +235,6 @@ func (api *Api) handlePedidos_Post(w http.ResponseWriter, r *http.Request) {
 	_, err = models_sql_boiler.Clientes(
 		qm.Where("id = ?", createDTO.IDCliente),
 		qm.Where("tenant_id = ?", tenantID.String()),
-		qm.Where("deleted_at IS NULL"),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
 	if err != nil {

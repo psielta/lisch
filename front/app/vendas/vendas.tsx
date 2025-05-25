@@ -599,6 +599,7 @@ function Vendas({
                     {/* Cliente */}
                     <Grid size={12}>
                       <Autocomplete
+                        size="small"
                         options={clienteOptions}
                         getOptionLabel={(option) => option.nome_razao_social}
                         onInputChange={async (_, value) => {
@@ -631,6 +632,7 @@ function Vendas({
                     {/* Código do Pedido */}
                     <Grid size={12}>
                       <TextField
+                        size="small"
                         fullWidth
                         label="Código do Pedido"
                         name="codigo_pedido"
@@ -686,6 +688,7 @@ function Vendas({
                     {/* Forma de Pagamento */}
                     <Grid size={12}>
                       <TextField
+                        size="small"
                         fullWidth
                         label="Forma de Pagamento"
                         name="forma_pagamento"
@@ -697,6 +700,7 @@ function Vendas({
                     {/* Nome da Taxa de Entrega */}
                     <Grid size={12}>
                       <TextField
+                        size="small"
                         fullWidth
                         label="Nome da Taxa de Entrega"
                         name="nome_taxa_entrega"
@@ -708,6 +712,7 @@ function Vendas({
                     {/* Taxa de Entrega */}
                     <Grid size={12}>
                       <TextField
+                        size="small"
                         fullWidth
                         label="Taxa de Entrega"
                         name="taxa_entrega"
@@ -733,6 +738,7 @@ function Vendas({
                     {/* Observação */}
                     <Grid size={12}>
                       <TextField
+                        size="small"
                         fullWidth
                         label="Observação"
                         name="observacao"
@@ -936,7 +942,7 @@ function ItemModal({
     if (!modalData?.produto || !selectedPreco) return;
 
     const selectedPrecoData = modalData.produto.precos?.find(
-      (p) => p.id === selectedPreco
+      (p) => p.id_categoria_opcao === selectedPreco
     );
     if (!selectedPrecoData) return;
 
@@ -980,7 +986,7 @@ function ItemModal({
     if (!modalData?.produto || !selectedPreco) return 0;
 
     const selectedPrecoData = modalData.produto.precos?.find(
-      (p) => p.id === selectedPreco
+      (p) => p.id_categoria_opcao === selectedPreco
     );
     if (!selectedPrecoData) return 0;
 
@@ -1249,8 +1255,8 @@ function ItemModal({
               >
                 {modalData.produto.precos.map((preco) => (
                   <FormControlLabel
-                    key={preco.id}
-                    value={preco.id}
+                    key={preco.id_categoria_opcao}
+                    value={preco.id_categoria_opcao}
                     control={<Radio />}
                     label={
                       <div className="flex justify-between items-center w-full">

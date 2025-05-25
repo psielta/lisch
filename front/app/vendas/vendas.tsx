@@ -340,12 +340,27 @@ function Vendas({
     setModalOpen(true);
   };
 
-  const handleEditItem = (item: PedidoItemDTO, index: number) => {
-    const produto = produtos.find((p) => p.id === item.id_produto);
-    if (produto) {
-      setModalData({ produto, item, index });
-      setModalOpen(true);
+  const handleEditItem = async (item: PedidoItemDTO, index: number) => {
+    debugger;
+    let produto = produtos.find((p) => p.id === item.id_produto);
+
+    // ↓ tenta buscar no servidor se não estiver no array local
+    if (!produto) {
+      try {
+        const resp = await api.get<ProdutoResponse>(
+          `/produtos/${item.id_produto}`
+        );
+        produto = resp.data;
+      } catch {
+        toast.error(
+          "Não foi possível carregar os dados do produto. Verifique se o produto está cadastrado ou se foi deletado."
+        );
+        return; // não abre o modal
+      }
     }
+
+    setModalData({ produto, item, index });
+    setModalOpen(true);
   };
 
   const calculateItemTotal = (values: PedidoFormValues) => {
@@ -559,7 +574,7 @@ function Vendas({
                                         className="font-medium"
                                       >
                                         {produto?.nome ||
-                                          "Produto não encontrado"}
+                                          "Produto não encontrado ou excluído do sistema"}
                                       </Typography>
                                       <Typography
                                         variant="caption"
@@ -653,7 +668,7 @@ function Vendas({
                                                 <span className="text-muted-foreground">
                                                   •{" "}
                                                   {adicionalData?.opcao.nome ||
-                                                    "Adicional não encontrado"}
+                                                    "Adicional não encontrado ou excluído do sistema"}
                                                   {` (${
                                                     adicional.quantidade ?? 0
                                                   }x)`}

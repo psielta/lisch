@@ -1,5 +1,5 @@
 "use client";
-
+import React from "react";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
@@ -18,6 +18,9 @@ import {
   CardContent,
   Avatar,
   Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from "@mui/material";
 import {
   Person,
@@ -29,9 +32,10 @@ import {
   LocalShipping,
   Restaurant,
   Storefront,
+  Edit,
 } from "@mui/icons-material";
 import { useState, useMemo } from "react";
-
+import { useRouter } from "next/navigation";
 export default function GerenciarVendas({
   pedidos,
   produtos,
@@ -45,6 +49,17 @@ export default function GerenciarVendas({
 }) {
   const theme = useTheme();
   const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(null);
+  const router = useRouter();
+
+  // *** Menu
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   const selectedPedido = useMemo(() => {
     return pedidos.find((p) => p.id === selectedPedidoId);
@@ -130,15 +145,21 @@ export default function GerenciarVendas({
             <List sx={{ padding: 0, flex: 1, overflowY: "auto" }}>
               {pedidos.map((pedido) => (
                 <Tooltip
+                  key={pedido.id}
                   title={pedido.tipo_entrega}
                   placement="right"
                   arrow
                   enterDelay={500}
                   leaveDelay={200}
                 >
-                  <ListItem key={pedido.id} disablePadding>
+                  <ListItem disablePadding>
                     <ListItemButton
                       onClick={() => setSelectedPedidoId(pedido.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setSelectedPedidoId(pedido.id);
+                        setAnchorEl(e.currentTarget);
+                      }}
                       sx={{
                         "&:hover": {
                           backgroundColor: theme.palette.action.focusOpacity,
@@ -215,6 +236,35 @@ export default function GerenciarVendas({
                 </Tooltip>
               ))}
             </List>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+              MenuListProps={{
+                "aria-labelledby": "basic-menu",
+              }}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  router.push(`/vendas/${selectedPedidoId}`);
+                }}
+              >
+                <ListItemIcon>
+                  <Edit fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Editar</ListItemText>
+              </MenuItem>
+            </Menu>
 
             <div className="mt-4 space-y-3 text-sm border-t border-border pt-4">
               <Typography

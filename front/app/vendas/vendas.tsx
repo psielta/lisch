@@ -15,17 +15,19 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-
+import { PedidoResponse } from "@/rxjs/pedido/pedido.model";
 function Vendas({
   produtos,
   user,
   categorias,
   adicionais,
+  pedido,
 }: {
   produtos: ProdutoResponse[];
   user: User;
   categorias: ICoreCategoria[];
   adicionais: CategoriaAdicionalResponse[];
+  pedido: PedidoResponse | null | undefined;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,7 +55,7 @@ function Vendas({
       </div>
 
       {/* Main area */}
-      <main className="flex-1 p-6 lg:pr-96">
+      <main className="flex-1 m-3 lg:pr-96">
         <div className="w-full">
           <Card>
             <CardHeader>
@@ -66,7 +68,9 @@ function Vendas({
               <p className="text-muted-foreground">
                 Selecione produtos na barra lateral para começar uma venda.
               </p>
-              <main></main>
+              <main>
+                <pre>{JSON.stringify(pedido, null, 2)}</pre>
+              </main>
             </CardContent>
           </Card>
         </div>

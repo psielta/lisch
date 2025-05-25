@@ -471,7 +471,7 @@ export default function AppSidebarMui() {
               <ListItemButton
                 component={Link}
                 href="/vendas"
-                selected={pathname === "/vendas"}
+                selected={pathname.startsWith("/vendas")}
                 sx={{
                   justifyContent: "center",
                   minHeight: 48,
@@ -521,7 +521,7 @@ export default function AppSidebarMui() {
               <ListItemButton
                 component={Link}
                 href="/gerenciar-vendas"
-                selected={pathname === "/gerenciar-vendas"}
+                selected={pathname.startsWith("/gerenciar-vendas")}
                 sx={{
                   justifyContent: "center",
                   minHeight: 48,

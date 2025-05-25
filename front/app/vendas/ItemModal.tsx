@@ -25,12 +25,14 @@ import {
 } from "@/rxjs/pedido/pedido.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import { buildItemSchema } from "./vendas";
+import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   modalData: { produto: ProdutoResponse; item?: PedidoItemDTO } | null;
   adicionais: CategoriaAdicionalResponse[];
+  categorias: ICoreCategoria[];
   onSave: (item: PedidoItemDTO) => void;
 }
 
@@ -39,6 +41,7 @@ export function ItemModal({
   onClose,
   modalData,
   adicionais,
+  categorias,
   onSave,
 }: Props) {
   if (!modalData) return null;
@@ -199,25 +202,36 @@ export function ItemModal({
                     setFieldValue("id_categoria_opcao", e.target.value)
                   }
                 >
-                  {produto.precos!.map((p) => (
-                    <FormControlLabel
-                      key={p.id_categoria_opcao}
-                      value={p.id_categoria_opcao}
-                      control={<Radio />}
-                      sx={{ mb: 0.5 }}
-                      label={
-                        <div className="flex justify-between w-full">
-                          <span>{p.nome_opcao || `Opção ${p.seq_id}`}</span>
-                          <span className="text-sm ml-3 flex items-center font-medium text-slate-600 dark:text-slate-300">
-                            {Number(p.preco_base).toLocaleString("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            })}
-                          </span>
-                        </div>
-                      }
-                    />
-                  ))}
+                  {produto.precos!.map((p) => {
+                    const categoria = categorias.find((c) =>
+                      c.opcoes?.some((o) => o.id === p.id_categoria_opcao)
+                    );
+                    return (
+                      <FormControlLabel
+                        key={p.id_categoria_opcao}
+                        value={p.id_categoria_opcao}
+                        control={<Radio />}
+                        sx={{ mb: 0.5 }}
+                        label={
+                          <div className="flex justify-between w-full">
+                            <span>
+                              {p.nome_opcao ||
+                                categoria?.opcoes?.find(
+                                  (o) => o.id === p.id_categoria_opcao
+                                )?.nome ||
+                                `Opção ${p.seq_id}`}
+                            </span>
+                            <span className="text-sm ml-3 flex items-center font-medium text-slate-600 dark:text-slate-300">
+                              {Number(p.preco_base).toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              })}
+                            </span>
+                          </div>
+                        }
+                      />
+                    );
+                  })}
                 </RadioGroup>
                 {touched.id_categoria_opcao && errors.id_categoria_opcao && (
                   <Typography variant="caption" color="error">

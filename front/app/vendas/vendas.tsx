@@ -83,46 +83,6 @@ import {
   selectPedidoState,
 } from "@/rxjs/pedido/pedido.slice";
 // Validation Schema
-const pedidoValidationSchema = Yup.object({
-  id: Yup.string().optional().nullable(),
-  id_cliente: Yup.string().required("Cliente é obrigatório"),
-  codigo_pedido: Yup.string().required("Código do pedido é obrigatório"),
-  tipo_entrega: Yup.string()
-    .oneOf(["Delivery", "Balcão", "Retirada"])
-    .required("Tipo de entrega é obrigatório"),
-  categoria_pagamento: Yup.string().oneOf([
-    "Cartão",
-    "Dinheiro",
-    "Pix",
-    "Prazo",
-  ]),
-  forma_pagamento: Yup.string(),
-  observacao: Yup.string(),
-  nome_taxa_entrega: Yup.string(),
-  taxa_entrega: Yup.number()
-    .min(0, "Taxa deve ser maior ou igual a zero")
-    .default(0),
-  id_status: Yup.number().default(2),
-  troco_para: Yup.string(),
-  itens: Yup.array().of(
-    Yup.object({
-      id_categoria: Yup.string().required(),
-      id_categoria_opcao: Yup.string().required(),
-      id_produto: Yup.string().required(),
-      id_produto_2: Yup.string(),
-      observacao: Yup.string(),
-      valor_unitario: Yup.string().required(),
-      quantidade: Yup.number().min(1).required(),
-      adicionais: Yup.array().of(
-        Yup.object({
-          id_adicional_opcao: Yup.string().required(),
-          valor: Yup.string().required(),
-          quantidade: Yup.number().min(1).required(),
-        })
-      ),
-    })
-  ),
-});
 
 interface PedidoFormValues {
   id?: string;
@@ -213,7 +173,60 @@ function Vendas({
   pedido?: PedidoResponse | null;
   defaultCliente: PedidoClienteDTO | null | undefined;
 }) {
+  let pedidoValidationSchema = Yup.object({
+    id: Yup.string().optional().nullable(),
+    id_cliente: Yup.string()
+      .required("Cliente é obrigatório")
+      .test(
+        "cliente-prazo-valido",
+        "Para venda a prazo, selecione um cliente diferente",
+        function (value) {
+          const categoria_pagamento = this.parent.categoria_pagamento;
+          if (categoria_pagamento === "Prazo" && defaultCliente?.id === value) {
+            return false;
+          }
+          return true;
+        }
+      ),
+    codigo_pedido: Yup.string().required("Código do pedido é obrigatório"),
+    tipo_entrega: Yup.string()
+      .oneOf(["Delivery", "Balcão", "Retirada"])
+      .required("Tipo de entrega é obrigatório"),
+    categoria_pagamento: Yup.string().oneOf([
+      "Cartão",
+      "Dinheiro",
+      "Pix",
+      "Prazo",
+    ]),
+    forma_pagamento: Yup.string(),
+    observacao: Yup.string(),
+    nome_taxa_entrega: Yup.string(),
+    taxa_entrega: Yup.number()
+      .min(0, "Taxa deve ser maior ou igual a zero")
+      .default(0),
+    id_status: Yup.number().default(2),
+    troco_para: Yup.string(),
+    itens: Yup.array().of(
+      Yup.object({
+        id_categoria: Yup.string().required(),
+        id_categoria_opcao: Yup.string().required(),
+        id_produto: Yup.string().required(),
+        id_produto_2: Yup.string(),
+        observacao: Yup.string(),
+        valor_unitario: Yup.string().required(),
+        quantidade: Yup.number().min(1).required(),
+        adicionais: Yup.array().of(
+          Yup.object({
+            id_adicional_opcao: Yup.string().required(),
+            valor: Yup.string().required(),
+            quantidade: Yup.number().min(1).required(),
+          })
+        ),
+      })
+    ),
+  });
   const { tenant } = useAuth();
+  console.log(produtos);
   const router = useRouter();
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
@@ -822,7 +835,7 @@ function Vendas({
                       </Grid>
 
                       {/* Forma de Pagamento */}
-                      <Grid size={12}>
+                      <Grid size={12} className="hidden">
                         <TextField
                           size="small"
                           fullWidth

@@ -9,13 +9,21 @@ import React from "react";
 import Vendas from "../vendas";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalListResponse } from "@/rxjs/adicionais/categoria-adicional.model";
-import { PedidoResponse } from "@/rxjs/pedido/pedido.model";
+import { PedidoClienteDTO, PedidoResponse } from "@/rxjs/pedido/pedido.model";
 async function page({ params }: { params: { id: string } }) {
   const { id } = params;
   const user = await apiServer<User>("/users/me");
 
   if (user.admin !== 1 && (user.permission_vendas ?? 0) !== 1) {
     redirect("/sem-permissao");
+  }
+
+  const tenant = await apiServer<Tenant>("/users/tenant/" + user.tenant_id);
+  let defaultCliente: PedidoClienteDTO | null | undefined = null;
+  if (tenant?.id_cliente_padrao) {
+    defaultCliente = await apiServer<PedidoClienteDTO>(
+      "/clientes/" + tenant.id_cliente_padrao
+    );
   }
 
   let page: ProdutoListResponse | null | undefined = null;
@@ -49,7 +57,7 @@ async function page({ params }: { params: { id: string } }) {
       categorias={categorias ?? []}
       adicionais={adicionais?.adicionais ?? []}
       pedido={pedido}
-      defaultCliente={null}
+      defaultCliente={defaultCliente}
     />
   );
 }

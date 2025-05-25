@@ -1,4 +1,4 @@
-// ItemModal.tsx  –  versão “bonita” ------------------------------------------------
+// ItemModal.tsx  –  versão "bonita" ------------------------------------------------
 import {
   Dialog,
   DialogTitle,
@@ -80,6 +80,42 @@ export function ItemModal({
       (s: number, n: any) => s + (n as number),
       0
     );
+
+  /* ---------------- calcula total ---------------- */
+  const calculateModalTotal = (values: any) => {
+    let total = 0;
+
+    // Preço base do produto
+    const preco = produto.precos!.find(
+      (p) => p.id_categoria_opcao === values.id_categoria_opcao
+    );
+    if (preco) {
+      total += parseFloat(preco.preco_base);
+    }
+
+    // Adicionais
+    relevantes.forEach((a) => {
+      if (a.selecao === "U") {
+        const selectedId = values[`u_${a.id}`];
+        const opcao = a.opcoes!.find((o) => o.id === selectedId);
+        if (opcao) {
+          total += parseFloat(opcao.valor);
+        }
+      }
+      if (a.selecao === "Q") {
+        Object.entries(values[`q_${a.id}`] || {}).forEach(([id, qt]: any) => {
+          if (qt > 0) {
+            const opcao = a.opcoes!.find((o) => o.id === id);
+            if (opcao) {
+              total += parseFloat(opcao.valor) * qt;
+            }
+          }
+        });
+      }
+    });
+
+    return total * values.quantidade;
+  };
 
   /* ---------------- component ------------------- */
   return (
@@ -172,7 +208,7 @@ export function ItemModal({
                       label={
                         <div className="flex justify-between w-full">
                           <span>{p.nome_opcao || `Opção ${p.seq_id}`}</span>
-                          <span className="text-sm font-medium">
+                          <span className="text-sm ml-3 flex items-center font-medium text-slate-600 dark:text-slate-300">
                             {Number(p.preco_base).toLocaleString("pt-BR", {
                               style: "currency",
                               currency: "BRL",
@@ -218,7 +254,7 @@ export function ItemModal({
                             label={
                               <div className="flex justify-between w-full">
                                 <span>{o.nome}</span>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-sm ml-3 flex items-center font-medium text-slate-600 dark:text-slate-300">
                                   {Number(o.valor).toLocaleString("pt-BR", {
                                     style: "currency",
                                     currency: "BRL",
@@ -245,7 +281,7 @@ export function ItemModal({
                       <Typography variant="subtitle1">
                         {a.nome}
                         {a.minimo! > 0 && (
-                          <span className="text-gray-500 ml-1">
+                          <span className="ml-1">
                             (MIN {a.minimo} – MAX {a.limite})
                           </span>
                         )}
@@ -264,6 +300,7 @@ export function ItemModal({
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
+                                fontWeight={"bold"}
                               >
                                 {Number(o.valor).toLocaleString("pt-BR", {
                                   style: "currency",
@@ -324,7 +361,7 @@ export function ItemModal({
                   );
                 }
 
-                /* --------- tipo “M” (checkbox) – fica igual ao seu ---------- */
+                /* --------- tipo "M" (checkbox) – fica igual ao seu ---------- */
                 return null;
               })}
 
@@ -382,7 +419,11 @@ export function ItemModal({
               </div>
 
               <Button type="submit" variant="contained" disabled={!isValid}>
-                {modalData.item ? "Atualizar" : "Adicionar"}
+                {modalData.item ? "Atualizar" : "Adicionar"}{" "}
+                {Number(calculateModalTotal(values)).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
               </Button>
             </DialogActions>
           </Form>

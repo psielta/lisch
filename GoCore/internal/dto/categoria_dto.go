@@ -33,7 +33,7 @@ type CoreCategoriaCreateDTO struct {
 
 // CoreCategoriaUpdateDTO representa os dados necessários para atualizar uma categoria existente com suas opções
 type CoreCategoriaUpdateDTO struct {
-	ID                string  `json:"id" validate:"required,uuid4"`
+	ID                string  `json:"id" validate:"required,uuid"`
 	IDCulinaria       int32   `json:"id_culinaria" validate:"required"`
 	Nome              string  `json:"nome" validate:"required,min=2,max=100"`
 	Descricao         *string `json:"descricao"`

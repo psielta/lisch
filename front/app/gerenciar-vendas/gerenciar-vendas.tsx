@@ -22,6 +22,7 @@ import {
   MenuItem,
   ListItemIcon,
   Fab,
+  Button,
 } from "@mui/material";
 import {
   Person,
@@ -334,18 +335,30 @@ export default function GerenciarVendas({
                   >
                     Pedido #{selectedPedido.codigo_pedido}
                   </Typography>
-                  <Chip
-                    icon={getStatusIcon(selectedPedido.tipo_entrega)}
-                    label={selectedPedido.tipo_entrega}
-                    size="small"
-                    sx={{
-                      backgroundColor: getStatusColor(
-                        selectedPedido.tipo_entrega
-                      ),
-                      color: "white",
-                      fontWeight: 500,
-                    }}
-                  />
+                  <div className="flex flex-col items-end gap-2">
+                    <Chip
+                      icon={getStatusIcon(selectedPedido.tipo_entrega)}
+                      label={selectedPedido.tipo_entrega}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(
+                          selectedPedido.tipo_entrega
+                        ),
+                        color: "white",
+                        fontWeight: 500,
+                      }}
+                    />
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Edit fontSize="small" />}
+                      onClick={() =>
+                        router.push(`/vendas/${selectedPedido.id}`)
+                      }
+                    >
+                      Editar
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <AccessTime sx={{ fontSize: 16 }} />
@@ -365,7 +378,28 @@ export default function GerenciarVendas({
                   <Typography variant="h6" className="font-semibold mb-3">
                     Resumo Financeiro
                   </Typography>
+
                   <div className="space-y-2">
+                    {selectedPedido.categoria_pagamento && (
+                      <div className="flex justify-between">
+                        <Typography variant="body2">
+                          Categoria de pagamento
+                        </Typography>
+                        <Typography variant="body2">
+                          {selectedPedido.categoria_pagamento}
+                        </Typography>
+                      </div>
+                    )}
+                    {selectedPedido.forma_pagamento && (
+                      <div className="flex justify-between">
+                        <Typography variant="body2">
+                          Forma de pagamento
+                        </Typography>
+                        <Typography variant="body2">
+                          {selectedPedido.forma_pagamento}
+                        </Typography>
+                      </div>
+                    )}
                     {selectedPedido.taxa_entrega !== "0.00" && (
                       <div className="flex justify-between">
                         <Typography variant="body2">
@@ -377,17 +411,18 @@ export default function GerenciarVendas({
                         </Typography>
                       </div>
                     )}
+
                     {selectedPedido.troco_para &&
-                      selectedPedido.troco_para !== "0.00" && (
-                        <div className="flex justify-between">
-                          <Typography variant="body2">Troco para</Typography>
-                          <Typography variant="body2">
-                            {formatCurrency(
-                              selectedPedido.troco_para ?? "0.00"
-                            )}
-                          </Typography>
-                        </div>
-                      )}
+                    selectedPedido.troco_para !== "0.00" ? (
+                      <div className="flex justify-between">
+                        <Typography variant="body2">Troco para</Typography>
+                        <Typography variant="body2">
+                          {formatCurrency(selectedPedido.troco_para ?? "0.00")}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <></>
+                    )}
                     {selectedPedido.cupom && (
                       <div className="flex justify-between text-green-600">
                         <Typography variant="body2">
@@ -416,30 +451,24 @@ export default function GerenciarVendas({
                       </Typography>
                     </div>
                     {selectedPedido.troco_para &&
-                      selectedPedido.troco_para !== "0.00" && (
-                        <div className="flex justify-between">
-                          <Typography variant="subtitle2">
-                            Valor troco esperado
-                          </Typography>
-                          <Typography variant="subtitle2">
-                            {formatCurrency(
-                              (
-                                -(
-                                  parseFloat(
-                                    selectedPedido.valor_total ?? "0"
-                                  ) +
-                                  parseFloat(selectedPedido.taxa_entrega ?? "0")
-                                ) + parseFloat(selectedPedido.troco_para ?? "0")
-                              ).toString()
-                            )}
-                          </Typography>
-                        </div>
-                      )}
-
-                    {selectedPedido.forma_pagamento && (
-                      <Typography variant="caption" color="text.secondary">
-                        Forma de pagamento: {selectedPedido.forma_pagamento}
-                      </Typography>
+                    selectedPedido.troco_para !== "0.00" ? (
+                      <div className="flex justify-between">
+                        <Typography variant="subtitle2">
+                          Valor troco esperado
+                        </Typography>
+                        <Typography variant="subtitle2">
+                          {formatCurrency(
+                            (
+                              -(
+                                parseFloat(selectedPedido.valor_total ?? "0") +
+                                parseFloat(selectedPedido.taxa_entrega ?? "0")
+                              ) + parseFloat(selectedPedido.troco_para ?? "0")
+                            ).toString()
+                          )}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <></>
                     )}
                   </div>
                 </CardContent>

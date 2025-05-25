@@ -93,6 +93,9 @@ func (api *Api) BindRoutes() {
 					r.Put("/{id}", api.handlePedidos_Put)       // PUT /api/v1/pedidos/{id}
 					r.Delete("/{id}", api.handlePedidos_Delete) // DELETE /api/v1/pedidos/{id}
 
+					// NOVA ROTA PARA DADOS DE EDIÇÃO
+					r.Get("/{id}/dados-edicao", api.handlePedidos_GetDadosEdicao) // GET /api/v1/pedidos/{id}/dados-edicao
+
 					// Operações específicas
 					r.Put("/{id}/status", api.handlePedidos_PutStatus)              // PUT /api/v1/pedidos/{id}/status
 					r.Put("/{id}/pedido-pronto", api.handlePedidos_PutPedidoPronto) // PUT /api/v1/pedidos/{id}/pedido-pronto

@@ -969,3 +969,203 @@ func (api *Api) handlePedidos_Count(w http.ResponseWriter, r *http.Request) {
 
 	jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{"count": total})
 }
+
+// Adicionar ao arquivo pedido_handlers.go
+
+// handlePedidos_GetDadosEdicao busca todos os dados necessários para edição de um pedido
+// Inclui o pedido + categorias, produtos e adicionais relacionados (mesmo se soft-deleted)
+func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "id is required"})
+		return
+	}
+
+	// Validar UUID
+	_, err := uuid.Parse(id)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid id format"})
+		return
+	}
+
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	// 1. Buscar pedido completo com relacionamentos
+	pedido, err := models_sql_boiler.Pedidos(
+		qm.Where("pedidos.id = ?", id),
+		qm.Where("pedidos.tenant_id = ?", tenantID.String()),
+		qm.Where("pedidos.deleted_at IS NULL"),
+		qm.Load(
+			qm.Rels(
+				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
+			),
+			// IMPORTANTE: NÃO filtrar por deleted_at aqui, queremos todos os adicionais
+		),
+		qm.Load(
+			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
+			// IMPORTANTE: NÃO filtrar por deleted_at aqui, queremos todos os itens
+		),
+		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
+		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
+	).One(r.Context(), api.SQLBoilerDB.GetDB())
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{"error": "pedido not found"})
+			return
+		}
+		api.Logger.Error("erro ao buscar pedido", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// 2. Extrair IDs únicos dos itens do pedido
+	categoriaIDs := make([]string, 0)
+	produtoIDs := make([]string, 0)
+	categoriaOpcaoIDs := make([]string, 0)
+	adicionalOpcaoIDs := make([]string, 0)
+
+	if pedido.R != nil && pedido.R.IDPedidoPedidoItens != nil {
+		for _, item := range pedido.R.IDPedidoPedidoItens {
+			// Coletar categoria IDs
+			categoriaIDs = append(categoriaIDs, item.IDCategoria)
+
+			// Coletar produto IDs
+			produtoIDs = append(produtoIDs, item.IDProduto)
+			if item.IDProduto2.Valid {
+				produtoIDs = append(produtoIDs, item.IDProduto2.String)
+			}
+
+			// Coletar categoria opcao IDs (importante para buscar preços corretos)
+			if item.IDCategoriaOpcao.Valid {
+				categoriaOpcaoIDs = append(categoriaOpcaoIDs, item.IDCategoriaOpcao.String)
+			}
+
+			// Coletar adicional opcao IDs
+			if item.R != nil && item.R.IDPedidoItemPedidoItemAdicionais != nil {
+				for _, adicional := range item.R.IDPedidoItemPedidoItemAdicionais {
+					adicionalOpcaoIDs = append(adicionalOpcaoIDs, adicional.IDAdicionalOpcao)
+				}
+			}
+		}
+	}
+
+	// Remover duplicatas
+	categoriaIDs = removeDuplicateStrings(categoriaIDs)
+	produtoIDs = removeDuplicateStrings(produtoIDs)
+	categoriaOpcaoIDs = removeDuplicateStrings(categoriaOpcaoIDs)
+	adicionalOpcaoIDs = removeDuplicateStrings(adicionalOpcaoIDs)
+
+	// 3. Buscar categorias relacionadas (incluindo soft-deleted) com opções específicas
+	var categorias models_sql_boiler.CategoriaSlice
+	if len(categoriaIDs) > 0 {
+		categorias, err = models_sql_boiler.Categorias(
+			qm.WhereIn("id IN ?", convertStringsToInterfaces(categoriaIDs)...),
+			qm.Where("id_tenant = ?", tenantID.String()),
+			// IMPORTANTE: NÃO filtrar por deleted_at - queremos incluir soft-deleted
+			qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes,
+				// Carregar APENAS as opções usadas no pedido
+				qm.WhereIn("id IN ?", convertStringsToInterfaces(categoriaOpcaoIDs)...)),
+		).All(r.Context(), api.SQLBoilerDB.GetDB())
+
+		if err != nil {
+			api.Logger.Error("erro ao buscar categorias", zap.Error(err))
+			jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+			return
+		}
+	}
+
+	// 4. Buscar produtos relacionados (incluindo soft-deleted) com preços específicos
+	var produtos models_sql_boiler.ProdutoSlice
+	if len(produtoIDs) > 0 {
+		produtos, err = models_sql_boiler.Produtos(
+			qm.WhereIn("produtos.id IN ?", convertStringsToInterfaces(produtoIDs)...),
+			// IMPORTANTE: NÃO filtrar por deleted_at - queremos incluir soft-deleted
+			qm.InnerJoin("categorias c on c.id = produtos.id_categoria"),
+			qm.Where("c.id_tenant = ?", tenantID.String()),
+			qm.Load(models_sql_boiler.ProdutoRels.IDProdutoProdutoPrecos,
+				// Carregar APENAS os preços das opções usadas no pedido
+				qm.WhereIn("id_categoria_opcao IN ?", convertStringsToInterfaces(categoriaOpcaoIDs)...),
+				// NÃO filtrar por deleted_at para incluir preços soft-deleted
+				qm.Load(models_sql_boiler.ProdutoPrecoRels.IDCategoriaOpcaoCategoriaOpco)),
+		).All(r.Context(), api.SQLBoilerDB.GetDB())
+
+		if err != nil {
+			api.Logger.Error("erro ao buscar produtos", zap.Error(err))
+			jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+			return
+		}
+	}
+
+	// 5. Buscar adicionais relacionados (incluindo soft-deleted) com opções específicas
+	var adicionais models_sql_boiler.CategoriaAdicionalSlice
+	if len(adicionalOpcaoIDs) > 0 {
+		// Primeiro, buscar os IDs dos adicionais a partir das opções ESPECÍFICAS do pedido
+		adicionalIDs, err := models_sql_boiler.CategoriaAdicionalOpcoes(
+			qm.Select("DISTINCT id_categoria_adicional"),
+			qm.WhereIn("id IN ?", convertStringsToInterfaces(adicionalOpcaoIDs)...),
+			// IMPORTANTE: NÃO filtrar por deleted_at para pegar opções soft-deleted
+		).All(r.Context(), api.SQLBoilerDB.GetDB())
+
+		if err != nil {
+			api.Logger.Error("erro ao buscar IDs de adicionais", zap.Error(err))
+			jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+			return
+		}
+
+		if len(adicionalIDs) > 0 {
+			adicionalIDsStrings := make([]string, len(adicionalIDs))
+			for i, adicionalID := range adicionalIDs {
+				adicionalIDsStrings[i] = adicionalID.IDCategoriaAdicional
+			}
+
+			adicionais, err = models_sql_boiler.CategoriaAdicionais(
+				qm.WhereIn("categoria_adicionais.id IN ?", convertStringsToInterfaces(adicionalIDsStrings)...),
+				// IMPORTANTE: NÃO filtrar por deleted_at para pegar adicionais soft-deleted
+				qm.InnerJoin("categorias c on c.id = categoria_adicionais.id_categoria"),
+				qm.Where("c.id_tenant = ?", tenantID.String()),
+				qm.Load(models_sql_boiler.CategoriaAdicionalRels.IDCategoriaAdicionalCategoriaAdicionalOpcoes,
+					// Carregar APENAS as opções usadas no pedido
+					qm.WhereIn("id IN ?", convertStringsToInterfaces(adicionalOpcaoIDs)...)),
+			).All(r.Context(), api.SQLBoilerDB.GetDB())
+
+			if err != nil {
+				api.Logger.Error("erro ao buscar adicionais", zap.Error(err))
+				jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+				return
+			}
+		}
+	}
+
+	// 6. Converter para DTO e retornar
+	resp := dto.ConvertPedidoToEdicaoResponse(pedido, categorias, produtos, adicionais)
+	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
+}
+
+// Funções auxiliares
+func removeDuplicateStrings(slice []string) []string {
+	keys := make(map[string]bool)
+	result := []string{}
+
+	for _, item := range slice {
+		if !keys[item] {
+			keys[item] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
+}
+
+func convertStringsToInterfaces(strings []string) []interface{} {
+	interfaces := make([]interface{}, len(strings))
+	for i, s := range strings {
+		interfaces[i] = s
+	}
+	return interfaces
+}

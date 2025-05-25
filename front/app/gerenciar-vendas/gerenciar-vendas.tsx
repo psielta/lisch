@@ -21,6 +21,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
+  Fab,
 } from "@mui/material";
 import {
   Person,
@@ -33,9 +34,11 @@ import {
   Restaurant,
   Storefront,
   Edit,
+  Add,
 } from "@mui/icons-material";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+
 export default function GerenciarVendas({
   pedidos,
   produtos,
@@ -679,6 +682,21 @@ export default function GerenciarVendas({
           )}
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="Adicionar novo pedido"
+        onClick={() => router.push("/vendas/new")}
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <Add />
+      </Fab>
     </div>
   );
 }

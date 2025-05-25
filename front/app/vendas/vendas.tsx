@@ -167,7 +167,9 @@ function Vendas({
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>([]);
+  const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
+    pedido?.cliente ? [pedido.cliente] : []
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
   const theme = useTheme();
@@ -633,6 +635,11 @@ function Vendas({
                         <Autocomplete
                           size="small"
                           options={clienteOptions}
+                          value={
+                            clienteOptions.find(
+                              (c) => c.id === formik.values.id_cliente
+                            ) || null
+                          }
                           getOptionLabel={(option) => option.nome_razao_social}
                           getOptionKey={(option) => option.id}
                           onInputChange={async (_, value) => {

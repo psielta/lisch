@@ -98,6 +98,7 @@ interface CreatePedidoRequest {
   id_status: number;
   lat?: string;
   lng?: string;
+  troco_para?: string;
   itens: PedidoItemDTO[];
 }
 
@@ -129,6 +130,7 @@ interface PedidoResponse {
   id_status: number;
   lat?: string;
   lng?: string;
+  troco_para?: string;
   created_at: string;
   updated_at: string;
   deleted_at?: string;

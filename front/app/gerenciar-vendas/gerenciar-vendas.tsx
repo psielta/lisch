@@ -377,6 +377,17 @@ export default function GerenciarVendas({
                         </Typography>
                       </div>
                     )}
+                    {selectedPedido.troco_para &&
+                      selectedPedido.troco_para !== "0.00" && (
+                        <div className="flex justify-between">
+                          <Typography variant="body2">Troco para</Typography>
+                          <Typography variant="body2">
+                            {formatCurrency(
+                              selectedPedido.troco_para ?? "0.00"
+                            )}
+                          </Typography>
+                        </div>
+                      )}
                     {selectedPedido.cupom && (
                       <div className="flex justify-between text-green-600">
                         <Typography variant="body2">
@@ -404,6 +415,27 @@ export default function GerenciarVendas({
                         )}
                       </Typography>
                     </div>
+                    {selectedPedido.troco_para &&
+                      selectedPedido.troco_para !== "0.00" && (
+                        <div className="flex justify-between">
+                          <Typography variant="subtitle2">
+                            Valor troco esperado
+                          </Typography>
+                          <Typography variant="subtitle2">
+                            {formatCurrency(
+                              (
+                                -(
+                                  parseFloat(
+                                    selectedPedido.valor_total ?? "0"
+                                  ) +
+                                  parseFloat(selectedPedido.taxa_entrega ?? "0")
+                                ) + parseFloat(selectedPedido.troco_para ?? "0")
+                              ).toString()
+                            )}
+                          </Typography>
+                        </div>
+                      )}
+
                     {selectedPedido.forma_pagamento && (
                       <Typography variant="caption" color="text.secondary">
                         Forma de pagamento: {selectedPedido.forma_pagamento}

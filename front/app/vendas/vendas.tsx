@@ -103,6 +103,7 @@ const pedidoValidationSchema = Yup.object({
     .min(0, "Taxa deve ser maior ou igual a zero")
     .default(0),
   id_status: Yup.number().default(2),
+  troco_para: Yup.string(),
   itens: Yup.array().of(
     Yup.object({
       id_categoria: Yup.string().required(),
@@ -144,6 +145,7 @@ interface PedidoFormValues {
   id_status: number;
   lat?: string;
   lng?: string;
+  troco_para?: string;
   itens: PedidoItemDTO[];
 }
 
@@ -245,6 +247,7 @@ function Vendas({
     id_status: pedido?.id_status || 2,
     lat: pedido?.lat || "-20.924730",
     lng: pedido?.lng || "-49.454230",
+    troco_para: pedido?.troco_para || "0.00",
     itens:
       pedido?.itens?.map((item) => ({
         id_categoria: item.id_categoria,
@@ -378,7 +381,10 @@ function Vendas({
           dispatch(
             updatePedidoAction.request({
               id: values.id,
-              data: values as UpdatePedidoRequest,
+              data: {
+                ...values,
+                troco_para: (values.troco_para ?? "0.00").toString(),
+              } as UpdatePedidoRequest,
             })
           );
         } else {
@@ -779,7 +785,12 @@ function Vendas({
                           <Select
                             name="tipo_entrega"
                             value={formik.values.tipo_entrega}
-                            onChange={formik.handleChange}
+                            onChange={(e) => {
+                              formik.handleChange(e);
+                              if (e.target.value !== "Delivery") {
+                                formik.setFieldValue("taxa_entrega", "0.00");
+                              }
+                            }}
                             label="Tipo de Entrega"
                           >
                             <MenuItem value="Balcão">Balcão</MenuItem>
@@ -796,7 +807,12 @@ function Vendas({
                           <Select
                             name="categoria_pagamento"
                             value={formik.values.categoria_pagamento}
-                            onChange={formik.handleChange}
+                            onChange={(e) => {
+                              formik.handleChange(e);
+                              if (e.target.value !== "Dinheiro") {
+                                formik.setFieldValue("troco_para", "0.00");
+                              }
+                            }}
                             label="Categoria de Pagamento"
                           >
                             <MenuItem value="Cartão">Cartão</MenuItem>
@@ -819,7 +835,79 @@ function Vendas({
                         />
                       </Grid>
 
-                      {/* Nome da Taxa de Entrega */}
+                      {/* Nome da Taxa de Entrega, Troco Para e Valor do Troco */}
+                      <Grid size={12}>
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Taxa de Entrega"
+                            name="taxa_entrega"
+                            type="number"
+                            value={formik.values.taxa_entrega}
+                            onChange={formik.handleChange}
+                            error={
+                              formik.touched.taxa_entrega &&
+                              Boolean(formik.errors.taxa_entrega)
+                            }
+                            helperText={
+                              formik.touched.taxa_entrega &&
+                              formik.errors.taxa_entrega
+                            }
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  R$
+                                </InputAdornment>
+                              ),
+                            }}
+                            disabled={formik.values.tipo_entrega !== "Delivery"}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Troco Para"
+                            name="troco_para"
+                            type="number"
+                            disabled={
+                              formik.values.categoria_pagamento !== "Dinheiro"
+                            }
+                            value={formik.values.troco_para}
+                            onChange={formik.handleChange}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  R$
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Valor do Troco"
+                            disabled
+                            value={
+                              formik.values.categoria_pagamento === "Dinheiro"
+                                ? (
+                                    parseFloat(
+                                      formik.values.troco_para || "0"
+                                    ) - calculateItemTotal(formik.values)
+                                  ).toFixed(2)
+                                : "0.00"
+                            }
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  R$
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+
+                      {/* Taxa de Entrega */}
                       <Grid size={12}>
                         <TextField
                           size="small"
@@ -828,34 +916,6 @@ function Vendas({
                           name="nome_taxa_entrega"
                           value={formik.values.nome_taxa_entrega}
                           onChange={formik.handleChange}
-                        />
-                      </Grid>
-
-                      {/* Taxa de Entrega */}
-                      <Grid size={12}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label="Taxa de Entrega"
-                          name="taxa_entrega"
-                          type="number"
-                          value={formik.values.taxa_entrega}
-                          onChange={formik.handleChange}
-                          error={
-                            formik.touched.taxa_entrega &&
-                            Boolean(formik.errors.taxa_entrega)
-                          }
-                          helperText={
-                            formik.touched.taxa_entrega &&
-                            formik.errors.taxa_entrega
-                          }
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                R$
-                              </InputAdornment>
-                            ),
-                          }}
                         />
                       </Grid>
 

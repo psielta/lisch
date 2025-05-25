@@ -22,6 +22,15 @@ export interface User {
   permission_cliente: number | null;
 }
 
+export interface Tenant {
+  id: string;
+  name: string | null;
+  plan: string | null;
+  status: string | null;
+  created_at: string | null;
+  id_cliente_padrao: string | null;
+}
+
 interface LoginInput {
   email: string;
   password: string;
@@ -29,6 +38,7 @@ interface LoginInput {
 
 interface AuthCtx {
   user: User | null;
+  tenant: Tenant | null;
   reloadUser: () => void;
   loading: boolean;
   login(data: LoginInput): Promise<void>;
@@ -41,7 +51,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const router = useRouter();
 
   function reloadUser() {
@@ -85,8 +95,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => api.interceptors.response.eject(id);
   }, [logout]);
 
+  async function getTenant() {
+    const { data } = await api.get<Tenant>(`/users/tenant/${user?.tenant_id}`);
+    return data;
+  }
+
+  useEffect(() => {
+    if (user && user.tenant_id) {
+      getTenant()
+        .then((tenant) => setTenant(tenant as Tenant))
+        .catch(() => setTenant(null));
+    }
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, reloadUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, logout, reloadUser, tenant }}
+    >
       {children}
     </AuthContext.Provider>
   );

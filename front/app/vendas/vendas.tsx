@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@/context/auth-context";
+import { useAuth, User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
@@ -204,19 +204,22 @@ function Vendas({
   categorias,
   adicionais,
   pedido,
+  defaultCliente,
 }: {
   produtos: ProdutoResponse[];
   user: User;
   categorias: ICoreCategoria[];
   adicionais: CategoriaAdicionalResponse[];
   pedido?: PedidoResponse | null;
+  defaultCliente: PedidoClienteDTO | null | undefined;
 }) {
+  const { tenant } = useAuth();
   const router = useRouter();
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
-    pedido?.cliente ? [pedido.cliente] : []
+    defaultCliente ? [defaultCliente] : pedido?.cliente ? [pedido.cliente] : []
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
@@ -229,7 +232,7 @@ function Vendas({
   const initialValues: PedidoFormValues = {
     id: pedido?.id || undefined,
     tenant_id: user.tenant_id || "",
-    id_cliente: pedido?.id_cliente || "",
+    id_cliente: pedido?.id_cliente || defaultCliente?.id || "",
     codigo_pedido: pedido?.codigo_pedido || getCodigoPadrao(),
     data_pedido: pedido?.data_pedido || new Date().toISOString(),
     gmt: pedido?.gmt || -3,
@@ -359,7 +362,10 @@ function Vendas({
   useEffect(() => {
     dispatch(clearPedidoState());
   }, [dispatch]);
-  const clienteInicial = pedido?.cliente?.nome_razao_social ?? "";
+  const clienteInicial =
+    pedido?.cliente?.nome_razao_social ??
+    defaultCliente?.nome_razao_social ??
+    "";
   const [inputValue, setInputValue] = useState(clienteInicial);
   const fetchClientes = useMemo(
     () =>
@@ -414,7 +420,7 @@ function Vendas({
                   <h2 className="font-semibold text-xl flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
                     {formik.values.codigo_pedido
-                      ? `Pedido ${formik.values.codigo_pedido}`
+                      ? `Dados do Pedido`
                       : "Novo Pedido"}
                   </h2>
                 </div>
@@ -689,14 +695,6 @@ function Vendas({
                   sx={{ border: "none", backgroundColor: "background.paper" }}
                 >
                   <CardContent sx={{ padding: 3 }}>
-                    <Typography
-                      variant="h6"
-                      className="flex items-center gap-2 mb-6"
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                      Dados do Pedido
-                    </Typography>
-
                     <Grid container spacing={3}>
                       {/* Cliente */}
                       <Grid size={12}>

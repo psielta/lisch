@@ -1,4 +1,4 @@
-import { User } from "@/context/auth-context";
+import { User, Tenant } from "@/context/auth-context";
 import { apiServer } from "@/lib/api-server";
 import {
   ProdutoListResponse,
@@ -17,6 +17,7 @@ async function page({ params }: { params: { id: string } }) {
   if (user.admin !== 1 && (user.permission_vendas ?? 0) !== 1) {
     redirect("/sem-permissao");
   }
+
   let page: ProdutoListResponse | null | undefined = null;
   let categorias: ICoreCategoria[] | null | undefined = null;
   let adicionais: CategoriaAdicionalListResponse | null | undefined = null;
@@ -48,6 +49,7 @@ async function page({ params }: { params: { id: string } }) {
       categorias={categorias ?? []}
       adicionais={adicionais?.adicionais ?? []}
       pedido={pedido}
+      defaultCliente={null}
     />
   );
 }

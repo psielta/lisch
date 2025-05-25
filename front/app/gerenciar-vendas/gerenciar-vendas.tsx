@@ -201,7 +201,12 @@ export default function GerenciarVendas({
                               display: "block",
                             }}
                           >
-                            {formatCurrency(pedido.valor_total)}
+                            {formatCurrency(
+                              (
+                                parseFloat(pedido.valor_total ?? "0") +
+                                parseFloat(pedido.taxa_entrega ?? "0")
+                              ).toString()
+                            )}
                           </Typography>
                         </Box>
                       </Box>
@@ -280,7 +285,115 @@ export default function GerenciarVendas({
                   <span>{formatDateTime(selectedPedido.data_pedido)}</span>
                 </div>
               </div>
+              {/* Resumo Financeiro */}
+              <Card
+                elevation={0}
+                sx={{
+                  backgroundColor: "background.paper",
+                  border: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <CardContent sx={{ padding: 3 }}>
+                  <Typography variant="h6" className="font-semibold mb-3">
+                    Resumo Financeiro
+                  </Typography>
+                  <div className="space-y-2">
+                    {selectedPedido.taxa_entrega !== "0.00" && (
+                      <div className="flex justify-between">
+                        <Typography variant="body2">
+                          {selectedPedido.nome_taxa_entrega ||
+                            "Taxa de entrega"}
+                        </Typography>
+                        <Typography variant="body2">
+                          {formatCurrency(selectedPedido.taxa_entrega)}
+                        </Typography>
+                      </div>
+                    )}
+                    {selectedPedido.cupom && (
+                      <div className="flex justify-between text-green-600">
+                        <Typography variant="body2">
+                          Cupom: {selectedPedido.cupom}
+                        </Typography>
+                        <Typography variant="body2">
+                          Desconto aplicado
+                        </Typography>
+                      </div>
+                    )}
+                    <Divider />
+                    <div className="flex justify-between items-center">
+                      <Typography variant="h6" className="font-bold">
+                        Total
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        className="font-bold text-primary"
+                      >
+                        {formatCurrency(
+                          (
+                            parseFloat(selectedPedido.valor_total ?? "0") +
+                            parseFloat(selectedPedido.taxa_entrega ?? "0")
+                          ).toString()
+                        )}
+                      </Typography>
+                    </div>
+                    {selectedPedido.forma_pagamento && (
+                      <Typography variant="caption" color="text.secondary">
+                        Forma de pagamento: {selectedPedido.forma_pagamento}
+                      </Typography>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
+              {/* Informações Adicionais */}
+              {(selectedPedido.observacao || selectedPedido.prazo) && (
+                <Card
+                  elevation={0}
+                  sx={{
+                    backgroundColor: "background.paper",
+                    border: 1,
+                    borderColor: "divider",
+                  }}
+                >
+                  <CardContent sx={{ padding: 3 }}>
+                    <Typography variant="h6" className="font-semibold mb-3">
+                      Informações Adicionais
+                    </Typography>
+                    <div className="space-y-2">
+                      {selectedPedido.observacao && (
+                        <div>
+                          <Typography
+                            variant="body2"
+                            className="font-medium mb-1"
+                          >
+                            Observações:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {selectedPedido.observacao}
+                          </Typography>
+                        </div>
+                      )}
+                      {selectedPedido.prazo && (
+                        <div>
+                          <Typography
+                            variant="body2"
+                            className="font-medium mb-1"
+                          >
+                            Prazo de entrega:
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {selectedPedido.prazo} minutos
+                            {selectedPedido.prazo_min &&
+                              selectedPedido.prazo_max &&
+                              ` (${selectedPedido.prazo_min} - ${selectedPedido.prazo_max} min)`}
+                          </Typography>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {/* Informações do Cliente */}
               <Card
                 elevation={0}
@@ -384,6 +497,14 @@ export default function GerenciarVendas({
                           )
                         : null;
 
+                      const valorItemComAdicional =
+                        parseFloat(item.valor_unitario) +
+                        (item.adicionais ?? []).reduce(
+                          (acc: number, adicional: any) =>
+                            acc + parseFloat(adicional.valor),
+                          0
+                        );
+
                       return (
                         <div
                           key={index}
@@ -420,17 +541,16 @@ export default function GerenciarVendas({
                                 className="font-medium"
                               >
                                 {item.quantidade}x{" "}
-                                {formatCurrency(item.valor_unitario)}
+                                {formatCurrency(
+                                  valorItemComAdicional.toString()
+                                )}
                               </Typography>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
                               >
                                 {formatCurrency(
-                                  (
-                                    parseFloat(item.valor_unitario) *
-                                    item.quantidade
-                                  ).toString()
+                                  parseFloat(item.valor_unitario).toString()
                                 )}
                               </Typography>
                             </div>
@@ -476,111 +596,6 @@ export default function GerenciarVendas({
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Resumo Financeiro */}
-              <Card
-                elevation={0}
-                sx={{
-                  backgroundColor: "background.paper",
-                  border: 1,
-                  borderColor: "divider",
-                }}
-              >
-                <CardContent sx={{ padding: 3 }}>
-                  <Typography variant="h6" className="font-semibold mb-3">
-                    Resumo Financeiro
-                  </Typography>
-                  <div className="space-y-2">
-                    {selectedPedido.taxa_entrega !== "0.00" && (
-                      <div className="flex justify-between">
-                        <Typography variant="body2">
-                          {selectedPedido.nome_taxa_entrega ||
-                            "Taxa de entrega"}
-                        </Typography>
-                        <Typography variant="body2">
-                          {formatCurrency(selectedPedido.taxa_entrega)}
-                        </Typography>
-                      </div>
-                    )}
-                    {selectedPedido.cupom && (
-                      <div className="flex justify-between text-green-600">
-                        <Typography variant="body2">
-                          Cupom: {selectedPedido.cupom}
-                        </Typography>
-                        <Typography variant="body2">
-                          Desconto aplicado
-                        </Typography>
-                      </div>
-                    )}
-                    <Divider />
-                    <div className="flex justify-between items-center">
-                      <Typography variant="h6" className="font-bold">
-                        Total
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        className="font-bold text-primary"
-                      >
-                        {formatCurrency(selectedPedido.valor_total)}
-                      </Typography>
-                    </div>
-                    {selectedPedido.forma_pagamento && (
-                      <Typography variant="caption" color="text.secondary">
-                        Forma de pagamento: {selectedPedido.forma_pagamento}
-                      </Typography>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Informações Adicionais */}
-              {(selectedPedido.observacao || selectedPedido.prazo) && (
-                <Card
-                  elevation={0}
-                  sx={{
-                    backgroundColor: "background.paper",
-                    border: 1,
-                    borderColor: "divider",
-                  }}
-                >
-                  <CardContent sx={{ padding: 3 }}>
-                    <Typography variant="h6" className="font-semibold mb-3">
-                      Informações Adicionais
-                    </Typography>
-                    <div className="space-y-2">
-                      {selectedPedido.observacao && (
-                        <div>
-                          <Typography
-                            variant="body2"
-                            className="font-medium mb-1"
-                          >
-                            Observações:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {selectedPedido.observacao}
-                          </Typography>
-                        </div>
-                      )}
-                      {selectedPedido.prazo && (
-                        <div>
-                          <Typography
-                            variant="body2"
-                            className="font-medium mb-1"
-                          >
-                            Prazo de entrega:
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {selectedPedido.prazo} minutos
-                            {selectedPedido.prazo_min &&
-                              selectedPedido.prazo_max &&
-                              ` (${selectedPedido.prazo_min} - ${selectedPedido.prazo_max} min)`}
-                          </Typography>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           ) : (
             <div className="h-full flex items-center justify-center">

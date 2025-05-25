@@ -801,8 +801,16 @@ function Vendas({
                         mt: 4,
                         display: "flex",
                         justifyContent: "flex-end",
+                        gap: 2,
                       }}
                     >
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => router.push("/gerenciar-vendas")}
+                      >
+                        Voltar
+                      </Button>
                       <Button
                         type="submit"
                         variant="contained"

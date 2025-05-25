@@ -9,7 +9,6 @@ import {
   CreateClienteDTO,
   UpdateClienteDTO,
 } from "@/rxjs/clientes/cliente.model";
-import { IsGuid } from "@/lib/guidUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { postOrPutClienteAction } from "@/rxjs/clientes/cliente.action";
 import { selectpostOrPutClienteActionState } from "@/rxjs/clientes/cliente.slice";
@@ -152,7 +151,7 @@ function FormCliente({
   const dispatch = useDispatch();
   const router = useRouter();
   const postOrPutClienteState = useSelector(selectpostOrPutClienteActionState);
-  const isEditing = IsGuid(data?.id);
+  const isEditing = (data?.id ?? "") !== "" && (data?.id?.length ?? 0) > 10;
   const isSubmitting = postOrPutClienteState === "pending";
 
   // Valores padrão para o formulário

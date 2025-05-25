@@ -7,8 +7,10 @@ import { ProdutoListResponse } from "@/rxjs/produto/produto.model";
 import { redirect } from "next/navigation";
 import { User } from "@/context/auth-context";
 
-async function page({ params }: { params: { id: string } }) {
-  const id = params.id;
+export default async function Page(
+  { params }: { params: Promise<{ id: string }> } // <-- AQUI
+) {
+  const { id } = await params;
   const user = await apiServer<User>("/users/me");
 
   if (user.admin !== 1 && (user.permission_vendas ?? 0) !== 1) {
@@ -46,5 +48,3 @@ async function page({ params }: { params: { id: string } }) {
     </div>
   );
 }
-
-export default page;

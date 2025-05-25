@@ -15,7 +15,6 @@ import {
   UpdateProdutoRequest,
 } from "@/rxjs/produto/produto.model";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
-import { IsGuid } from "@/lib/guidUtils";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createProdutoAction,
@@ -176,7 +175,7 @@ function FormProduto({
   const router = useRouter();
   const createProdutoState = useSelector(selectCreateProdutoActionState);
   const updateProdutoState = useSelector(selectUpdateProdutoActionState);
-  const isEditing = IsGuid(data?.id);
+  const isEditing = (data?.id ?? "") !== "" && (data?.id?.length ?? 0) > 10;
   const isSubmitting =
     createProdutoState === "pending" || updateProdutoState === "pending";
 
@@ -246,8 +245,10 @@ function FormProduto({
 
   // Função para enviar o formulário
   const onSubmit = (data: ProdutoFormValues) => {
+    debugger;
     const cleanedData = {
       ...data,
+      id: data.id || undefined,
       ordem:
         data.ordem === undefined || isNaN(Number(data.ordem))
           ? undefined
@@ -263,6 +264,7 @@ function FormProduto({
     };
     const payload = {
       ...cleanedData,
+      id: data.id || undefined,
       status: cleanedData.status as 0 | 1, // ⚠  garante 0 | 1
       precos: cleanedData.precos.map((p) => ({
         ...p,
@@ -646,7 +648,6 @@ function FormProduto({
                       render={({ field }) => (
                         <select
                           id={`preco-opcao-${index}`}
-                          disabled={isEditing}
                           className="block w-full disabled:opacity-50 disabled:cursor-not-allowed rounded-md border-0 py-1.5 bg-background text-foreground shadow-sm ring-1 ring-inset ring-input focus:ring-2 focus:ring-inset focus:ring-ring sm:text-sm sm:leading-6"
                           {...field}
                         >

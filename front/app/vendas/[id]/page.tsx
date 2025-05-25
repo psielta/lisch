@@ -10,8 +10,11 @@ import Vendas from "../vendas";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalListResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import { PedidoClienteDTO, PedidoResponse } from "@/rxjs/pedido/pedido.model";
-async function page({ params }: { params: { id: string } }) {
-  const { id } = params;
+
+export default async function Page(
+  { params }: { params: Promise<{ id: string }> } // <-- AQUI
+) {
+  const { id } = await params;
   const user = await apiServer<User>("/users/me");
 
   if (user.admin !== 1 && (user.permission_vendas ?? 0) !== 1) {
@@ -61,5 +64,3 @@ async function page({ params }: { params: { id: string } }) {
     />
   );
 }
-
-export default page;

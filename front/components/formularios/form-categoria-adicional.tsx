@@ -186,6 +186,7 @@ export default function FormCategoriaAdicional({
   const onSubmit = (values: FormValues) => {
     const payloadBase = {
       ...values,
+      id: values.id || undefined,
       codigo_tipo: values.codigo_tipo || undefined,
       minimo: selecao === "Q" ? Number(values.minimo) : undefined,
       limite:

@@ -7,18 +7,11 @@ import FormCategoriaAdicional from "@/components/formularios/form-categoria-adic
 import Loader from "@/components/my/Loader";
 
 export const dynamic = "force-dynamic";
-
-interface PageProps {
-  params: {
-    id: string;
-    idCategoria: string;
-  };
-}
-
-export default async function CategoriaAdicionalEditPage({
-  params,
-}: PageProps) {
-  const { id, idCategoria } = params;
+type Params = Promise<{ id: string; idCategoria: string }>;
+export default async function CategoriaAdicionalEditPage(props: {
+  params: Params;
+}) {
+  const { id, idCategoria } = await props.params;
   console.log("id", id);
   console.log("idCategoria", idCategoria);
   const user = await apiServer<User>("/users/me");

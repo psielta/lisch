@@ -41,6 +41,8 @@ import {
   Grid,
 } from "@mui/material";
 
+import { ItemModal as NewItemModal } from "../vendas/ItemModal";
+
 import {
   Receipt,
   LocalShipping,
@@ -149,6 +151,49 @@ interface ItemModalData {
   produto: ProdutoResponse;
   item?: PedidoItemDTO;
   index?: number;
+}
+
+export function buildItemSchema(adicionais: CategoriaAdicionalResponse[]) {
+  const shape: any = {
+    id_categoria_opcao: Yup.string().required("Selecione o preço"),
+    quantidade: Yup.number().min(1),
+    observacao: Yup.string(),
+  };
+
+  adicionais.forEach((add) => {
+    if (add.selecao === "U") {
+      shape[`u_${add.id}`] = Yup.string()
+        .oneOf(add.opcoes!.map((o) => o.id))
+        .required(`Escolha uma opção em ${add.nome}`);
+    }
+
+    if (add.selecao === "Q") {
+      const opShape: any = {};
+      add.opcoes!.forEach((o) => (opShape[o.id] = Yup.number().min(0)));
+
+      shape[`q_${add.id}`] = Yup.object(opShape).test(
+        "min-max",
+        "Fora do intervalo",
+        function (value) {
+          const total = Object.values(value || {}).reduce(
+            (s, n: any) => s + (n as number),
+            0
+          );
+          if (total < (add.minimo || 0))
+            return this.createError({
+              message: `Mínimo ${add.minimo} em ${add.nome}`,
+            });
+          if (add.limite && total > add.limite)
+            return this.createError({
+              message: `Máximo ${add.limite} em ${add.nome}`,
+            });
+          return true;
+        }
+      );
+    }
+  });
+
+  return Yup.object(shape);
 }
 
 function Vendas({
@@ -954,7 +999,7 @@ function Vendas({
             </aside>
 
             {/* Modal para Adicionar/Editar Item */}
-            <ItemModal
+            <NewItemModal
               open={modalOpen}
               onClose={() => {
                 setModalOpen(false);
@@ -1016,8 +1061,16 @@ function ItemModal({
         setObservacao(modalData.item.observacao || "");
         // Set adicionais state based on existing item
         const addState: { [key: string]: any } = {};
-        modalData.item.adicionais?.forEach((add) => {
+        modalData.item?.adicionais?.forEach((add) => {
           addState[add.id_adicional_opcao] = add.quantidade;
+
+          // preciso descobrir a qual adicional essa opção pertence
+          const grupo = adicionais.find((a) =>
+            a.opcoes?.some((o) => o.id === add.id_adicional_opcao)
+          );
+          if (grupo?.selecao === "U") {
+            addState[`group_${grupo.id}`] = add.id_adicional_opcao; //  ⭐ novo
+          }
         });
         setSelectedAdicionais(addState);
       } else {

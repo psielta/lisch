@@ -5,26 +5,26 @@
 -- ***********************
 
 -- name: CreateTenant :one
-INSERT INTO tenants (name, plan, status)
-VALUES ($1, $2, $3)
-RETURNING id, name, plan, status, created_at;
+INSERT INTO tenants (name, plan, status, id_cliente_padrao)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, plan, status, created_at, id_cliente_padrao;
 
 -- name: GetTenant :one
-SELECT id, name, plan, status, created_at
+SELECT id, name, plan, status, created_at, id_cliente_padrao
 FROM tenants
 WHERE id = $1;
 
 -- name: ListTenants :many
-SELECT id, name, plan, status, created_at
+SELECT id, name, plan, status, created_at, id_cliente_padrao
 FROM tenants
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: UpdateTenant :one
 UPDATE tenants
-SET name = $2, plan = $3, status = $4
+SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5
 WHERE id = $1
-RETURNING id, name, plan, status, created_at;
+RETURNING id, name, plan, status, created_at, id_cliente_padrao;
 
 -- name: DeleteTenant :exec
 DELETE FROM tenants

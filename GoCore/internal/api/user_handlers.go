@@ -296,6 +296,28 @@ func (api *Api) handleGetUserByID(w http.ResponseWriter, r *http.Request) {
 	jsonutils.EncodeJson(w, r, http.StatusOK, userDTO)
 }
 
+func (api *Api) handleGetTenantByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	idUUID, err := uuid.Parse(id)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{
+			"error": "invalid tenant id",
+		})
+		return
+	}
+
+	tenant, err := api.UserService.GetTenantByID(r.Context(), idUUID)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, tenant)
+}
+
 func (api *Api) handleGetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	userIDValue := api.Sessions.Get(r.Context(), "AuthenticatedUserId")
 	if userIDValue == nil {

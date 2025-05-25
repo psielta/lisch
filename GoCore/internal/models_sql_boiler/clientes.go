@@ -206,17 +206,20 @@ var ClienteWhere = struct {
 
 // ClienteRels is where relationship names are stored.
 var ClienteRels = struct {
-	Tenant           string
-	IDClientePedidos string
+	Tenant                 string
+	IDClientePedidos       string
+	IDClientePadraoTenants string
 }{
-	Tenant:           "Tenant",
-	IDClientePedidos: "IDClientePedidos",
+	Tenant:                 "Tenant",
+	IDClientePedidos:       "IDClientePedidos",
+	IDClientePadraoTenants: "IDClientePadraoTenants",
 }
 
 // clienteR is where relationships are stored.
 type clienteR struct {
-	Tenant           *Tenant     `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
-	IDClientePedidos PedidoSlice `boil:"IDClientePedidos" json:"IDClientePedidos" toml:"IDClientePedidos" yaml:"IDClientePedidos"`
+	Tenant                 *Tenant     `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
+	IDClientePedidos       PedidoSlice `boil:"IDClientePedidos" json:"IDClientePedidos" toml:"IDClientePedidos" yaml:"IDClientePedidos"`
+	IDClientePadraoTenants TenantSlice `boil:"IDClientePadraoTenants" json:"IDClientePadraoTenants" toml:"IDClientePadraoTenants" yaml:"IDClientePadraoTenants"`
 }
 
 // NewStruct creates a new relationship struct
@@ -236,6 +239,13 @@ func (r *clienteR) GetIDClientePedidos() PedidoSlice {
 		return nil
 	}
 	return r.IDClientePedidos
+}
+
+func (r *clienteR) GetIDClientePadraoTenants() TenantSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDClientePadraoTenants
 }
 
 // clienteL is where Load methods for each relationship are stored.
@@ -579,6 +589,20 @@ func (o *Cliente) IDClientePedidos(mods ...qm.QueryMod) pedidoQuery {
 	return Pedidos(queryMods...)
 }
 
+// IDClientePadraoTenants retrieves all the tenant's Tenants with an executor via id_cliente_padrao column.
+func (o *Cliente) IDClientePadraoTenants(mods ...qm.QueryMod) tenantQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"tenants\".\"id_cliente_padrao\"=?", o.ID),
+	)
+
+	return Tenants(queryMods...)
+}
+
 // LoadTenant allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (clienteL) LoadTenant(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCliente interface{}, mods queries.Applicator) error {
@@ -812,6 +836,119 @@ func (clienteL) LoadIDClientePedidos(ctx context.Context, e boil.ContextExecutor
 	return nil
 }
 
+// LoadIDClientePadraoTenants allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (clienteL) LoadIDClientePadraoTenants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCliente interface{}, mods queries.Applicator) error {
+	var slice []*Cliente
+	var object *Cliente
+
+	if singular {
+		var ok bool
+		object, ok = maybeCliente.(*Cliente)
+		if !ok {
+			object = new(Cliente)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCliente)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCliente))
+			}
+		}
+	} else {
+		s, ok := maybeCliente.(*[]*Cliente)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCliente)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCliente))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &clienteR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &clienteR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`tenants`),
+		qm.WhereIn(`tenants.id_cliente_padrao in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load tenants")
+	}
+
+	var resultSlice []*Tenant
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice tenants")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on tenants")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for tenants")
+	}
+
+	if len(tenantAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDClientePadraoTenants = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &tenantR{}
+			}
+			foreign.R.IDClientePadraoCliente = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.IDClientePadrao) {
+				local.R.IDClientePadraoTenants = append(local.R.IDClientePadraoTenants, foreign)
+				if foreign.R == nil {
+					foreign.R = &tenantR{}
+				}
+				foreign.R.IDClientePadraoCliente = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetTenant of the cliente to the related item.
 // Sets o.R.Tenant to related.
 // Adds o to related.R.Clientes.
@@ -909,6 +1046,133 @@ func (o *Cliente) AddIDClientePedidos(ctx context.Context, exec boil.ContextExec
 			rel.R.IDClienteCliente = o
 		}
 	}
+	return nil
+}
+
+// AddIDClientePadraoTenants adds the given related objects to the existing relationships
+// of the cliente, optionally inserting them as new records.
+// Appends related to o.R.IDClientePadraoTenants.
+// Sets related.R.IDClientePadraoCliente appropriately.
+func (o *Cliente) AddIDClientePadraoTenants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Tenant) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.IDClientePadrao, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"tenants\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_cliente_padrao"}),
+				strmangle.WhereClause("\"", "\"", 2, tenantPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.IDClientePadrao, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &clienteR{
+			IDClientePadraoTenants: related,
+		}
+	} else {
+		o.R.IDClientePadraoTenants = append(o.R.IDClientePadraoTenants, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &tenantR{
+				IDClientePadraoCliente: o,
+			}
+		} else {
+			rel.R.IDClientePadraoCliente = o
+		}
+	}
+	return nil
+}
+
+// SetIDClientePadraoTenants removes all previously related items of the
+// cliente replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.IDClientePadraoCliente's IDClientePadraoTenants accordingly.
+// Replaces o.R.IDClientePadraoTenants with related.
+// Sets related.R.IDClientePadraoCliente's IDClientePadraoTenants accordingly.
+func (o *Cliente) SetIDClientePadraoTenants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Tenant) error {
+	query := "update \"tenants\" set \"id_cliente_padrao\" = null where \"id_cliente_padrao\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.IDClientePadraoTenants {
+			queries.SetScanner(&rel.IDClientePadrao, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.IDClientePadraoCliente = nil
+		}
+		o.R.IDClientePadraoTenants = nil
+	}
+
+	return o.AddIDClientePadraoTenants(ctx, exec, insert, related...)
+}
+
+// RemoveIDClientePadraoTenants relationships from objects passed in.
+// Removes related items from R.IDClientePadraoTenants (uses pointer comparison, removal does not keep order)
+// Sets related.R.IDClientePadraoCliente.
+func (o *Cliente) RemoveIDClientePadraoTenants(ctx context.Context, exec boil.ContextExecutor, related ...*Tenant) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.IDClientePadrao, nil)
+		if rel.R != nil {
+			rel.R.IDClientePadraoCliente = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("id_cliente_padrao")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.IDClientePadraoTenants {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.IDClientePadraoTenants)
+			if ln > 1 && i < ln-1 {
+				o.R.IDClientePadraoTenants[i] = o.R.IDClientePadraoTenants[ln-1]
+			}
+			o.R.IDClientePadraoTenants = o.R.IDClientePadraoTenants[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

@@ -34,6 +34,7 @@ func (api *Api) BindRoutes() {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)
 					r.Get("/get/{id}", api.handleGetUserByID)
+					r.Get("/tenant/{id}", api.handleGetTenantByID)
 					r.Get("/me", api.handleGetCurrentUser)
 					r.Put("/put/{id}", api.handleUpdateUser)
 					r.Put("/putnopassword/{id}", api.handleUpdateUserNoPassword)

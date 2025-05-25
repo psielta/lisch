@@ -209,3 +209,11 @@ func (us *UserService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+func (us *UserService) GetTenantByID(ctx context.Context, id uuid.UUID) (pgstore.Tenant, error) {
+	tenant, err := us.queries.GetTenant(ctx, id)
+	if err != nil {
+		return pgstore.Tenant{}, err
+	}
+	return tenant, nil
+}

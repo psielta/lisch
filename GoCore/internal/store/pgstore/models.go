@@ -423,11 +423,12 @@ type Session struct {
 }
 
 type Tenant struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Plan      string    `json:"plan"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	ID              uuid.UUID   `json:"id"`
+	Name            string      `json:"name"`
+	Plan            string      `json:"plan"`
+	Status          string      `json:"status"`
+	CreatedAt       time.Time   `json:"created_at"`
+	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
 }
 
 type User struct {

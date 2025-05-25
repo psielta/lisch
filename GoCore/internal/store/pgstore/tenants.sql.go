@@ -60,15 +60,16 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const createTenant = `-- name: CreateTenant :one
 
 
-INSERT INTO tenants (name, plan, status)
-VALUES ($1, $2, $3)
-RETURNING id, name, plan, status, created_at
+INSERT INTO tenants (name, plan, status, id_cliente_padrao)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, plan, status, created_at, id_cliente_padrao
 `
 
 type CreateTenantParams struct {
-	Name   string `json:"name"`
-	Plan   string `json:"plan"`
-	Status string `json:"status"`
+	Name            string      `json:"name"`
+	Plan            string      `json:"plan"`
+	Status          string      `json:"status"`
+	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
 }
 
 // SQLC Queries for Multi-Tenant SaaS
@@ -76,7 +77,12 @@ type CreateTenantParams struct {
 // TENANTS
 // ***********************
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error) {
-	row := q.db.QueryRow(ctx, createTenant, arg.Name, arg.Plan, arg.Status)
+	row := q.db.QueryRow(ctx, createTenant,
+		arg.Name,
+		arg.Plan,
+		arg.Status,
+		arg.IDClientePadrao,
+	)
 	var i Tenant
 	err := row.Scan(
 		&i.ID,
@@ -84,6 +90,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.Plan,
 		&i.Status,
 		&i.CreatedAt,
+		&i.IDClientePadrao,
 	)
 	return i, err
 }
@@ -204,7 +211,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (Product, er
 }
 
 const getTenant = `-- name: GetTenant :one
-SELECT id, name, plan, status, created_at
+SELECT id, name, plan, status, created_at, id_cliente_padrao
 FROM tenants
 WHERE id = $1
 `
@@ -218,6 +225,7 @@ func (q *Queries) GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error) {
 		&i.Plan,
 		&i.Status,
 		&i.CreatedAt,
+		&i.IDClientePadrao,
 	)
 	return i, err
 }
@@ -337,7 +345,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 }
 
 const listTenants = `-- name: ListTenants :many
-SELECT id, name, plan, status, created_at
+SELECT id, name, plan, status, created_at, id_cliente_padrao
 FROM tenants
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -363,6 +371,7 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 			&i.Plan,
 			&i.Status,
 			&i.CreatedAt,
+			&i.IDClientePadrao,
 		); err != nil {
 			return nil, err
 		}
@@ -479,16 +488,17 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
-SET name = $2, plan = $3, status = $4
+SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5
 WHERE id = $1
-RETURNING id, name, plan, status, created_at
+RETURNING id, name, plan, status, created_at, id_cliente_padrao
 `
 
 type UpdateTenantParams struct {
-	ID     uuid.UUID `json:"id"`
-	Name   string    `json:"name"`
-	Plan   string    `json:"plan"`
-	Status string    `json:"status"`
+	ID              uuid.UUID   `json:"id"`
+	Name            string      `json:"name"`
+	Plan            string      `json:"plan"`
+	Status          string      `json:"status"`
+	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
@@ -497,6 +507,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		arg.Name,
 		arg.Plan,
 		arg.Status,
+		arg.IDClientePadrao,
 	)
 	var i Tenant
 	err := row.Scan(
@@ -505,6 +516,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.Plan,
 		&i.Status,
 		&i.CreatedAt,
+		&i.IDClientePadrao,
 	)
 	return i, err
 }

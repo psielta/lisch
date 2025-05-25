@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,87 +24,104 @@ import (
 
 // Tenant is an object representing the database table.
 type Tenant struct {
-	ID        string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name      string    `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Plan      string    `boil:"plan" json:"plan" toml:"plan" yaml:"plan"`
-	Status    string    `boil:"status" json:"status" toml:"status" yaml:"status"`
-	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID              string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name            string      `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Plan            string      `boil:"plan" json:"plan" toml:"plan" yaml:"plan"`
+	Status          string      `boil:"status" json:"status" toml:"status" yaml:"status"`
+	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	IDClientePadrao null.String `boil:"id_cliente_padrao" json:"id_cliente_padrao,omitempty" toml:"id_cliente_padrao" yaml:"id_cliente_padrao,omitempty"`
 
 	R *tenantR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L tenantL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var TenantColumns = struct {
-	ID        string
-	Name      string
-	Plan      string
-	Status    string
-	CreatedAt string
+	ID              string
+	Name            string
+	Plan            string
+	Status          string
+	CreatedAt       string
+	IDClientePadrao string
 }{
-	ID:        "id",
-	Name:      "name",
-	Plan:      "plan",
-	Status:    "status",
-	CreatedAt: "created_at",
+	ID:              "id",
+	Name:            "name",
+	Plan:            "plan",
+	Status:          "status",
+	CreatedAt:       "created_at",
+	IDClientePadrao: "id_cliente_padrao",
 }
 
 var TenantTableColumns = struct {
-	ID        string
-	Name      string
-	Plan      string
-	Status    string
-	CreatedAt string
+	ID              string
+	Name            string
+	Plan            string
+	Status          string
+	CreatedAt       string
+	IDClientePadrao string
 }{
-	ID:        "tenants.id",
-	Name:      "tenants.name",
-	Plan:      "tenants.plan",
-	Status:    "tenants.status",
-	CreatedAt: "tenants.created_at",
+	ID:              "tenants.id",
+	Name:            "tenants.name",
+	Plan:            "tenants.plan",
+	Status:          "tenants.status",
+	CreatedAt:       "tenants.created_at",
+	IDClientePadrao: "tenants.id_cliente_padrao",
 }
 
 // Generated where
 
 var TenantWhere = struct {
-	ID        whereHelperstring
-	Name      whereHelperstring
-	Plan      whereHelperstring
-	Status    whereHelperstring
-	CreatedAt whereHelpertime_Time
+	ID              whereHelperstring
+	Name            whereHelperstring
+	Plan            whereHelperstring
+	Status          whereHelperstring
+	CreatedAt       whereHelpertime_Time
+	IDClientePadrao whereHelpernull_String
 }{
-	ID:        whereHelperstring{field: "\"tenants\".\"id\""},
-	Name:      whereHelperstring{field: "\"tenants\".\"name\""},
-	Plan:      whereHelperstring{field: "\"tenants\".\"plan\""},
-	Status:    whereHelperstring{field: "\"tenants\".\"status\""},
-	CreatedAt: whereHelpertime_Time{field: "\"tenants\".\"created_at\""},
+	ID:              whereHelperstring{field: "\"tenants\".\"id\""},
+	Name:            whereHelperstring{field: "\"tenants\".\"name\""},
+	Plan:            whereHelperstring{field: "\"tenants\".\"plan\""},
+	Status:          whereHelperstring{field: "\"tenants\".\"status\""},
+	CreatedAt:       whereHelpertime_Time{field: "\"tenants\".\"created_at\""},
+	IDClientePadrao: whereHelpernull_String{field: "\"tenants\".\"id_cliente_padrao\""},
 }
 
 // TenantRels is where relationship names are stored.
 var TenantRels = struct {
-	Categorias string
-	Clientes   string
-	Pedidos    string
-	Products   string
-	Users      string
+	IDClientePadraoCliente string
+	Categorias             string
+	Clientes               string
+	Pedidos                string
+	Products               string
+	Users                  string
 }{
-	Categorias: "Categorias",
-	Clientes:   "Clientes",
-	Pedidos:    "Pedidos",
-	Products:   "Products",
-	Users:      "Users",
+	IDClientePadraoCliente: "IDClientePadraoCliente",
+	Categorias:             "Categorias",
+	Clientes:               "Clientes",
+	Pedidos:                "Pedidos",
+	Products:               "Products",
+	Users:                  "Users",
 }
 
 // tenantR is where relationships are stored.
 type tenantR struct {
-	Categorias CategoriaSlice `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
-	Clientes   ClienteSlice   `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
-	Pedidos    PedidoSlice    `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
-	Products   ProductSlice   `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
-	Users      UserSlice      `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
+	IDClientePadraoCliente *Cliente       `boil:"IDClientePadraoCliente" json:"IDClientePadraoCliente" toml:"IDClientePadraoCliente" yaml:"IDClientePadraoCliente"`
+	Categorias             CategoriaSlice `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
+	Clientes               ClienteSlice   `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
+	Pedidos                PedidoSlice    `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
+	Products               ProductSlice   `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
+	Users                  UserSlice      `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
 }
 
 // NewStruct creates a new relationship struct
 func (*tenantR) NewStruct() *tenantR {
 	return &tenantR{}
+}
+
+func (r *tenantR) GetIDClientePadraoCliente() *Cliente {
+	if r == nil {
+		return nil
+	}
+	return r.IDClientePadraoCliente
 }
 
 func (r *tenantR) GetCategorias() CategoriaSlice {
@@ -145,9 +163,9 @@ func (r *tenantR) GetUsers() UserSlice {
 type tenantL struct{}
 
 var (
-	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at"}
+	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at", "id_cliente_padrao"}
 	tenantColumnsWithoutDefault = []string{"name", "plan", "status"}
-	tenantColumnsWithDefault    = []string{"id", "created_at"}
+	tenantColumnsWithDefault    = []string{"id", "created_at", "id_cliente_padrao"}
 	tenantPrimaryKeyColumns     = []string{"id"}
 	tenantGeneratedColumns      = []string{}
 )
@@ -457,6 +475,17 @@ func (q tenantQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (boo
 	return count > 0, nil
 }
 
+// IDClientePadraoCliente pointed to by the foreign key.
+func (o *Tenant) IDClientePadraoCliente(mods ...qm.QueryMod) clienteQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.IDClientePadrao),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Clientes(queryMods...)
+}
+
 // Categorias retrieves all the categorias's Categorias with an executor.
 func (o *Tenant) Categorias(mods ...qm.QueryMod) categoriaQuery {
 	var queryMods []qm.QueryMod
@@ -525,6 +554,130 @@ func (o *Tenant) Users(mods ...qm.QueryMod) userQuery {
 	)
 
 	return Users(queryMods...)
+}
+
+// LoadIDClientePadraoCliente allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (tenantL) LoadIDClientePadraoCliente(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTenant interface{}, mods queries.Applicator) error {
+	var slice []*Tenant
+	var object *Tenant
+
+	if singular {
+		var ok bool
+		object, ok = maybeTenant.(*Tenant)
+		if !ok {
+			object = new(Tenant)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeTenant))
+			}
+		}
+	} else {
+		s, ok := maybeTenant.(*[]*Tenant)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeTenant))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &tenantR{}
+		}
+		if !queries.IsNil(object.IDClientePadrao) {
+			args[object.IDClientePadrao] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &tenantR{}
+			}
+
+			if !queries.IsNil(obj.IDClientePadrao) {
+				args[obj.IDClientePadrao] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`clientes`),
+		qm.WhereIn(`clientes.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Cliente")
+	}
+
+	var resultSlice []*Cliente
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Cliente")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for clientes")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for clientes")
+	}
+
+	if len(clienteAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.IDClientePadraoCliente = foreign
+		if foreign.R == nil {
+			foreign.R = &clienteR{}
+		}
+		foreign.R.IDClientePadraoTenants = append(foreign.R.IDClientePadraoTenants, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.IDClientePadrao, foreign.ID) {
+				local.R.IDClientePadraoCliente = foreign
+				if foreign.R == nil {
+					foreign.R = &clienteR{}
+				}
+				foreign.R.IDClientePadraoTenants = append(foreign.R.IDClientePadraoTenants, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadCategorias allows an eager lookup of values, cached into the
@@ -1089,6 +1242,86 @@ func (tenantL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular b
 		}
 	}
 
+	return nil
+}
+
+// SetIDClientePadraoCliente of the tenant to the related item.
+// Sets o.R.IDClientePadraoCliente to related.
+// Adds o to related.R.IDClientePadraoTenants.
+func (o *Tenant) SetIDClientePadraoCliente(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Cliente) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"tenants\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"id_cliente_padrao"}),
+		strmangle.WhereClause("\"", "\"", 2, tenantPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.IDClientePadrao, related.ID)
+	if o.R == nil {
+		o.R = &tenantR{
+			IDClientePadraoCliente: related,
+		}
+	} else {
+		o.R.IDClientePadraoCliente = related
+	}
+
+	if related.R == nil {
+		related.R = &clienteR{
+			IDClientePadraoTenants: TenantSlice{o},
+		}
+	} else {
+		related.R.IDClientePadraoTenants = append(related.R.IDClientePadraoTenants, o)
+	}
+
+	return nil
+}
+
+// RemoveIDClientePadraoCliente relationship.
+// Sets o.R.IDClientePadraoCliente to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Tenant) RemoveIDClientePadraoCliente(ctx context.Context, exec boil.ContextExecutor, related *Cliente) error {
+	var err error
+
+	queries.SetScanner(&o.IDClientePadrao, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("id_cliente_padrao")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.IDClientePadraoCliente = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.IDClientePadraoTenants {
+		if queries.Equal(o.IDClientePadrao, ri.IDClientePadrao) {
+			continue
+		}
+
+		ln := len(related.R.IDClientePadraoTenants)
+		if ln > 1 && i < ln-1 {
+			related.R.IDClientePadraoTenants[i] = related.R.IDClientePadraoTenants[ln-1]
+		}
+		related.R.IDClientePadraoTenants = related.R.IDClientePadraoTenants[:ln-1]
+		break
+	}
 	return nil
 }
 

@@ -2,10 +2,11 @@
 
 import { User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
+import debounce from "lodash.debounce";
 import {
   List,
   ListItem,
@@ -174,11 +175,15 @@ function Vendas({
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
   const theme = useTheme();
 
+  const getCodigoPadrao = () => {
+    return `P${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}-${new Date().getHours()}${new Date().getMinutes()}${new Date().getSeconds()}`;
+  };
+
   const initialValues: PedidoFormValues = {
     id: pedido?.id || undefined,
     tenant_id: user.tenant_id || "",
     id_cliente: pedido?.id_cliente || "",
-    codigo_pedido: pedido?.codigo_pedido || "",
+    codigo_pedido: pedido?.codigo_pedido || getCodigoPadrao(),
     data_pedido: pedido?.data_pedido || new Date().toISOString(),
     gmt: pedido?.gmt || -3,
     cupom: pedido?.cupom || "",
@@ -193,8 +198,8 @@ function Vendas({
     taxa_entrega: pedido?.taxa_entrega || "0.00",
     nome_taxa_entrega: pedido?.nome_taxa_entrega || "",
     id_status: pedido?.id_status || 2,
-    lat: pedido?.lat || "",
-    lng: pedido?.lng || "",
+    lat: pedido?.lat || "-20.924730",
+    lng: pedido?.lng || "-49.454230",
     itens:
       pedido?.itens?.map((item) => ({
         id_categoria: item.id_categoria,
@@ -306,6 +311,18 @@ function Vendas({
   useEffect(() => {
     dispatch(clearPedidoState());
   }, [dispatch]);
+  const clienteInicial = pedido?.cliente?.nome_razao_social ?? "";
+  const [inputValue, setInputValue] = useState(clienteInicial);
+  const fetchClientes = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
+          `/clientes?nome=${query}`
+        );
+        setClienteOptions(resp.data.items);
+      }, 300),
+    []
+  );
 
   return (
     <Formik
@@ -323,7 +340,7 @@ function Vendas({
           dispatch(createPedidoAction.request(values));
         }
       }}
-      enableReinitialize
+      // enableReinitialize
     >
       {(formik: FormikProps<PedidoFormValues>) => {
         // Efeito para lidar com o sucesso no envio do formulário
@@ -638,23 +655,44 @@ function Vendas({
                           value={
                             clienteOptions.find(
                               (c) => c.id === formik.values.id_cliente
-                            ) || null
+                            ) ?? null
                           }
-                          getOptionLabel={(option) => option.nome_razao_social}
+                          inputValue={inputValue}
                           getOptionKey={(option) => option.id}
-                          onInputChange={async (_, value) => {
-                            if (value.length > 2) {
-                              const clientes = await getClienteBySearch(value);
-                              setClienteOptions(clientes);
+                          onInputChange={(_, newInput, reason) => {
+                            if (reason === "input") {
+                              setInputValue(newInput);
+                              if (newInput.length >= 3) fetchClientes(newInput);
                             }
                           }}
-                          onChange={(_, value) => {
-                            formik.setFieldValue("id_cliente", value?.id || "");
+                          onChange={(_, option) => {
+                            formik.setFieldValue(
+                              "id_cliente",
+                              option?.id ?? ""
+                            );
+                            setInputValue(
+                              option ? option.nome_razao_social : ""
+                            ); // << aqui!
+                          }}
+                          getOptionLabel={(opt) => opt.nome_razao_social}
+                          isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                          loading={
+                            inputValue.length >= 3 &&
+                            clienteOptions.length === 0
+                          }
+                          onBlur={() => {
+                            const selecionado = clienteOptions.find(
+                              (c) => c.id === formik.values.id_cliente
+                            );
+                            setInputValue(
+                              selecionado ? selecionado.nome_razao_social : ""
+                            );
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Cliente"
+                              required
                               error={
                                 formik.touched.id_cliente &&
                                 Boolean(formik.errors.id_cliente)
@@ -663,12 +701,8 @@ function Vendas({
                                 formik.touched.id_cliente &&
                                 formik.errors.id_cliente
                               }
-                              required
                             />
                           )}
-                          isOptionEqualToValue={(option, value) =>
-                            option.id === value.id
-                          }
                         />
                       </Grid>
 

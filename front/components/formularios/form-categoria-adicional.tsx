@@ -165,7 +165,7 @@ export default function FormCategoriaAdicional({
       dispatch(clearState());
       toast.success("Adicional salvo com sucesso");
       router.push(
-        `/cadastros/categorias/${defaultIdCategoria}/categoria-adicional`
+        `/cadastros/categorias/${defaultValues.id_categoria}/categoria-adicional`
       );
     }
   }, [crudState, dispatch, router, defaultIdCategoria]);

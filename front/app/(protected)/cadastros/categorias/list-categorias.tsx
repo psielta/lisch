@@ -9,10 +9,12 @@ import {
   DropdownItem,
   DropdownMenu,
 } from "@/components/catalyst-ui-kit/dropdown";
+import { Box, Button as ButtonMui } from "@mui/material";
 import Link from "next/link";
 import {
   EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 import {
   ArrowLongLeftIcon,
@@ -69,33 +71,33 @@ export default function CategoriaTableClient({
   const columns = [
     columnHelper.display({
       id: "actions",
-      size: 75,
+      size: 50,
       header: "Ações",
       cell: (info) => (
         <div className="flex items-center justify-center">
-          <Dropdown>
-            <DropdownButton>
-              <EllipsisHorizontalIcon className="h-5 w-5" />
-            </DropdownButton>
-            <DropdownMenu>
-              <DropdownItem
-                onClick={() =>
-                  router.push(`/cadastros/categorias/${info.row.original.id}`)
-                }
-              >
-                Editar
-              </DropdownItem>
-              <DropdownItem
-                onClick={() => {
-                  router.push(
-                    `/cadastros/categorias/${info.row.original.id}/categoria-adicional`
-                  );
-                }}
-              >
-                Adicionais
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ButtonMui
+              variant="outlined"
+              size="small"
+              onClick={() =>
+                router.push(`/cadastros/categorias/${info.row.original.id}`)
+              }
+              startIcon={<PencilIcon className="h-3 w-3" />}
+            >
+              Editar
+            </ButtonMui>
+            <ButtonMui
+              variant="contained"
+              size="small"
+              onClick={() =>
+                router.push(
+                  `/cadastros/categorias/${info.row.original.id}/categoria-adicional`
+                )
+              }
+            >
+              Adicionais
+            </ButtonMui>
+          </Box>
         </div>
       ),
     }),

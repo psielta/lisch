@@ -169,6 +169,9 @@ export default function GerenciarVendas({
                     <ListItem disablePadding>
                       <ListItemButton
                         onClick={() => setSelectedPedidoId(pedido.id)}
+                        onDoubleClick={() =>
+                          router.push(`/vendas/${pedido.id}`)
+                        }
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setSelectedPedidoId(pedido.id);

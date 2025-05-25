@@ -13,7 +13,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
+import { Box, Button as ButtonMui } from "@mui/material";
 import { User } from "@/context/auth-context";
 import { useAppDispatch } from "@/rxjs/hooks";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
@@ -279,30 +279,30 @@ function TableCategoriaAdicional({
       id: "actions",
       header: "Ações",
       cell: (info) => (
-        <Dropdown>
-          <DropdownButton>
-            <EllipsisHorizontalIcon className="h-5 w-5" />
-          </DropdownButton>
-          <DropdownMenu>
-            <DropdownItem
-              onClick={() =>
-                router.push(
-                  `/cadastros/categorias/${idCategoria}/categoria-adicional/${info.row.original.id}`
-                )
-              }
-            >
-              Editar
-            </DropdownItem>
-            <DropdownItem
-              onClick={() => {
-                setSelectedAdicional(info.row.original);
-                setDeleteDialogOpen(true);
-              }}
-            >
-              Excluir
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <ButtonMui
+            variant="outlined"
+            size="small"
+            onClick={() =>
+              router.push(
+                `/cadastros/categorias/${idCategoria}/categoria-adicional/${info.row.original.id}`
+              )
+            }
+          >
+            Editar
+          </ButtonMui>
+          <ButtonMui
+            variant="outlined"
+            size="small"
+            color="error"
+            onClick={() => {
+              setSelectedAdicional(info.row.original);
+              setDeleteDialogOpen(true);
+            }}
+          >
+            Excluir
+          </ButtonMui>
+        </Box>
       ),
     }),
   ];

@@ -41,14 +41,18 @@ export default function GerenciarVendas({
   produtos,
   categorias,
   adicionais,
+  idPedidoSelecionado,
 }: {
   pedidos: PedidoResponse[];
   produtos: ProdutoResponse[];
   categorias: ICoreCategoria[];
   adicionais: CategoriaAdicionalResponse[];
+  idPedidoSelecionado: string | null;
 }) {
   const theme = useTheme();
-  const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(null);
+  const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(
+    idPedidoSelecionado
+  );
   const router = useRouter();
 
   // *** Menu
@@ -143,98 +147,105 @@ export default function GerenciarVendas({
             </div>
 
             <List sx={{ padding: 0, flex: 1, overflowY: "auto" }}>
-              {pedidos.map((pedido) => (
-                <Tooltip
-                  key={pedido.id}
-                  title={pedido.tipo_entrega}
-                  placement="right"
-                  arrow
-                  enterDelay={500}
-                  leaveDelay={200}
-                >
-                  <ListItem disablePadding>
-                    <ListItemButton
-                      onClick={() => setSelectedPedidoId(pedido.id)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setSelectedPedidoId(pedido.id);
-                        setAnchorEl(e.currentTarget);
-                      }}
-                      sx={{
-                        "&:hover": {
-                          backgroundColor: theme.palette.action.focusOpacity,
-                          color: theme.palette.action.active,
-                        },
-                        backgroundColor:
-                          selectedPedidoId === pedido.id
-                            ? theme.palette.primary.main
-                            : "transparent",
-                        color:
-                          selectedPedidoId === pedido.id
-                            ? theme.palette.primary.contrastText
-                            : getStatusColor(pedido.tipo_entrega),
-                        padding: "16px",
-                        borderRadius: "12px",
-                        marginBottom: "8px",
-                        border:
-                          selectedPedidoId === pedido.id
-                            ? `2px solid ${theme.palette.primary.main}`
-                            : "2px solid transparent",
-                        transition: "all 0.2s ease-in-out",
-                      }}
-                    >
-                      <Box
+              {pedidos
+                .sort((a, b) => {
+                  return (
+                    new Date(b.updated_at).getTime() -
+                    new Date(a.updated_at).getTime()
+                  );
+                })
+                .map((pedido) => (
+                  <Tooltip
+                    key={pedido.id}
+                    title={pedido.tipo_entrega}
+                    placement="right"
+                    arrow
+                    enterDelay={500}
+                    leaveDelay={200}
+                  >
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={() => setSelectedPedidoId(pedido.id)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setSelectedPedidoId(pedido.id);
+                          setAnchorEl(e.currentTarget);
+                        }}
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          width: "100%",
+                          "&:hover": {
+                            backgroundColor: theme.palette.action.focusOpacity,
+                            color: theme.palette.action.active,
+                          },
+                          backgroundColor:
+                            selectedPedidoId === pedido.id
+                              ? theme.palette.primary.main
+                              : "transparent",
+                          color:
+                            selectedPedidoId === pedido.id
+                              ? theme.palette.primary.contrastText
+                              : getStatusColor(pedido.tipo_entrega),
+                          padding: "16px",
+                          borderRadius: "12px",
+                          marginBottom: "8px",
+                          border:
+                            selectedPedidoId === pedido.id
+                              ? `2px solid ${theme.palette.primary.main}`
+                              : "2px solid transparent",
+                          transition: "all 0.2s ease-in-out",
                         }}
                       >
-                        {getStatusIcon(pedido.tipo_entrega)}
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: "14px",
-                              color: "inherit",
-                            }}
-                          >
-                            #{pedido.codigo_pedido}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontSize: "12px",
-                              opacity: 0.8,
-                              color: "inherit",
-                            }}
-                          >
-                            {pedido.cliente.nome_razao_social}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontSize: "11px",
-                              opacity: 0.7,
-                              color: "inherit",
-                              display: "block",
-                            }}
-                          >
-                            {formatCurrency(
-                              (
-                                parseFloat(pedido.valor_total ?? "0") +
-                                parseFloat(pedido.taxa_entrega ?? "0")
-                              ).toString()
-                            )}
-                          </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            width: "100%",
+                          }}
+                        >
+                          {getStatusIcon(pedido.tipo_entrega)}
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              variant="subtitle2"
+                              sx={{
+                                fontWeight: 600,
+                                fontSize: "14px",
+                                color: "inherit",
+                              }}
+                            >
+                              #{pedido.codigo_pedido}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: "12px",
+                                opacity: 0.8,
+                                color: "inherit",
+                              }}
+                            >
+                              {pedido.cliente.nome_razao_social}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: "11px",
+                                opacity: 0.7,
+                                color: "inherit",
+                                display: "block",
+                              }}
+                            >
+                              {formatCurrency(
+                                (
+                                  parseFloat(pedido.valor_total ?? "0") +
+                                  parseFloat(pedido.taxa_entrega ?? "0")
+                                ).toString()
+                              )}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </ListItemButton>
-                  </ListItem>
-                </Tooltip>
-              ))}
+                      </ListItemButton>
+                    </ListItem>
+                  </Tooltip>
+                ))}
             </List>
 
             <Menu

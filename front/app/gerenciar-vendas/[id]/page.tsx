@@ -1,13 +1,14 @@
 import { apiServer } from "@/lib/api-server";
 import { PedidoListResponse } from "@/rxjs/pedido/pedido.model";
-import GerenciarVendas from "./gerenciar-vendas";
+import GerenciarVendas from "../gerenciar-vendas";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalListResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import { ProdutoListResponse } from "@/rxjs/produto/produto.model";
 import { redirect } from "next/navigation";
 import { User } from "@/context/auth-context";
 
-async function page() {
+async function page({ params }: { params: { id: string } }) {
+  const id = params.id;
   const user = await apiServer<User>("/users/me");
 
   if (user.admin !== 1 && (user.permission_vendas ?? 0) !== 1) {
@@ -40,7 +41,7 @@ async function page() {
         produtos={page?.produtos ?? []}
         categorias={categorias ?? []}
         adicionais={adicionais?.adicionais ?? []}
-        idPedidoSelecionado={null}
+        idPedidoSelecionado={id}
       />
     </div>
   );

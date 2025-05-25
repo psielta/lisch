@@ -104,7 +104,7 @@ type PedidoCreateDTO struct {
 	DataPedido         time.Time          `json:"data_pedido"        validate:"required"`
 	GMT                int16              `json:"gmt"                validate:"required"`
 	Cupom              *string            `json:"cupom,omitempty"`
-	TipoEntrega        string             `json:"tipo_entrega"       validate:"required,oneof=Delivery Retirada"`
+	TipoEntrega        string             `json:"tipo_entrega"       validate:"required,oneof=Delivery Retirada Balcão"`
 	Prazo              *int               `json:"prazo,omitempty"`
 	PrazoMin           *int               `json:"prazo_min,omitempty"`
 	PrazoMax           *int               `json:"prazo_max,omitempty"`

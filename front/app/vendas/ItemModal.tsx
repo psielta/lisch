@@ -1,30 +1,35 @@
+// ItemModal.tsx  –  versão “bonita” ------------------------------------------------
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Typography,
-  RadioGroup,
+  IconButton,
   FormControlLabel,
   Radio,
+  RadioGroup,
+  Checkbox,
   TextField,
   Button,
-  IconButton,
+  Typography,
+  Divider,
+  Box,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { Add, Remove } from "@mui/icons-material";
-import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
-import { PedidoItemDTO } from "@/rxjs/pedido/pedido.model";
+import { X, Plus, Minus } from "lucide-react";
+import { Field, Formik, Form, ErrorMessage } from "formik";
 
-interface ItemModalProps {
+import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
+import {
+  PedidoItemAdicionalDTO,
+  PedidoItemDTO,
+} from "@/rxjs/pedido/pedido.model";
+import { ProdutoResponse } from "@/rxjs/produto/produto.model";
+import { buildItemSchema } from "./vendas";
+
+interface Props {
   open: boolean;
   onClose: () => void;
-  modalData: {
-    produto: ProdutoResponse;
-    item?: PedidoItemDTO;
-    index?: number;
-  } | null;
+  modalData: { produto: ProdutoResponse; item?: PedidoItemDTO } | null;
   adicionais: CategoriaAdicionalResponse[];
   onSave: (item: PedidoItemDTO) => void;
 }
@@ -35,354 +40,354 @@ export function ItemModal({
   modalData,
   adicionais,
   onSave,
-}: ItemModalProps) {
-  const [selectedPreco, setSelectedPreco] = useState<string>("");
-  const [selectedAdicionais, setSelectedAdicionais] = useState<{
-    [key: string]: any;
-  }>({});
-  const [quantidade, setQuantidade] = useState<number>(1);
-  const [observacao, setObservacao] = useState<string>("");
-
-  // Reset modal state when opening
-  useEffect(() => {
-    if (open && modalData) {
-      if (modalData.item) {
-        // Editing existing item
-        setSelectedPreco(modalData.item.id_categoria_opcao || "");
-        setQuantidade(modalData.item.quantidade);
-        setObservacao(modalData.item.observacao || "");
-        // Set adicionais state based on existing item
-        const addState: { [key: string]: any } = {};
-        modalData.item?.adicionais?.forEach((add) => {
-          addState[add.id_adicional_opcao] = add.quantidade;
-
-          // preciso descobrir a qual adicional essa opção pertence
-          const grupo = adicionais.find((a) =>
-            a.opcoes?.some((o) => o.id === add.id_adicional_opcao)
-          );
-          if (grupo?.selecao === "U") {
-            addState[`group_${grupo.id}`] = add.id_adicional_opcao;
-          }
-        });
-        setSelectedAdicionais(addState);
-      } else {
-        // Adding new item
-        setSelectedPreco("");
-        setSelectedAdicionais({});
-        setQuantidade(1);
-        setObservacao("");
-      }
-    }
-  }, [open, modalData, adicionais]);
-
+}: Props) {
   if (!modalData) return null;
+  const { produto } = modalData;
 
-  const relevantAdicionais = adicionais.filter(
-    (a) => a.id_categoria === modalData.produto.id_categoria
+  /* ---------------- Yup schema + initialValues ------------------- */
+  const relevantes = adicionais.filter(
+    (a) => a.id_categoria === produto.id_categoria
   );
+  const schema = buildItemSchema(relevantes);
 
-  const formatCurrency = (value: string | number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(typeof value === "string" ? parseFloat(value) : value);
+  const initial: any = {
+    id_categoria_opcao: modalData.item?.id_categoria_opcao ?? "",
+    quantidade: modalData.item?.quantidade ?? 1,
+    observacao: modalData.item?.observacao ?? "",
   };
+  relevantes.forEach((a) => {
+    if (a.selecao === "U") {
+      const sel = modalData.item?.adicionais?.find((ad) =>
+        a.opcoes?.some((o) => o.id === ad.id_adicional_opcao)
+      );
+      initial[`u_${a.id}`] = sel?.id_adicional_opcao ?? "";
+    }
+    if (a.selecao === "Q") {
+      const obj: any = {};
+      a.opcoes!.forEach((o) => {
+        const ad = modalData.item?.adicionais?.find(
+          (x) => x.id_adicional_opcao === o.id
+        );
+        obj[o.id] = ad?.quantidade ?? 0;
+      });
+      initial[`q_${a.id}`] = obj;
+    }
+  });
 
-  const calculateModalTotal = () => {
-    if (!selectedPreco) return 0;
-
-    const precoBase =
-      modalData.produto.precos?.find(
-        (p) => p.id_categoria_opcao === selectedPreco
-      )?.preco_base || "0";
-
-    const adicionaisTotal = Object.entries(selectedAdicionais).reduce(
-      (total, [key, value]) => {
-        if (key.startsWith("group_")) return total;
-
-        const adicionalOpcao = relevantAdicionais
-          .flatMap((a) => a.opcoes || [])
-          .find((o) => o.id === key);
-
-        if (adicionalOpcao) {
-          return total + parseFloat(adicionalOpcao.valor) * value;
-        }
-        return total;
-      },
+  /* ---------------- helpers p/ Q ---------------- */
+  const sumQ = (vals: any, a: CategoriaAdicionalResponse) =>
+    Object.values(vals[`q_${a.id}`] || {}).reduce(
+      (s: number, n: any) => s + (n as number),
       0
     );
 
-    return (parseFloat(precoBase) + adicionaisTotal) * quantidade;
-  };
-
-  const handleSave = () => {
-    if (!selectedPreco) return;
-
-    const precoSelecionado = modalData.produto.precos?.find(
-      (p) => p.id_categoria_opcao === selectedPreco
-    );
-
-    if (!precoSelecionado) return;
-
-    const adicionaisArray = Object.entries(selectedAdicionais)
-      .filter(([key]) => !key.startsWith("group_"))
-      .filter(([, value]) => value > 0)
-      .map(([key, value]) => {
-        const adicionalOpcao = relevantAdicionais
-          .flatMap((a) => a.opcoes || [])
-          .find((o) => o.id === key);
-
-        return {
-          id_adicional_opcao: key,
-          valor: adicionalOpcao?.valor || "0",
-          quantidade: value,
-        };
-      });
-
-    const item: PedidoItemDTO = {
-      id_categoria: modalData.produto.id_categoria,
-      id_categoria_opcao: selectedPreco,
-      id_produto: modalData.produto.id,
-      valor_unitario: precoSelecionado.preco_base,
-      quantidade,
-      observacao: observacao || undefined,
-      adicionais: adicionaisArray,
-    };
-
-    onSave(item);
-  };
-
-  const totalQ = (adicional: CategoriaAdicionalResponse) => {
-    return Object.entries(selectedAdicionais)
-      .filter(([key]) => {
-        const opcao = adicional.opcoes?.find((o) => o.id === key);
-        return opcao !== undefined;
-      })
-      .reduce((sum, [, value]) => sum + value, 0);
-  };
-
-  const renderAdicionalControl = (adicional: CategoriaAdicionalResponse) => {
-    if (adicional.selecao === "U") {
-      return (
-        <div key={adicional.id} className="mb-4">
-          <Typography variant="h6" className="mb-2">
-            {adicional.nome}
-          </Typography>
-          <RadioGroup
-            value={selectedAdicionais[`group_${adicional.id}`] || ""}
-            onChange={(e) => {
-              const newState = { ...selectedAdicionais };
-              // Remove previous selection if exists
-              Object.keys(newState).forEach((key) => {
-                if (key.startsWith("group_")) delete newState[key];
-              });
-              // Add new selection
-              newState[`group_${adicional.id}`] = e.target.value;
-              newState[e.target.value] = 1;
-              setSelectedAdicionais(newState);
-            }}
-          >
-            {adicional.opcoes?.map((opcao) => (
-              <FormControlLabel
-                key={opcao.id}
-                value={opcao.id}
-                control={<Radio />}
-                label={
-                  <div className="flex justify-between items-center w-full">
-                    <span>{opcao.nome}</span>
-                    <span className="text-sm font-medium">
-                      {formatCurrency(opcao.valor)}
-                    </span>
-                  </div>
-                }
-              />
-            ))}
-          </RadioGroup>
-        </div>
-      );
-    }
-
-    if (adicional.selecao === "Q") {
-      const total = totalQ(adicional);
-      return (
-        <div key={adicional.id} className="mb-4">
-          <Typography variant="h6" className="mb-2">
-            {adicional.nome}
-          </Typography>
-          <div className="space-y-2">
-            {adicional.opcoes?.map((opcao) => {
-              const currentValue = selectedAdicionais[opcao.id] || 0;
-              const disabled =
-                adicional.limite &&
-                total >= adicional.limite &&
-                currentValue === 0;
-
-              return (
-                <div
-                  key={opcao.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex-1">
-                    <Typography variant="body2">{opcao.nome}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatCurrency(opcao.valor)}
-                    </Typography>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        const newValue = Math.max(0, currentValue - 1);
-                        setSelectedAdicionais({
-                          ...selectedAdicionais,
-                          [opcao.id]: newValue,
-                        });
-                      }}
-                      disabled={currentValue === 0}
-                    >
-                      <Remove fontSize="small" />
-                    </IconButton>
-                    <Typography
-                      variant="body2"
-                      sx={{ minWidth: 20, textAlign: "center" }}
-                    >
-                      {currentValue}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        if (!adicional.limite || total < adicional.limite) {
-                          setSelectedAdicionais({
-                            ...selectedAdicionais,
-                            [opcao.id]: currentValue + 1,
-                          });
-                        }
-                      }}
-                      disabled={
-                        disabled ||
-                        (adicional.limite ? total >= adicional.limite : false)
-                      }
-                    >
-                      <Add fontSize="small" />
-                    </IconButton>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
+  /* ---------------- component ------------------- */
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Typography variant="h6">
-          {modalData.item ? "Editar Item" : "Adicionar Item"}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {modalData.produto.nome}
-        </Typography>
-      </DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <Formik
+        initialValues={initial}
+        validationSchema={schema}
+        validateOnMount
+        onSubmit={(vals) => {
+          /* monta DTO ---------------------------------------------------- */
+          const adArr: PedidoItemAdicionalDTO[] = [];
 
-      <DialogContent dividers>
-        <div className="space-y-4">
-          {/* Preços */}
-          {modalData.produto.precos && modalData.produto.precos.length > 0 && (
-            <div>
-              <Typography variant="h6" className="mb-2">
-                Escolha o preço
-              </Typography>
-              <RadioGroup
-                value={selectedPreco}
-                onChange={(e) => setSelectedPreco(e.target.value)}
-              >
-                {modalData.produto.precos.map((preco) => (
-                  <FormControlLabel
-                    key={preco.id_categoria_opcao}
-                    value={preco.id_categoria_opcao}
-                    control={<Radio />}
-                    label={
-                      <div className="flex justify-between items-center w-full">
-                        <span>
-                          {preco.nome_opcao || `Opção ${preco.seq_id}`}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {formatCurrency(preco.preco_base)}
-                        </span>
-                      </div>
-                    }
-                  />
-                ))}
-              </RadioGroup>
-            </div>
-          )}
-
-          {/* Adicionais */}
-          {relevantAdicionais.map((adicional) =>
-            renderAdicionalControl(adicional)
-          )}
-
-          {/* Observação */}
-          <div>
-            <Typography variant="h6" className="mb-2">
-              Alguma observação?
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              placeholder="Qual a sua observação?"
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              inputProps={{ maxLength: 1000 }}
-            />
-          </div>
-        </div>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 3, justifyContent: "space-between" }}>
-        <div className="flex items-center gap-2">
-          <IconButton
-            onClick={() => setQuantidade(Math.max(1, quantidade - 1))}
-            disabled={quantidade <= 1}
-          >
-            <Remove />
-          </IconButton>
-          <TextField
-            size="small"
-            type="number"
-            value={quantidade}
-            onChange={(e) =>
-              setQuantidade(Math.max(1, parseInt(e.target.value) || 1))
+          relevantes.forEach((a) => {
+            if (a.selecao === "U") {
+              const id = vals[`u_${a.id}`];
+              if (id) {
+                const opc = a.opcoes!.find((o) => o.id === id)!;
+                adArr.push({
+                  id_adicional_opcao: id,
+                  valor: opc.valor,
+                  quantidade: 1,
+                });
+              }
             }
-            inputProps={{
-              min: 1,
-              max: 100,
-              style: { textAlign: "center", width: "60px" },
-            }}
-          />
-          <IconButton
-            onClick={() => setQuantidade(Math.min(100, quantidade + 1))}
-            disabled={quantidade >= 100}
-          >
-            <Add />
-          </IconButton>
-        </div>
+            if (a.selecao === "Q") {
+              Object.entries(vals[`q_${a.id}`]).forEach(([id, qt]: any) => {
+                if (qt > 0) {
+                  const opc = a.opcoes!.find((o) => o.id === id)!;
+                  adArr.push({
+                    id_adicional_opcao: id,
+                    valor: opc.valor,
+                    quantidade: qt,
+                  });
+                }
+              });
+            }
+          });
 
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!selectedPreco}
-          size="large"
-        >
-          {modalData.item ? "Atualizar" : "Adicionar ao carrinho"}{" "}
-          {formatCurrency(calculateModalTotal())}
-        </Button>
-      </DialogActions>
+          const preco = produto.precos!.find(
+            (p) => p.id_categoria_opcao === vals.id_categoria_opcao
+          )!;
+          onSave({
+            id_categoria: produto.id_categoria,
+            id_categoria_opcao: vals.id_categoria_opcao,
+            id_produto: produto.id,
+            quantidade: vals.quantidade,
+            valor_unitario: preco.preco_base,
+            observacao: vals.observacao || undefined,
+            adicionais: adArr,
+          });
+          onClose();
+        }}
+      >
+        {({ values, setFieldValue, errors, touched, isValid }) => (
+          <Form>
+            {/* ---------- HEADER ----------------------------------- */}
+            <DialogTitle className="flex justify-between items-center">
+              <div>
+                <Typography variant="h6">
+                  {modalData.item ? "Editar Item" : "Adicionar Item"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {produto.nome}
+                </Typography>
+              </div>
+              <IconButton onClick={onClose}>
+                <X size={20} />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers className="space-y-6">
+              {/* ---------- PREÇOS ---------------------------------- */}
+              <div>
+                <Typography variant="subtitle1" className="mb-2">
+                  Seleciona uma opção
+                  <span className="text-red-500 ml-1">*</span>
+                </Typography>
+                <RadioGroup
+                  value={values.id_categoria_opcao}
+                  onChange={(e) =>
+                    setFieldValue("id_categoria_opcao", e.target.value)
+                  }
+                >
+                  {produto.precos!.map((p) => (
+                    <FormControlLabel
+                      key={p.id_categoria_opcao}
+                      value={p.id_categoria_opcao}
+                      control={<Radio />}
+                      sx={{ mb: 0.5 }}
+                      label={
+                        <div className="flex justify-between w-full">
+                          <span>{p.nome_opcao || `Opção ${p.seq_id}`}</span>
+                          <span className="text-sm font-medium">
+                            {Number(p.preco_base).toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </span>
+                        </div>
+                      }
+                    />
+                  ))}
+                </RadioGroup>
+                {touched.id_categoria_opcao && errors.id_categoria_opcao && (
+                  <Typography variant="caption" color="error">
+                    {errors.id_categoria_opcao as string}
+                  </Typography>
+                )}
+              </div>
+
+              <Divider />
+
+              {/* ---------- ADICIONAIS -------------------------------- */}
+              {relevantes.map((a) => {
+                if (a.selecao === "U") {
+                  return (
+                    <div key={a.id} className="space-y-1">
+                      <Typography variant="subtitle1">
+                        {a.nome}
+                        {a.minimo! > 0 && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </Typography>
+                      <RadioGroup
+                        value={values[`u_${a.id}`]}
+                        onChange={(e) =>
+                          setFieldValue(`u_${a.id}`, e.target.value)
+                        }
+                      >
+                        {a.opcoes!.map((o) => (
+                          <FormControlLabel
+                            key={o.id}
+                            value={o.id}
+                            control={<Radio />}
+                            sx={{ mb: 0.5 }}
+                            label={
+                              <div className="flex justify-between w-full">
+                                <span>{o.nome}</span>
+                                <span className="text-sm text-gray-600">
+                                  {Number(o.valor).toLocaleString("pt-BR", {
+                                    style: "currency",
+                                    currency: "BRL",
+                                  })}
+                                </span>
+                              </div>
+                            }
+                          />
+                        ))}
+                      </RadioGroup>
+                      {errors[`u_${a.id}`] && (
+                        <Typography variant="caption" color="error">
+                          {errors[`u_${a.id}`] as string}
+                        </Typography>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (a.selecao === "Q") {
+                  const total = sumQ(values, a);
+                  return (
+                    <div key={a.id} className="space-y-2">
+                      <Typography variant="subtitle1">
+                        {a.nome}
+                        {a.minimo! > 0 && (
+                          <span className="text-gray-500 ml-1">
+                            (MIN {a.minimo} – MAX {a.limite})
+                          </span>
+                        )}
+                      </Typography>
+
+                      {a.opcoes!.map((o) => {
+                        const v = values[`q_${a.id}`][o.id] || 0;
+                        const disablePlus = !!a.limite && total >= a.limite;
+                        return (
+                          <Box
+                            key={o.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div>
+                              <Typography variant="body2">{o.nome}</Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {Number(o.valor).toLocaleString("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                                })}
+                              </Typography>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  setFieldValue(
+                                    `q_${a.id}.${o.id}`,
+                                    Math.max(0, v - 1)
+                                  )
+                                }
+                                disabled={v === 0}
+                              >
+                                <Minus size={16} />
+                              </IconButton>
+                              <TextField
+                                type="number"
+                                size="small"
+                                value={v}
+                                onChange={(e) => {
+                                  const val = Math.max(
+                                    0,
+                                    Math.min(
+                                      a.limite || 99,
+                                      parseInt(e.target.value) || 0
+                                    )
+                                  );
+                                  setFieldValue(`q_${a.id}.${o.id}`, val);
+                                }}
+                                inputProps={{
+                                  style: { textAlign: "center", width: 60 },
+                                }}
+                              />
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  setFieldValue(`q_${a.id}.${o.id}`, v + 1)
+                                }
+                                disabled={disablePlus}
+                              >
+                                <Plus size={16} />
+                              </IconButton>
+                            </div>
+                          </Box>
+                        );
+                      })}
+                      {errors[`q_${a.id}`] && (
+                        <Typography variant="caption" color="error">
+                          {errors[`q_${a.id}`] as string}
+                        </Typography>
+                      )}
+                    </div>
+                  );
+                }
+
+                /* --------- tipo “M” (checkbox) – fica igual ao seu ---------- */
+                return null;
+              })}
+
+              <Divider />
+
+              {/* ---------- OBSERVAÇÃO --------------------------------------- */}
+              <Field
+                as={TextField}
+                name="observacao"
+                label="Alguma observação?"
+                fullWidth
+                multiline
+                rows={3}
+              />
+            </DialogContent>
+
+            {/* ---------- FOOTER ----------------------------------- */}
+            <DialogActions
+              sx={{ px: 3, py: 2, justifyContent: "space-between" }}
+            >
+              <div className="flex items-center gap-2">
+                <IconButton
+                  onClick={() =>
+                    setFieldValue(
+                      "quantidade",
+                      Math.max(1, values.quantidade - 1)
+                    )
+                  }
+                  disabled={values.quantidade === 1}
+                >
+                  <Minus size={18} />
+                </IconButton>
+                <TextField
+                  type="number"
+                  size="small"
+                  value={values.quantidade}
+                  onChange={(e) =>
+                    setFieldValue(
+                      "quantidade",
+                      Math.max(1, parseInt(e.target.value) || 1)
+                    )
+                  }
+                  inputProps={{
+                    min: 1,
+                    style: { textAlign: "center", width: 60 },
+                  }}
+                />
+                <IconButton
+                  onClick={() =>
+                    setFieldValue("quantidade", values.quantidade + 1)
+                  }
+                >
+                  <Plus size={18} />
+                </IconButton>
+              </div>
+
+              <Button type="submit" variant="contained" disabled={!isValid}>
+                {modalData.item ? "Atualizar" : "Adicionar"}
+              </Button>
+            </DialogActions>
+          </Form>
+        )}
+      </Formik>
     </Dialog>
   );
 }

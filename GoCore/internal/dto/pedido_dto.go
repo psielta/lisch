@@ -117,6 +117,7 @@ type PedidoCreateDTO struct {
 	IDStatus           int16              `json:"id_status"          validate:"required"`
 	Lat                *types.NullDecimal `json:"lat,omitempty"`
 	LNG                *types.NullDecimal `json:"lng,omitempty"`
+	TrocoPara          *types.NullDecimal `json:"troco_para,omitempty"`
 	Itens              []PedidoItemDTO    `json:"itens"              validate:"required,dive"`
 }
 
@@ -159,6 +160,7 @@ type PedidoResponseDTO struct {
 	DeletedAt          *time.Time         `json:"deleted_at,omitempty"`
 	ValorPago          types.Decimal      `json:"valor_pago"`
 	Quitado            *bool              `json:"quitado,omitempty"`
+	TrocoPara          *types.NullDecimal `json:"troco_para,omitempty"`
 	// Relacionamentos
 	Status  PedidoStatusDTO         `json:"status"`
 	Cliente PedidoClienteDTO        `json:"cliente"`
@@ -193,6 +195,7 @@ func (d *PedidoCreateDTO) ToModels() (*models.Pedido, []*models.PedidoItem, []*m
 		IDStatus:           d.IDStatus,
 		Lat:                derefNullDecimal(d.Lat),
 		LNG:                derefNullDecimal(d.LNG),
+		TrocoPara:          derefNullDecimal(d.TrocoPara),
 	}
 
 	var itens []*models.PedidoItem
@@ -349,6 +352,7 @@ func PedidoModelToResponse(p *models.Pedido) *PedidoResponseDTO {
 		DeletedAt:          nullTimeToPtr(p.DeletedAt),
 		ValorPago:          p.ValorPago,
 		Quitado:            nullBoolToPtr(p.Quitado),
+		TrocoPara:          nullDecimalToPtr(p.TrocoPara),
 		Status:             st,
 		Cliente:            cli,
 		Itens:              itens,

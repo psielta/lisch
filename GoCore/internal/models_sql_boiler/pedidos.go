@@ -53,6 +53,7 @@ type Pedido struct {
 	DeletedAt          null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 	ValorPago          types.Decimal     `boil:"valor_pago" json:"valor_pago" toml:"valor_pago" yaml:"valor_pago"`
 	Quitado            null.Bool         `boil:"quitado" json:"quitado,omitempty" toml:"quitado" yaml:"quitado,omitempty"`
+	TrocoPara          types.NullDecimal `boil:"troco_para" json:"troco_para,omitempty" toml:"troco_para" yaml:"troco_para,omitempty"`
 
 	R *pedidoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pedidoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -87,6 +88,7 @@ var PedidoColumns = struct {
 	DeletedAt          string
 	ValorPago          string
 	Quitado            string
+	TrocoPara          string
 }{
 	ID:                 "id",
 	SeqID:              "seq_id",
@@ -116,6 +118,7 @@ var PedidoColumns = struct {
 	DeletedAt:          "deleted_at",
 	ValorPago:          "valor_pago",
 	Quitado:            "quitado",
+	TrocoPara:          "troco_para",
 }
 
 var PedidoTableColumns = struct {
@@ -147,6 +150,7 @@ var PedidoTableColumns = struct {
 	DeletedAt          string
 	ValorPago          string
 	Quitado            string
+	TrocoPara          string
 }{
 	ID:                 "pedidos.id",
 	SeqID:              "pedidos.seq_id",
@@ -176,6 +180,7 @@ var PedidoTableColumns = struct {
 	DeletedAt:          "pedidos.deleted_at",
 	ValorPago:          "pedidos.valor_pago",
 	Quitado:            "pedidos.quitado",
+	TrocoPara:          "pedidos.troco_para",
 }
 
 // Generated where
@@ -209,6 +214,7 @@ var PedidoWhere = struct {
 	DeletedAt          whereHelpernull_Time
 	ValorPago          whereHelpertypes_Decimal
 	Quitado            whereHelpernull_Bool
+	TrocoPara          whereHelpertypes_NullDecimal
 }{
 	ID:                 whereHelperstring{field: "\"pedidos\".\"id\""},
 	SeqID:              whereHelperint64{field: "\"pedidos\".\"seq_id\""},
@@ -238,6 +244,7 @@ var PedidoWhere = struct {
 	DeletedAt:          whereHelpernull_Time{field: "\"pedidos\".\"deleted_at\""},
 	ValorPago:          whereHelpertypes_Decimal{field: "\"pedidos\".\"valor_pago\""},
 	Quitado:            whereHelpernull_Bool{field: "\"pedidos\".\"quitado\""},
+	TrocoPara:          whereHelpertypes_NullDecimal{field: "\"pedidos\".\"troco_para\""},
 }
 
 // PedidoRels is where relationship names are stored.
@@ -318,9 +325,9 @@ func (r *pedidoR) GetIDPedidoPedidoPagamentos() PedidoPagamentoSlice {
 type pedidoL struct{}
 
 var (
-	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado"}
+	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para"}
 	pedidoColumnsWithoutDefault = []string{"tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "tipo_entrega", "valor_total", "id_status"}
-	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado"}
+	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para"}
 	pedidoPrimaryKeyColumns     = []string{"id"}
 	pedidoGeneratedColumns      = []string{}
 )

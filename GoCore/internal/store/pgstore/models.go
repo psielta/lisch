@@ -236,6 +236,7 @@ type Pedido struct {
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 	ValorPago          pgtype.Numeric     `json:"valor_pago"`
 	Quitado            pgtype.Bool        `json:"quitado"`
+	TrocoPara          pgtype.Numeric     `json:"troco_para"`
 }
 
 type PedidoItemAdicionai struct {

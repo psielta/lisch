@@ -403,6 +403,22 @@ function Vendas({
       parseFloat(values.acrescimo || "0")
     );
   };
+  const calculateItemSubTotal = (values: PedidoFormValues) => {
+    return values.itens.reduce((total, item) => {
+      // Soma total dos adicionais
+      const adicionaisTotal = (item.adicionais || []).reduce(
+        (addTotal, adicional) =>
+          addTotal + parseFloat(adicional.valor) * adicional.quantidade,
+        0
+      );
+
+      // Soma valor unitário + total adicionais e multiplica pela quantidade
+      const itemTotal =
+        (parseFloat(item.valor_unitario) + adicionaisTotal) * item.quantidade;
+
+      return total + itemTotal;
+    }, 0);
+  };
 
   const dispatch = useDispatch();
   const postOrPutPedidoState = useSelector(
@@ -588,7 +604,11 @@ function Vendas({
                                     Valor total
                                   </Typography>
                                   <Typography variant="body2">
-                                    {formatCurrency(formik.values.valor_total)}
+                                    {formatCurrency(
+                                      calculateItemSubTotal(
+                                        formik.values
+                                      ).toString()
+                                    )}
                                   </Typography>
                                 </div>
 
@@ -1043,7 +1063,7 @@ function Vendas({
                           </Grid>
 
                           {/* Tipo de Entrega */}
-                          <Grid size={12}>
+                          <Grid size={6}>
                             <FormControl fullWidth required>
                               <InputLabel>Tipo de Entrega</InputLabel>
                               <Select
@@ -1068,7 +1088,7 @@ function Vendas({
                           </Grid>
 
                           {/* Categoria de Pagamento */}
-                          <Grid size={12}>
+                          <Grid size={6}>
                             <FormControl fullWidth>
                               <InputLabel>Categoria de Pagamento</InputLabel>
                               <Select

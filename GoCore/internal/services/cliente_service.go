@@ -185,3 +185,55 @@ func (cs *ClienteService) ListClientesPaginated(
 	// Retorna a resposta paginada
 	return dto.NewPaginated(clientesResponse, page, pageSize, total), nil
 }
+
+func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID uuid.UUID, page, pageSize int, searchTerm string) (dto.PaginatedResponse[dto.ClienteResponse], error) {
+	// Calcula o offset baseado na página atual
+	offset := (page - 1) * pageSize
+
+	// Prepara parâmetros para a consulta
+	params := pgstore.ListClientesSmartSearchParams{
+		TenantID: tenantID,
+		Limit:    int32(pageSize),
+		Column3:  searchTerm,
+		Offset:   int32(offset),
+	}
+
+	// Obtém os registros
+	clientes, err := cs.queries.ListClientesSmartSearch(ctx, params)
+	if err != nil {
+		return dto.PaginatedResponse[dto.ClienteResponse]{}, err
+	}
+
+	// Converte os clientes para o formato de resposta
+	clientesResponse := make([]dto.ClienteResponse, len(clientes))
+	for i, cliente := range clientes {
+		clientesResponse[i] = dto.ClienteToResponse(pgstore.Cliente{
+			ID:              cliente.ID,
+			TenantID:        cliente.TenantID,
+			TipoPessoa:      cliente.TipoPessoa,
+			NomeRazaoSocial: cliente.NomeRazaoSocial,
+			NomeFantasia:    cliente.NomeFantasia,
+			Cpf:             cliente.Cpf,
+			Cnpj:            cliente.Cnpj,
+			Rg:              cliente.Rg,
+			Ie:              cliente.Ie,
+			Im:              cliente.Im,
+			DataNascimento:  cliente.DataNascimento,
+			Email:           cliente.Email,
+			Telefone:        cliente.Telefone,
+			Celular:         cliente.Celular,
+			Cep:             cliente.Cep,
+			Logradouro:      cliente.Logradouro,
+			Numero:          cliente.Numero,
+			Complemento:     cliente.Complemento,
+			Bairro:          cliente.Bairro,
+			Cidade:          cliente.Cidade,
+			Uf:              cliente.Uf,
+			CreatedAt:       cliente.CreatedAt,
+			UpdatedAt:       cliente.UpdatedAt,
+		})
+	}
+
+	// Retorna a resposta paginada
+	return dto.NewPaginated(clientesResponse, page, pageSize, int64(len(clientesResponse))), nil
+}

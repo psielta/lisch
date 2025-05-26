@@ -54,6 +54,10 @@ export default async function Page({
     pedidoEditarDTO = await apiServer<PedidoEditarDTO | null | undefined>(
       "/pedidos/" + id + "/dados-edicao"
     );
+    console.log(
+      "pedidoEditarDTO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",
+      pedidoEditarDTO
+    );
   } catch (error) {
     console.error("Erro ao carregar dados:", error);
   }

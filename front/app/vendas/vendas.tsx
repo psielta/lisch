@@ -104,6 +104,8 @@ interface PedidoFormValues {
   categoria_pagamento?: string;
   forma_pagamento?: string;
   valor_total: string;
+  desconto: string;
+  acrescimo: string;
   observacao?: string;
   taxa_entrega: string;
   nome_taxa_entrega?: string;
@@ -211,6 +213,8 @@ function Vendas({
       .default(0),
     id_status: Yup.number().default(2),
     troco_para: Yup.string(),
+    desconto: Yup.number().default(0),
+    acrescimo: Yup.number().default(0),
     itens: Yup.array().of(
       Yup.object({
         id_categoria: Yup.string().required(),
@@ -272,6 +276,8 @@ function Vendas({
     lat: pedido?.lat || "-20.924730",
     lng: pedido?.lng || "-49.454230",
     troco_para: pedido?.troco_para || "0.00",
+    desconto: pedido?.desconto || "0.00",
+    acrescimo: pedido?.acrescimo || "0.00",
     itens:
       pedido?.itens?.map((item) => ({
         id_categoria: item.id_categoria,
@@ -294,7 +300,7 @@ function Vendas({
     async (search: string): Promise<PedidoClienteDTO[]> => {
       try {
         const response = await api.get<PaginatedResponse<PedidoClienteDTO>>(
-          `/clientes?nome=${search}`
+          `/clientes/smartsearch?search=${search}&page_size=250`
         );
         return response.data.items;
       } catch (error) {
@@ -385,7 +391,10 @@ function Vendas({
           (parseFloat(item.valor_unitario) + adicionaisTotal) * item.quantidade;
 
         return total + itemTotal;
-      }, 0) + parseFloat(values.taxa_entrega || "0")
+      }, 0) +
+      parseFloat(values.taxa_entrega || "0") -
+      parseFloat(values.desconto || "0") +
+      parseFloat(values.acrescimo || "0")
     );
   };
 
@@ -406,7 +415,7 @@ function Vendas({
     () =>
       debounce(async (query: string) => {
         const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
-          `/clientes?nome=${query}`
+          `/clientes/smartsearch?search=${query}&page_size=250`
         );
         setClienteOptions(resp.data.items);
       }, 300),
@@ -426,6 +435,8 @@ function Vendas({
                 data: {
                   ...values,
                   troco_para: (values.troco_para ?? "0.00").toString(),
+                  desconto: (values.desconto ?? "0.00").toString(),
+                  acrescimo: (values.acrescimo ?? "0.00").toString(),
                 } as UpdatePedidoRequest,
               })
             );
@@ -805,6 +816,7 @@ function Vendas({
                                       (c) => c.id === formik.values.id_cliente
                                     ) ?? null
                                   }
+                                  filterOptions={(options) => options}
                                   inputValue={inputValue}
                                   getOptionKey={(option) => option.id}
                                   onInputChange={(_, newInput, reason) => {
@@ -823,9 +835,15 @@ function Vendas({
                                       option ? option.nome_razao_social : ""
                                     );
                                   }}
-                                  getOptionLabel={(opt) =>
-                                    opt.nome_razao_social
-                                  }
+                                  getOptionLabel={(opt) => {
+                                    const telefone =
+                                      opt.telefone?.match(/\d+/g)?.join("") ||
+                                      "";
+                                    const celular =
+                                      opt.celular?.match(/\d+/g)?.join("") ||
+                                      "";
+                                    return `${opt.nome_razao_social} - ${telefone} - ${celular}`;
+                                  }}
                                   isOptionEqualToValue={(opt, val) =>
                                     opt.id === val.id
                                   }
@@ -1065,6 +1083,32 @@ function Vendas({
                               label="Nome da Taxa de Entrega"
                               name="nome_taxa_entrega"
                               value={formik.values.nome_taxa_entrega}
+                              onChange={formik.handleChange}
+                            />
+                          </Grid>
+
+                          {/* Desconto */}
+                          <Grid size={6}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Desconto"
+                              name="desconto"
+                              type="number"
+                              value={formik.values.desconto}
+                              onChange={formik.handleChange}
+                            />
+                          </Grid>
+
+                          {/* Acrecimo */}
+                          <Grid size={6}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Acrecimo"
+                              name="acrescimo"
+                              type="number"
+                              value={formik.values.acrescimo}
                               onChange={formik.handleChange}
                             />
                           </Grid>

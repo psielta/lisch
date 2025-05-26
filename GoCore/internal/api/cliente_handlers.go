@@ -351,6 +351,47 @@ func (api *Api) handleListClientes(w http.ResponseWriter, r *http.Request) {
 	jsonutils.EncodeJson(w, r, http.StatusOK, clientes)
 }
 
+func (api *Api) handleListClientesSmartSearch(w http.ResponseWriter, r *http.Request) {
+	// Obter tenant_id do contexto da sessão
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	// Parse query parameters
+	query := r.URL.Query()
+
+	page := 1
+	if pageStr := query.Get("page"); pageStr != "" {
+		if parsedPage, err := strconv.Atoi(pageStr); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	pageSize := 10
+	if pageSizeStr := query.Get("page_size"); pageSizeStr != "" {
+		if parsedPageSize, err := strconv.Atoi(pageSizeStr); err == nil && parsedPageSize > 0 {
+			pageSize = parsedPageSize
+		}
+	}
+
+	searchTerm := query.Get("search")
+
+	clientes, err := api.ClienteService.ListClientesSmartSearch(r.Context(), tenantID, page, pageSize, searchTerm)
+	if err != nil {
+		api.Logger.Error("erro ao buscar clientes", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, clientes)
+}
+
 func (api *Api) handleListClientesSimple(w http.ResponseWriter, r *http.Request) {
 	// Obter tenant_id do contexto da sessão
 	tenantID := api.getTenantIDFromContext(r)

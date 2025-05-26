@@ -1004,12 +1004,8 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 				models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
 				models_sql_boiler.PedidoItemRels.IDPedidoItemPedidoItemAdicionais,
 			),
-			// IMPORTANTE: NÃO filtrar por deleted_at aqui, queremos todos os adicionais
 		),
-		qm.Load(
-			models_sql_boiler.PedidoRels.IDPedidoPedidoItens,
-			// IMPORTANTE: NÃO filtrar por deleted_at aqui, queremos todos os itens
-		),
+		qm.Load(models_sql_boiler.PedidoRels.IDPedidoPedidoItens),
 		qm.Load(models_sql_boiler.PedidoRels.IDClienteCliente),
 		qm.Load(models_sql_boiler.PedidoRels.IDStatusPedidoStatus),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
@@ -1024,7 +1020,19 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// 2. Extrair IDs únicos dos itens do pedido
+	// 2. Filtrar itens do pedido não deletados (fazer manualmente após carregar)
+	if pedido.R != nil && pedido.R.IDPedidoPedidoItens != nil {
+		itensAtivos := make([]*models_sql_boiler.PedidoItem, 0)
+		for _, item := range pedido.R.IDPedidoPedidoItens {
+			// Incluir apenas itens não deletados
+			if !item.DeletedAt.Valid {
+				itensAtivos = append(itensAtivos, item)
+			}
+		}
+		pedido.R.IDPedidoPedidoItens = itensAtivos
+	}
+
+	// 3. Extrair IDs únicos dos itens ativos do pedido
 	categoriaIDs := make([]string, 0)
 	produtoIDs := make([]string, 0)
 	categoriaOpcaoIDs := make([]string, 0)
@@ -1061,9 +1069,9 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 	categoriaOpcaoIDs = removeDuplicateStrings(categoriaOpcaoIDs)
 	adicionalOpcaoIDs = removeDuplicateStrings(adicionalOpcaoIDs)
 
-	// 3. Buscar categorias relacionadas (incluindo soft-deleted) com opções específicas
+	// 4. Buscar categorias relacionadas (incluindo soft-deleted) com opções específicas
 	var categorias models_sql_boiler.CategoriaSlice
-	if len(categoriaIDs) > 0 {
+	if len(categoriaIDs) > 0 && len(categoriaOpcaoIDs) > 0 {
 		categorias, err = models_sql_boiler.Categorias(
 			qm.WhereIn("id IN ?", convertStringsToInterfaces(categoriaIDs)...),
 			qm.Where("id_tenant = ?", tenantID.String()),
@@ -1080,9 +1088,9 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	// 4. Buscar produtos relacionados (incluindo soft-deleted) com preços específicos
+	// 5. Buscar produtos relacionados (incluindo soft-deleted) com preços específicos
 	var produtos models_sql_boiler.ProdutoSlice
-	if len(produtoIDs) > 0 {
+	if len(produtoIDs) > 0 && len(categoriaOpcaoIDs) > 0 {
 		produtos, err = models_sql_boiler.Produtos(
 			qm.WhereIn("produtos.id IN ?", convertStringsToInterfaces(produtoIDs)...),
 			// IMPORTANTE: NÃO filtrar por deleted_at - queremos incluir soft-deleted
@@ -1102,7 +1110,7 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	// 5. Buscar adicionais relacionados (incluindo soft-deleted) com opções específicas
+	// 6. Buscar adicionais relacionados (incluindo soft-deleted) com opções específicas
 	var adicionais models_sql_boiler.CategoriaAdicionalSlice
 	if len(adicionalOpcaoIDs) > 0 {
 		// Primeiro, buscar os IDs dos adicionais a partir das opções ESPECÍFICAS do pedido
@@ -1142,7 +1150,7 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	// 6. Converter para DTO e retornar
+	// 7. Converter para DTO e retornar
 	resp := dto.ConvertPedidoToEdicaoResponse(pedido, categorias, produtos, adicionais)
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
 }

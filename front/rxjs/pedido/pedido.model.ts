@@ -99,6 +99,8 @@ interface CreatePedidoRequest {
   lat?: string;
   lng?: string;
   troco_para?: string;
+  desconto: string;
+  acrescimo: string;
   itens: PedidoItemDTO[];
 }
 
@@ -136,6 +138,8 @@ interface PedidoResponse {
   deleted_at?: string;
   valor_pago: string;
   quitado?: boolean;
+  desconto: string;
+  acrescimo: string;
   status: PedidoStatusDTO;
   cliente: PedidoClienteDTO;
   itens: PedidoItemResponseDTO[];

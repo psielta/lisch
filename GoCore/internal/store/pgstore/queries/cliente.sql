@@ -152,3 +152,88 @@ WHERE c.tenant_id = $1
   AND ($9 = '' OR c.tipo_pessoa = $9)
   AND ($10 = '' OR regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($10, '[^0-9]', '', 'g') || '%')
   AND ($11 = '' OR regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($11, '[^0-9]', '', 'g') || '%');
+
+-- name: ListClientesSmartSearch :many
+SELECT
+    c.*,
+    -- Score para ordenar por relevância (opcional)
+    CASE
+        WHEN $3 = '' THEN 0
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 3
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 2
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        ELSE 0
+        END as relevance_score
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $3 = '' OR
+        -- Busca em nome/razão social (maior prioridade)
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em nome fantasia
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em telefone (apenas números)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+        -- Busca em celular (apenas números)
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%'
+    )
+ORDER BY
+    -- Ordena por relevância primeiro, depois por nome
+    relevance_score DESC,
+    c.nome_razao_social ASC
+    LIMIT $2 OFFSET $4;
+
+-- name: CountClientesSmartSearch :one
+SELECT COUNT(*)
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $2 = '' OR
+        -- Busca em nome/razão social
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
+        -- Busca em nome fantasia
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
+        -- Busca em telefone (apenas números)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
+        -- Busca em celular (apenas números)
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%'
+    );
+
+-- name: ListClientesSmartSearchFuzzy :many
+SELECT
+    c.*,
+    -- Score de relevância mais sofisticado
+    CASE
+        WHEN $3 = '' THEN 0
+        -- Match exato no início do nome tem score maior
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE LOWER(unaccent($3)) || '%' THEN 5
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE LOWER(unaccent($3)) || '%' THEN 4
+        -- Match parcial no nome
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 3
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 2
+        -- Match em telefones
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 2
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 2
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        ELSE 0
+        END as relevance_score
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $3 = '' OR
+        -- Busca em nomes (com e sem acentos)
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em telefones (flexível - aceita com ou sem formatação)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+        -- Busca adicional: telefone formatado
+    c.telefone LIKE '%' || $3 || '%' OR
+    c.celular LIKE '%' || $3 || '%'
+    )
+ORDER BY
+    relevance_score DESC,
+    c.nome_razao_social ASC
+    LIMIT $2 OFFSET $4;

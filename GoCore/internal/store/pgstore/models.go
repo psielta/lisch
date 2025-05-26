@@ -237,6 +237,8 @@ type Pedido struct {
 	ValorPago          pgtype.Numeric     `json:"valor_pago"`
 	Quitado            pgtype.Bool        `json:"quitado"`
 	TrocoPara          pgtype.Numeric     `json:"troco_para"`
+	Desconto           pgtype.Numeric     `json:"desconto"`
+	Acrescimo          pgtype.Numeric     `json:"acrescimo"`
 }
 
 type PedidoItemAdicionai struct {

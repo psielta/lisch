@@ -118,6 +118,8 @@ func (api *Api) BindRoutes() {
 					r.Put("/{id}", api.handleUpdateCliente)        // PUT /api/v1/clientes/{id}
 					r.Delete("/{id}", api.handleDeleteCliente)     // DELETE /api/v1/clientes/{id}
 
+					r.Get("/smartsearch", api.handleListClientesSmartSearch) // GET /api/v1/clientes/smartsearch - busca inteligente
+
 					// Busca por documento
 					r.Get("/cpf/{cpf}", api.handleGetClienteByCPF)    // GET /api/v1/clientes/cpf/{cpf}
 					r.Get("/cnpj/{cnpj}", api.handleGetClienteByCNPJ) // GET /api/v1/clientes/cnpj/{cnpj}

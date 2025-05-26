@@ -7,6 +7,7 @@ package pgstore
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -75,6 +76,35 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 		arg.Column10,
 		arg.Column11,
 	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
+SELECT COUNT(*)
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $2 = '' OR
+        -- Busca em nome/razão social
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
+        -- Busca em nome fantasia
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
+        -- Busca em telefone (apenas números)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
+        -- Busca em celular (apenas números)
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%'
+    )
+`
+
+type CountClientesSmartSearchParams struct {
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Column2  interface{} `json:"column_2"`
+}
+
+func (q *Queries) CountClientesSmartSearch(ctx context.Context, arg CountClientesSmartSearchParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countClientesSmartSearch, arg.TenantID, arg.Column2)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -493,6 +523,245 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 			&i.Uf,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
+SELECT
+    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at,
+    -- Score para ordenar por relevância (opcional)
+    CASE
+        WHEN $3 = '' THEN 0
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 3
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 2
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        ELSE 0
+        END as relevance_score
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $3 = '' OR
+        -- Busca em nome/razão social (maior prioridade)
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em nome fantasia
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em telefone (apenas números)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+        -- Busca em celular (apenas números)
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%'
+    )
+ORDER BY
+    -- Ordena por relevância primeiro, depois por nome
+    relevance_score DESC,
+    c.nome_razao_social ASC
+    LIMIT $2 OFFSET $4
+`
+
+type ListClientesSmartSearchParams struct {
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Limit    int32       `json:"limit"`
+	Column3  interface{} `json:"column_3"`
+	Offset   int32       `json:"offset"`
+}
+
+type ListClientesSmartSearchRow struct {
+	ID              uuid.UUID   `json:"id"`
+	TenantID        uuid.UUID   `json:"tenant_id"`
+	TipoPessoa      string      `json:"tipo_pessoa"`
+	NomeRazaoSocial string      `json:"nome_razao_social"`
+	NomeFantasia    pgtype.Text `json:"nome_fantasia"`
+	Cpf             pgtype.Text `json:"cpf"`
+	Cnpj            pgtype.Text `json:"cnpj"`
+	Rg              pgtype.Text `json:"rg"`
+	Ie              pgtype.Text `json:"ie"`
+	Im              pgtype.Text `json:"im"`
+	DataNascimento  pgtype.Date `json:"data_nascimento"`
+	Email           pgtype.Text `json:"email"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Celular         pgtype.Text `json:"celular"`
+	Cep             pgtype.Text `json:"cep"`
+	Logradouro      pgtype.Text `json:"logradouro"`
+	Numero          pgtype.Text `json:"numero"`
+	Complemento     pgtype.Text `json:"complemento"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
+	Uf              pgtype.Text `json:"uf"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
+	RelevanceScore  int32       `json:"relevance_score"`
+}
+
+func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesSmartSearchParams) ([]ListClientesSmartSearchRow, error) {
+	rows, err := q.db.Query(ctx, listClientesSmartSearch,
+		arg.TenantID,
+		arg.Limit,
+		arg.Column3,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListClientesSmartSearchRow
+	for rows.Next() {
+		var i ListClientesSmartSearchRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.TipoPessoa,
+			&i.NomeRazaoSocial,
+			&i.NomeFantasia,
+			&i.Cpf,
+			&i.Cnpj,
+			&i.Rg,
+			&i.Ie,
+			&i.Im,
+			&i.DataNascimento,
+			&i.Email,
+			&i.Telefone,
+			&i.Celular,
+			&i.Cep,
+			&i.Logradouro,
+			&i.Numero,
+			&i.Complemento,
+			&i.Bairro,
+			&i.Cidade,
+			&i.Uf,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RelevanceScore,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listClientesSmartSearchFuzzy = `-- name: ListClientesSmartSearchFuzzy :many
+SELECT
+    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at,
+    -- Score de relevância mais sofisticado
+    CASE
+        WHEN $3 = '' THEN 0
+        -- Match exato no início do nome tem score maior
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE LOWER(unaccent($3)) || '%' THEN 5
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE LOWER(unaccent($3)) || '%' THEN 4
+        -- Match parcial no nome
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 3
+        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 2
+        -- Match em telefones
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 2
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 2
+        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        ELSE 0
+        END as relevance_score
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND (
+    $3 = '' OR
+        -- Busca em nomes (com e sem acentos)
+    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
+        -- Busca em telefones (flexível - aceita com ou sem formatação)
+    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+        -- Busca adicional: telefone formatado
+    c.telefone LIKE '%' || $3 || '%' OR
+    c.celular LIKE '%' || $3 || '%'
+    )
+ORDER BY
+    relevance_score DESC,
+    c.nome_razao_social ASC
+    LIMIT $2 OFFSET $4
+`
+
+type ListClientesSmartSearchFuzzyParams struct {
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Limit    int32       `json:"limit"`
+	Column3  interface{} `json:"column_3"`
+	Offset   int32       `json:"offset"`
+}
+
+type ListClientesSmartSearchFuzzyRow struct {
+	ID              uuid.UUID   `json:"id"`
+	TenantID        uuid.UUID   `json:"tenant_id"`
+	TipoPessoa      string      `json:"tipo_pessoa"`
+	NomeRazaoSocial string      `json:"nome_razao_social"`
+	NomeFantasia    pgtype.Text `json:"nome_fantasia"`
+	Cpf             pgtype.Text `json:"cpf"`
+	Cnpj            pgtype.Text `json:"cnpj"`
+	Rg              pgtype.Text `json:"rg"`
+	Ie              pgtype.Text `json:"ie"`
+	Im              pgtype.Text `json:"im"`
+	DataNascimento  pgtype.Date `json:"data_nascimento"`
+	Email           pgtype.Text `json:"email"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Celular         pgtype.Text `json:"celular"`
+	Cep             pgtype.Text `json:"cep"`
+	Logradouro      pgtype.Text `json:"logradouro"`
+	Numero          pgtype.Text `json:"numero"`
+	Complemento     pgtype.Text `json:"complemento"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
+	Uf              pgtype.Text `json:"uf"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
+	RelevanceScore  int32       `json:"relevance_score"`
+}
+
+func (q *Queries) ListClientesSmartSearchFuzzy(ctx context.Context, arg ListClientesSmartSearchFuzzyParams) ([]ListClientesSmartSearchFuzzyRow, error) {
+	rows, err := q.db.Query(ctx, listClientesSmartSearchFuzzy,
+		arg.TenantID,
+		arg.Limit,
+		arg.Column3,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListClientesSmartSearchFuzzyRow
+	for rows.Next() {
+		var i ListClientesSmartSearchFuzzyRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.TipoPessoa,
+			&i.NomeRazaoSocial,
+			&i.NomeFantasia,
+			&i.Cpf,
+			&i.Cnpj,
+			&i.Rg,
+			&i.Ie,
+			&i.Im,
+			&i.DataNascimento,
+			&i.Email,
+			&i.Telefone,
+			&i.Celular,
+			&i.Cep,
+			&i.Logradouro,
+			&i.Numero,
+			&i.Complemento,
+			&i.Bairro,
+			&i.Cidade,
+			&i.Uf,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RelevanceScore,
 		); err != nil {
 			return nil, err
 		}

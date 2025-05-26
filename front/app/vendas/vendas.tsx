@@ -2,6 +2,7 @@
 
 import { useAuth, User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
+import DialogCliente from "@/components/dialogs/DialogCliente"; // Ajuste o caminho conforme necessário
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
@@ -47,6 +48,7 @@ import {
   Receipt,
   LocalShipping,
   Restaurant,
+  PersonAdd,
   Storefront,
   Person,
   Phone,
@@ -74,7 +76,10 @@ import {
   createPedidoAction,
   updatePedidoAction,
 } from "@/rxjs/pedido/pedido.action";
-import { PaginatedResponse } from "@/rxjs/clientes/cliente.model";
+import {
+  ClienteResponse,
+  PaginatedResponse,
+} from "@/rxjs/clientes/cliente.model";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { RootState } from "@/rxjs/store";
@@ -237,6 +242,9 @@ function Vendas({
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
   const theme = useTheme();
+  const [dialogClienteOpen, setDialogClienteOpen] = useState(false);
+  const [clienteParaEdicao, setClienteParaEdicao] =
+    useState<PedidoClienteDTO | null>(null);
 
   const getCodigoPadrao = () => {
     return `P${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}-${new Date().getHours()}${new Date().getMinutes()}${new Date().getSeconds()}`;
@@ -341,7 +349,6 @@ function Vendas({
   };
 
   const handleEditItem = async (item: PedidoItemDTO, index: number) => {
-    debugger;
     let produto = produtos.find((p) => p.id === item.id_produto);
 
     // ↓ tenta buscar no servidor se não estiver no array local
@@ -407,711 +414,841 @@ function Vendas({
   );
 
   return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={pedidoValidationSchema}
-      onSubmit={(values) => {
-        if (values.id) {
-          dispatch(
-            updatePedidoAction.request({
-              id: values.id,
-              data: {
-                ...values,
-                troco_para: (values.troco_para ?? "0.00").toString(),
-              } as UpdatePedidoRequest,
-            })
-          );
-        } else {
-          dispatch(createPedidoAction.request(values));
-        }
-      }}
-      // enableReinitialize
-    >
-      {(formik: FormikProps<PedidoFormValues>) => {
-        // Efeito para lidar com o sucesso no envio do formulário
-        useEffect(() => {
-          if (postOrPutPedidoState === "completed") {
-            //limpar store
-            dispatch(clearPedidoState());
-            router.push("/gerenciar-vendas");
-            toast.success("Pedido salvo com sucesso");
-          } else if (postOrPutPedidoState === "error") {
-            toast.error("Erro ao salvar pedido");
+    <>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={pedidoValidationSchema}
+        onSubmit={(values) => {
+          if (values.id) {
+            dispatch(
+              updatePedidoAction.request({
+                id: values.id,
+                data: {
+                  ...values,
+                  troco_para: (values.troco_para ?? "0.00").toString(),
+                } as UpdatePedidoRequest,
+              })
+            );
+          } else {
+            dispatch(createPedidoAction.request(values));
           }
-        }, [postOrPutPedidoState, router]);
-        return (
-          <Form className="flex h-full">
-            {/* Left Sidebar - Resumo do Pedido */}
-            <aside className="hidden lg:block w-96 border-r border-border bg-card">
-              <div className="h-full flex flex-col">
-                <div className="p-4 border-b border-border">
-                  <h2 className="font-semibold text-xl flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />
-                    {formik.values.codigo_pedido
-                      ? `Dados do Pedido`
-                      : "Novo Pedido"}
-                  </h2>
-                </div>
+        }}
+        // enableReinitialize
+      >
+        {(formik: FormikProps<PedidoFormValues>) => {
+          const handleAbrirDialogNovoCliente = () => {
+            setClienteParaEdicao(null);
+            setDialogClienteOpen(true);
+          };
 
-                <div className="flex-1 overflow-y-auto p-4">
-                  {formik.values.itens.length > 0 ? (
-                    <div className="space-y-6">
-                      {/* Header do pedido */}
-                      <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <Typography
-                            variant="h6"
-                            className="font-bold text-foreground"
-                          >
-                            Pedido #{formik.values.codigo_pedido || "Novo"}
-                          </Typography>
-                          <Chip
-                            icon={getStatusIcon(formik.values.tipo_entrega)}
-                            label={formik.values.tipo_entrega}
-                            size="small"
-                            sx={{
-                              backgroundColor: getStatusColor(
-                                formik.values.tipo_entrega
-                              ),
-                              color: "white",
-                              fontWeight: 500,
-                            }}
-                          />
-                        </div>
-                      </div>
+          const handleAbrirDialogEditarCliente = () => {
+            const clienteSelecionado = clienteOptions.find(
+              (c) => c.id === formik.values.id_cliente
+            );
+            if (clienteSelecionado) {
+              setClienteParaEdicao(clienteSelecionado);
+              setDialogClienteOpen(true);
+            } else {
+              toast.error("Selecione um cliente para editar");
+            }
+          };
 
-                      {/* Resumo Financeiro */}
-                      <Card
-                        elevation={0}
-                        sx={{
-                          backgroundColor: "background.paper",
-                          border: 1,
-                          borderColor: "divider",
-                        }}
-                      >
-                        <CardContent sx={{ padding: 3 }}>
-                          <Typography
-                            variant="h6"
-                            className="font-semibold mb-3"
-                          >
-                            Resumo Financeiro
-                          </Typography>
-                          <div className="space-y-2">
-                            {parseFloat(formik.values.taxa_entrega) > 0 && (
-                              <div className="flex justify-between">
-                                <Typography variant="body2">
-                                  {formik.values.nome_taxa_entrega ||
-                                    "Taxa de entrega"}
-                                </Typography>
-                                <Typography variant="body2">
-                                  {formatCurrency(formik.values.taxa_entrega)}
-                                </Typography>
-                              </div>
-                            )}
-                            <Divider />
-                            <div className="flex justify-between items-center">
-                              <Typography variant="h6" className="font-bold">
-                                Total
-                              </Typography>
+          const handleClienteSalvo = (clienteSalvo: any) => {
+            // Atualizar as opções de cliente
+            const clienteExiste = clienteOptions.find(
+              (c) => c.id === clienteSalvo.id
+            );
+
+            if (clienteExiste) {
+              // Se o cliente já existe, atualizar na lista
+              setClienteOptions((prev) =>
+                prev.map((c) => (c.id === clienteSalvo.id ? clienteSalvo : c))
+              );
+            } else {
+              // Se é um cliente novo, adicionar à lista
+              setClienteOptions((prev) => [...prev, clienteSalvo]);
+            }
+
+            // Selecionar o cliente salvo no formulário
+            formik.setFieldValue("id_cliente", clienteSalvo.id);
+            setInputValue(clienteSalvo.nome_razao_social);
+
+            toast.success("Cliente salvo e selecionado com sucesso!");
+          };
+          useEffect(() => {
+            if (postOrPutPedidoState === "completed") {
+              //limpar store
+              dispatch(clearPedidoState());
+              router.push("/gerenciar-vendas");
+              toast.success("Pedido salvo com sucesso");
+            } else if (postOrPutPedidoState === "error") {
+              toast.error("Erro ao salvar pedido");
+            }
+          }, [postOrPutPedidoState, router]);
+          return (
+            <>
+              <Form className="flex h-full">
+                {/* Left Sidebar - Resumo do Pedido */}
+                <aside className="hidden lg:block w-96 border-r border-border bg-card">
+                  <div className="h-full flex flex-col">
+                    <div className="p-4 border-b border-border">
+                      <h2 className="font-semibold text-xl flex items-center gap-2">
+                        <Receipt className="h-5 w-5" />
+                        {formik.values.codigo_pedido
+                          ? `Dados do Pedido`
+                          : "Novo Pedido"}
+                      </h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4">
+                      {formik.values.itens.length > 0 ? (
+                        <div className="space-y-6">
+                          {/* Header do pedido */}
+                          <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
+                            <div className="flex items-center justify-between mb-2">
                               <Typography
                                 variant="h6"
-                                className="font-bold text-primary"
+                                className="font-bold text-foreground"
                               >
-                                {formatCurrency(
-                                  calculateItemTotal(formik.values).toString()
-                                )}
+                                Pedido #{formik.values.codigo_pedido || "Novo"}
                               </Typography>
+                              <Chip
+                                icon={getStatusIcon(formik.values.tipo_entrega)}
+                                label={formik.values.tipo_entrega}
+                                size="small"
+                                sx={{
+                                  backgroundColor: getStatusColor(
+                                    formik.values.tipo_entrega
+                                  ),
+                                  color: "white",
+                                  fontWeight: 500,
+                                }}
+                              />
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
 
-                      {/* Itens do Pedido */}
-                      <Card
-                        elevation={0}
-                        sx={{
-                          backgroundColor: "background.paper",
-                          border: 1,
-                          borderColor: "divider",
-                        }}
-                      >
-                        <CardContent sx={{ padding: 3 }}>
-                          <Typography
-                            variant="h6"
-                            className="font-semibold mb-3 flex items-center gap-2"
+                          {/* Resumo Financeiro */}
+                          <Card
+                            elevation={0}
+                            sx={{
+                              backgroundColor: "background.paper",
+                              border: 1,
+                              borderColor: "divider",
+                            }}
                           >
-                            <Receipt sx={{ fontSize: 20 }} />
-                            Itens do Pedido
-                          </Typography>
-                          <div className="space-y-4">
-                            {formik.values.itens.map((item, index) => {
-                              const produto = produtos.find(
-                                (p) => p.id === item.id_produto
-                              );
-                              const categoria = categorias.find(
-                                (c) => c.id === item.id_categoria
-                              );
-
-                              const valorItemComAdicional =
-                                parseFloat(item.valor_unitario) +
-                                (item.adicionais || []).reduce(
-                                  (acc, adicional) =>
-                                    acc +
-                                    parseFloat(adicional.valor) *
-                                      adicional.quantidade,
-                                  0
-                                );
-
-                              return (
-                                <div
-                                  key={index}
-                                  className="border-b border-border pb-4 last:border-b-0 last:pb-0"
-                                >
-                                  <div className="flex justify-between items-start mb-2">
-                                    <div className="flex-1">
-                                      <Typography
-                                        variant="subtitle2"
-                                        className="font-medium"
-                                      >
-                                        {produto?.nome ||
-                                          "Produto não encontrado ou excluído do sistema"}
-                                      </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                      >
-                                        {categoria?.nome}
-                                      </Typography>
-                                      {item.observacao && (
-                                        <Typography
-                                          variant="caption"
-                                          className="block text-amber-600 mt-1"
-                                        >
-                                          Obs: {item.observacao}
-                                        </Typography>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                          handleEditItem(item, index)
-                                        }
-                                      >
-                                        <Edit fontSize="small" />
-                                      </IconButton>
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => {
-                                          const newItens = [
-                                            ...formik.values.itens,
-                                          ];
-                                          newItens.splice(index, 1);
-                                          formik.setFieldValue(
-                                            "itens",
-                                            newItens
-                                          );
-                                        }}
-                                      >
-                                        <Delete fontSize="small" />
-                                      </IconButton>
-                                    </div>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <Typography
-                                      variant="body2"
-                                      className="font-medium"
-                                    >
-                                      {item.quantidade}x{" "}
+                            <CardContent sx={{ padding: 3 }}>
+                              <Typography
+                                variant="h6"
+                                className="font-semibold mb-3"
+                              >
+                                Resumo Financeiro
+                              </Typography>
+                              <div className="space-y-2">
+                                {parseFloat(formik.values.taxa_entrega) > 0 && (
+                                  <div className="flex justify-between">
+                                    <Typography variant="body2">
+                                      {formik.values.nome_taxa_entrega ||
+                                        "Taxa de entrega"}
+                                    </Typography>
+                                    <Typography variant="body2">
                                       {formatCurrency(
-                                        valorItemComAdicional.toString()
+                                        formik.values.taxa_entrega
                                       )}
                                     </Typography>
                                   </div>
+                                )}
+                                <Divider />
+                                <div className="flex justify-between items-center">
+                                  <Typography
+                                    variant="h6"
+                                    className="font-bold"
+                                  >
+                                    Total
+                                  </Typography>
+                                  <Typography
+                                    variant="h6"
+                                    className="font-bold text-primary"
+                                  >
+                                    {formatCurrency(
+                                      calculateItemTotal(
+                                        formik.values
+                                      ).toString()
+                                    )}
+                                  </Typography>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
 
-                                  {/* Adicionais */}
-                                  {item.adicionais &&
-                                    item.adicionais.length > 0 && (
-                                      <div className="ml-4 mt-2 space-y-1">
+                          {/* Itens do Pedido */}
+                          <Card
+                            elevation={0}
+                            sx={{
+                              backgroundColor: "background.paper",
+                              border: 1,
+                              borderColor: "divider",
+                            }}
+                          >
+                            <CardContent sx={{ padding: 3 }}>
+                              <Typography
+                                variant="h6"
+                                className="font-semibold mb-3 flex items-center gap-2"
+                              >
+                                <Receipt sx={{ fontSize: 20 }} />
+                                Itens do Pedido
+                              </Typography>
+                              <div className="space-y-4">
+                                {formik.values.itens.map((item, index) => {
+                                  const produto = produtos.find(
+                                    (p) => p.id === item.id_produto
+                                  );
+                                  const categoria = categorias.find(
+                                    (c) => c.id === item.id_categoria
+                                  );
+
+                                  const valorItemComAdicional =
+                                    parseFloat(item.valor_unitario) +
+                                    (item.adicionais || []).reduce(
+                                      (acc, adicional) =>
+                                        acc +
+                                        parseFloat(adicional.valor) *
+                                          adicional.quantidade,
+                                      0
+                                    );
+
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="border-b border-border pb-4 last:border-b-0 last:pb-0"
+                                    >
+                                      <div className="flex justify-between items-start mb-2">
+                                        <div className="flex-1">
+                                          <Typography
+                                            variant="subtitle2"
+                                            className="font-medium"
+                                          >
+                                            {produto?.nome ||
+                                              "Produto não encontrado ou excluído do sistema"}
+                                          </Typography>
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            {categoria?.nome}
+                                          </Typography>
+                                          {item.observacao && (
+                                            <Typography
+                                              variant="caption"
+                                              className="block text-amber-600 mt-1"
+                                            >
+                                              Obs: {item.observacao}
+                                            </Typography>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleEditItem(item, index)
+                                            }
+                                          >
+                                            <Edit fontSize="small" />
+                                          </IconButton>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => {
+                                              const newItens = [
+                                                ...formik.values.itens,
+                                              ];
+                                              newItens.splice(index, 1);
+                                              formik.setFieldValue(
+                                                "itens",
+                                                newItens
+                                              );
+                                            }}
+                                          >
+                                            <Delete fontSize="small" />
+                                          </IconButton>
+                                        </div>
+                                      </div>
+                                      <div className="flex justify-between items-center">
                                         <Typography
-                                          variant="caption"
-                                          color="text.secondary"
+                                          variant="body2"
                                           className="font-medium"
                                         >
-                                          Adicionais:
+                                          {item.quantidade}x{" "}
+                                          {formatCurrency(
+                                            valorItemComAdicional.toString()
+                                          )}
                                         </Typography>
-                                        {item.adicionais.map(
-                                          (adicional, addIndex) => {
-                                            // Buscar o adicional nos dados
-                                            let adicionalData = null;
-                                            for (const adicionalGroup of adicionais) {
-                                              const opcao =
-                                                adicionalGroup.opcoes?.find(
-                                                  (o) =>
-                                                    o.id ===
-                                                    adicional.id_adicional_opcao
-                                                );
-                                              if (opcao) {
-                                                adicionalData = {
-                                                  adicional: adicionalGroup,
-                                                  opcao,
-                                                };
-                                                break;
-                                              }
-                                            }
-
-                                            return (
-                                              <div
-                                                key={addIndex}
-                                                className="flex justify-between items-center text-sm"
-                                              >
-                                                <span className="text-muted-foreground">
-                                                  •{" "}
-                                                  {adicionalData?.opcao.nome ||
-                                                    "Adicional não encontrado ou excluído do sistema"}
-                                                  {` (${
-                                                    adicional.quantidade ?? 0
-                                                  }x)`}
-                                                </span>
-                                                <span className="text-muted-foreground">
-                                                  {formatCurrency(
-                                                    adicional.valor
-                                                  )}
-                                                </span>
-                                              </div>
-                                            );
-                                          }
-                                        )}
                                       </div>
-                                    )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    <div className="h-full min-h-[80vh] flex items-center justify-center">
-                      <div className="text-center">
-                        <Receipt
-                          sx={{ fontSize: 48, color: "text.secondary", mb: 2 }}
-                        />
-                        <Typography
-                          variant="h6"
-                          color="text.secondary"
-                          className="mb-2"
-                        >
-                          Adicione produtos para começar uma venda
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Clique em um produto na barra lateral para começar uma
-                          venda
-                        </Typography>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </aside>
 
-            {/* Main Content - Formulário */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <main className="flex-1 overflow-auto p-6">
-                <Card
-                  elevation={0}
-                  sx={{ border: "none", backgroundColor: "background.paper" }}
-                >
-                  <CardContent sx={{ padding: 3 }}>
-                    <Grid container spacing={3}>
-                      {/* Cliente */}
-                      <Grid size={12}>
-                        <Autocomplete
-                          size="small"
-                          options={clienteOptions}
-                          value={
-                            clienteOptions.find(
-                              (c) => c.id === formik.values.id_cliente
-                            ) ?? null
-                          }
-                          inputValue={inputValue}
-                          getOptionKey={(option) => option.id}
-                          onInputChange={(_, newInput, reason) => {
-                            if (reason === "input") {
-                              setInputValue(newInput);
-                              if (newInput.length >= 3) fetchClientes(newInput);
-                            }
-                          }}
-                          onChange={(_, option) => {
-                            formik.setFieldValue(
-                              "id_cliente",
-                              option?.id ?? ""
-                            );
-                            setInputValue(
-                              option ? option.nome_razao_social : ""
-                            ); // << aqui!
-                          }}
-                          getOptionLabel={(opt) => opt.nome_razao_social}
-                          isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                          loading={
-                            inputValue.length >= 3 &&
-                            clienteOptions.length === 0
-                          }
-                          onBlur={() => {
-                            const selecionado = clienteOptions.find(
-                              (c) => c.id === formik.values.id_cliente
-                            );
-                            setInputValue(
-                              selecionado ? selecionado.nome_razao_social : ""
-                            );
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Cliente"
-                              required
-                              error={
-                                formik.touched.id_cliente &&
-                                Boolean(formik.errors.id_cliente)
-                              }
-                              helperText={
-                                formik.touched.id_cliente &&
-                                formik.errors.id_cliente
-                              }
+                                      {/* Adicionais */}
+                                      {item.adicionais &&
+                                        item.adicionais.length > 0 && (
+                                          <div className="ml-4 mt-2 space-y-1">
+                                            <Typography
+                                              variant="caption"
+                                              color="text.secondary"
+                                              className="font-medium"
+                                            >
+                                              Adicionais:
+                                            </Typography>
+                                            {item.adicionais.map(
+                                              (adicional, addIndex) => {
+                                                // Buscar o adicional nos dados
+                                                let adicionalData = null;
+                                                for (const adicionalGroup of adicionais) {
+                                                  const opcao =
+                                                    adicionalGroup.opcoes?.find(
+                                                      (o) =>
+                                                        o.id ===
+                                                        adicional.id_adicional_opcao
+                                                    );
+                                                  if (opcao) {
+                                                    adicionalData = {
+                                                      adicional: adicionalGroup,
+                                                      opcao,
+                                                    };
+                                                    break;
+                                                  }
+                                                }
+
+                                                return (
+                                                  <div
+                                                    key={addIndex}
+                                                    className="flex justify-between items-center text-sm"
+                                                  >
+                                                    <span className="text-muted-foreground">
+                                                      •{" "}
+                                                      {adicionalData?.opcao
+                                                        .nome ||
+                                                        "Adicional não encontrado ou excluído do sistema"}
+                                                      {` (${
+                                                        adicional.quantidade ??
+                                                        0
+                                                      }x)`}
+                                                    </span>
+                                                    <span className="text-muted-foreground">
+                                                      {formatCurrency(
+                                                        adicional.valor
+                                                      )}
+                                                    </span>
+                                                  </div>
+                                                );
+                                              }
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ) : (
+                        <div className="h-full min-h-[80vh] flex items-center justify-center">
+                          <div className="text-center">
+                            <Receipt
+                              sx={{
+                                fontSize: 48,
+                                color: "text.secondary",
+                                mb: 2,
+                              }}
                             />
-                          )}
-                        />
-                      </Grid>
+                            <Typography
+                              variant="h6"
+                              color="text.secondary"
+                              className="mb-2"
+                            >
+                              Adicione produtos para começar uma venda
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Clique em um produto na barra lateral para começar
+                              uma venda
+                            </Typography>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </aside>
 
-                      {/* Código do Pedido */}
-                      <Grid size={12}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label="Código do Pedido"
-                          name="codigo_pedido"
-                          value={formik.values.codigo_pedido}
-                          onChange={formik.handleChange}
-                          error={
-                            formik.touched.codigo_pedido &&
-                            Boolean(formik.errors.codigo_pedido)
-                          }
-                          helperText={
-                            formik.touched.codigo_pedido &&
-                            formik.errors.codigo_pedido
-                          }
-                          required
-                        />
-                      </Grid>
-
-                      {/* Tipo de Entrega */}
-                      <Grid size={12}>
-                        <FormControl fullWidth required>
-                          <InputLabel>Tipo de Entrega</InputLabel>
-                          <Select
-                            name="tipo_entrega"
-                            value={formik.values.tipo_entrega}
-                            onChange={(e) => {
-                              formik.handleChange(e);
-                              if (e.target.value !== "Delivery") {
-                                formik.setFieldValue("taxa_entrega", "0.00");
-                              }
-                            }}
-                            label="Tipo de Entrega"
-                          >
-                            <MenuItem value="Balcão">Balcão</MenuItem>
-                            <MenuItem value="Delivery">Delivery</MenuItem>
-                            <MenuItem value="Retirada">Retirada</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
-
-                      {/* Categoria de Pagamento */}
-                      <Grid size={12}>
-                        <FormControl fullWidth>
-                          <InputLabel>Categoria de Pagamento</InputLabel>
-                          <Select
-                            name="categoria_pagamento"
-                            value={formik.values.categoria_pagamento}
-                            onChange={(e) => {
-                              formik.handleChange(e);
-                              if (e.target.value !== "Dinheiro") {
-                                formik.setFieldValue("troco_para", "0.00");
-                              }
-                            }}
-                            label="Categoria de Pagamento"
-                          >
-                            <MenuItem value="Cartão">Cartão</MenuItem>
-                            <MenuItem value="Dinheiro">Dinheiro</MenuItem>
-                            <MenuItem value="Pix">Pix</MenuItem>
-                            <MenuItem value="Prazo">Prazo</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
-
-                      {/* Forma de Pagamento */}
-                      <Grid size={12} className="hidden">
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label="Forma de Pagamento"
-                          name="forma_pagamento"
-                          value={formik.values.forma_pagamento}
-                          onChange={formik.handleChange}
-                        />
-                      </Grid>
-
-                      {/* Nome da Taxa de Entrega, Troco Para e Valor do Troco */}
-                      <Grid size={12}>
-                        <Box sx={{ display: "flex", gap: 2 }}>
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Taxa de Entrega"
-                            name="taxa_entrega"
-                            type="number"
-                            value={formik.values.taxa_entrega}
-                            onChange={formik.handleChange}
-                            error={
-                              formik.touched.taxa_entrega &&
-                              Boolean(formik.errors.taxa_entrega)
-                            }
-                            helperText={
-                              formik.touched.taxa_entrega &&
-                              formik.errors.taxa_entrega
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  R$
-                                </InputAdornment>
-                              ),
-                            }}
-                            disabled={formik.values.tipo_entrega !== "Delivery"}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Troco Para"
-                            name="troco_para"
-                            type="number"
-                            disabled={
-                              formik.values.categoria_pagamento !== "Dinheiro"
-                            }
-                            value={formik.values.troco_para}
-                            onChange={formik.handleChange}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  R$
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Valor do Troco"
-                            disabled
-                            value={
-                              formik.values.categoria_pagamento === "Dinheiro"
-                                ? (
-                                    parseFloat(
-                                      formik.values.troco_para || "0"
-                                    ) - calculateItemTotal(formik.values)
-                                  ).toFixed(2)
-                                : "0.00"
-                            }
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  R$
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Box>
-                      </Grid>
-
-                      {/* Taxa de Entrega */}
-                      <Grid size={12}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label="Nome da Taxa de Entrega"
-                          name="nome_taxa_entrega"
-                          value={formik.values.nome_taxa_entrega}
-                          onChange={formik.handleChange}
-                        />
-                      </Grid>
-
-                      {/* Observação */}
-                      <Grid size={12}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label="Observação"
-                          name="observacao"
-                          multiline
-                          rows={3}
-                          value={formik.values.observacao}
-                          onChange={formik.handleChange}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    {/* Submit Button */}
-                    <Box
+                {/* Main Content - Formulário */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <main className="flex-1 overflow-auto p-6">
+                    <Card
+                      elevation={0}
                       sx={{
-                        mt: 4,
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 2,
+                        border: "none",
+                        backgroundColor: "background.paper",
                       }}
                     >
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => router.push("/gerenciar-vendas")}
-                      >
-                        Voltar
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        size="large"
-                        disabled={
-                          !formik.isValid || formik.values.itens.length === 0
-                        }
-                      >
-                        {pedido ? "Atualizar Pedido" : "Criar Pedido"}
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </main>
-            </div>
-
-            {/* Right Sidebar - Produtos */}
-            <aside className="hidden lg:block w-96 border-l border-border bg-card">
-              <div className="h-full flex flex-col">
-                <div className="p-4 border-b border-border">
-                  <h2 className="font-semibold text-xl flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Produtos
-                  </h2>
-                </div>
-
-                <div className="flex-1 overflow-y-auto">
-                  {produtos && produtos.length > 0 ? (
-                    filteredProdutos.length > 0 ? (
-                      <List sx={{ padding: 0 }}>
-                        {filteredProdutos.map((produto) => (
-                          <ListItem key={produto.id} disablePadding>
-                            <ListItemButton
-                              onClick={() => handleAddItem(produto)}
+                      <CardContent sx={{ padding: 3 }}>
+                        <Grid container spacing={3}>
+                          {/* Cliente */}
+                          <Grid size={12}>
+                            <Box
                               sx={{
-                                "&:hover": {
-                                  backgroundColor: "rgba(0, 0, 0, 0.04)",
-                                },
-                                padding: "12px 16px",
+                                display: "flex",
+                                gap: 1,
+                                alignItems: "flex-start",
                               }}
                             >
-                              <ListItemText
-                                primary={produto.nome}
-                                secondary={produto.descricao}
-                                primaryTypographyProps={{
-                                  fontSize: "14px",
-                                  fontWeight: 400,
+                              <Box sx={{ flex: 1 }}>
+                                <Autocomplete
+                                  size="small"
+                                  options={clienteOptions}
+                                  value={
+                                    clienteOptions.find(
+                                      (c) => c.id === formik.values.id_cliente
+                                    ) ?? null
+                                  }
+                                  inputValue={inputValue}
+                                  getOptionKey={(option) => option.id}
+                                  onInputChange={(_, newInput, reason) => {
+                                    if (reason === "input") {
+                                      setInputValue(newInput);
+                                      if (newInput.length >= 3)
+                                        fetchClientes(newInput);
+                                    }
+                                  }}
+                                  onChange={(_, option) => {
+                                    formik.setFieldValue(
+                                      "id_cliente",
+                                      option?.id ?? ""
+                                    );
+                                    setInputValue(
+                                      option ? option.nome_razao_social : ""
+                                    );
+                                  }}
+                                  getOptionLabel={(opt) =>
+                                    opt.nome_razao_social
+                                  }
+                                  isOptionEqualToValue={(opt, val) =>
+                                    opt.id === val.id
+                                  }
+                                  loading={
+                                    inputValue.length >= 3 &&
+                                    clienteOptions.length === 0
+                                  }
+                                  onBlur={() => {
+                                    const selecionado = clienteOptions.find(
+                                      (c) => c.id === formik.values.id_cliente
+                                    );
+                                    setInputValue(
+                                      selecionado
+                                        ? selecionado.nome_razao_social
+                                        : ""
+                                    );
+                                  }}
+                                  renderInput={(params) => (
+                                    <TextField
+                                      {...params}
+                                      label="Cliente"
+                                      required
+                                      error={
+                                        formik.touched.id_cliente &&
+                                        Boolean(formik.errors.id_cliente)
+                                      }
+                                      helperText={
+                                        formik.touched.id_cliente &&
+                                        formik.errors.id_cliente
+                                      }
+                                    />
+                                  )}
+                                />
+                              </Box>
+
+                              <Box sx={{ display: "flex", gap: 0.5, mt: 0.5 }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={handleAbrirDialogNovoCliente}
+                                  title="Novo Cliente"
+                                  sx={{
+                                    backgroundColor: "primary.main",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "primary.dark",
+                                    },
+                                  }}
+                                >
+                                  <PersonAdd fontSize="small" />
+                                </IconButton>
+
+                                <IconButton
+                                  size="small"
+                                  onClick={handleAbrirDialogEditarCliente}
+                                  title="Editar Cliente"
+                                  disabled={!formik.values.id_cliente}
+                                  sx={{
+                                    backgroundColor: "secondary.main",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "secondary.dark",
+                                    },
+                                    "&:disabled": {
+                                      backgroundColor: "action.disabled",
+                                      color: "action.disabled",
+                                    },
+                                  }}
+                                >
+                                  <Edit fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                          </Grid>
+
+                          {/* Código do Pedido */}
+                          <Grid size={12}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Código do Pedido"
+                              name="codigo_pedido"
+                              value={formik.values.codigo_pedido}
+                              onChange={formik.handleChange}
+                              error={
+                                formik.touched.codigo_pedido &&
+                                Boolean(formik.errors.codigo_pedido)
+                              }
+                              helperText={
+                                formik.touched.codigo_pedido &&
+                                formik.errors.codigo_pedido
+                              }
+                              required
+                            />
+                          </Grid>
+
+                          {/* Tipo de Entrega */}
+                          <Grid size={12}>
+                            <FormControl fullWidth required>
+                              <InputLabel>Tipo de Entrega</InputLabel>
+                              <Select
+                                name="tipo_entrega"
+                                value={formik.values.tipo_entrega}
+                                onChange={(e) => {
+                                  formik.handleChange(e);
+                                  if (e.target.value !== "Delivery") {
+                                    formik.setFieldValue(
+                                      "taxa_entrega",
+                                      "0.00"
+                                    );
+                                  }
+                                }}
+                                label="Tipo de Entrega"
+                              >
+                                <MenuItem value="Balcão">Balcão</MenuItem>
+                                <MenuItem value="Delivery">Delivery</MenuItem>
+                                <MenuItem value="Retirada">Retirada</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+
+                          {/* Categoria de Pagamento */}
+                          <Grid size={12}>
+                            <FormControl fullWidth>
+                              <InputLabel>Categoria de Pagamento</InputLabel>
+                              <Select
+                                name="categoria_pagamento"
+                                value={formik.values.categoria_pagamento}
+                                onChange={(e) => {
+                                  formik.handleChange(e);
+                                  if (e.target.value !== "Dinheiro") {
+                                    formik.setFieldValue("troco_para", "0.00");
+                                  }
+                                }}
+                                label="Categoria de Pagamento"
+                              >
+                                <MenuItem value="Cartão">Cartão</MenuItem>
+                                <MenuItem value="Dinheiro">Dinheiro</MenuItem>
+                                <MenuItem value="Pix">Pix</MenuItem>
+                                <MenuItem value="Prazo">Prazo</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+
+                          {/* Forma de Pagamento */}
+                          <Grid size={12} className="hidden">
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Forma de Pagamento"
+                              name="forma_pagamento"
+                              value={formik.values.forma_pagamento}
+                              onChange={formik.handleChange}
+                            />
+                          </Grid>
+
+                          {/* Nome da Taxa de Entrega, Troco Para e Valor do Troco */}
+                          <Grid size={12}>
+                            <Box sx={{ display: "flex", gap: 2 }}>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                label="Taxa de Entrega"
+                                name="taxa_entrega"
+                                type="number"
+                                value={formik.values.taxa_entrega}
+                                onChange={formik.handleChange}
+                                error={
+                                  formik.touched.taxa_entrega &&
+                                  Boolean(formik.errors.taxa_entrega)
+                                }
+                                helperText={
+                                  formik.touched.taxa_entrega &&
+                                  formik.errors.taxa_entrega
+                                }
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      R$
+                                    </InputAdornment>
+                                  ),
+                                }}
+                                disabled={
+                                  formik.values.tipo_entrega !== "Delivery"
+                                }
+                              />
+                              <TextField
+                                size="small"
+                                fullWidth
+                                label="Troco Para"
+                                name="troco_para"
+                                type="number"
+                                disabled={
+                                  formik.values.categoria_pagamento !==
+                                  "Dinheiro"
+                                }
+                                value={formik.values.troco_para}
+                                onChange={formik.handleChange}
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      R$
+                                    </InputAdornment>
+                                  ),
                                 }}
                               />
-                            </ListItemButton>
-                          </ListItem>
-                        ))}
-                      </List>
-                    ) : (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          height: "200px",
-                          padding: "40px 0",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          textAlign="center"
+                              <TextField
+                                size="small"
+                                fullWidth
+                                label="Valor do Troco"
+                                disabled
+                                value={
+                                  formik.values.categoria_pagamento ===
+                                  "Dinheiro"
+                                    ? (
+                                        parseFloat(
+                                          formik.values.troco_para || "0"
+                                        ) - calculateItemTotal(formik.values)
+                                      ).toFixed(2)
+                                    : "0.00"
+                                }
+                                InputProps={{
+                                  startAdornment: (
+                                    <InputAdornment position="start">
+                                      R$
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
+                            </Box>
+                          </Grid>
+
+                          {/* Taxa de Entrega */}
+                          <Grid size={12}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Nome da Taxa de Entrega"
+                              name="nome_taxa_entrega"
+                              value={formik.values.nome_taxa_entrega}
+                              onChange={formik.handleChange}
+                            />
+                          </Grid>
+
+                          {/* Observação */}
+                          <Grid size={12}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Observação"
+                              name="observacao"
+                              multiline
+                              rows={3}
+                              value={formik.values.observacao}
+                              onChange={formik.handleChange}
+                            />
+                          </Grid>
+                        </Grid>
+
+                        {/* Submit Button */}
+                        <Box
+                          sx={{
+                            mt: 4,
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 2,
+                          }}
                         >
-                          Nenhum produto encontrado
-                        </Typography>
-                      </Box>
-                    )
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        height: "200px",
-                        padding: "40px 0",
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        textAlign="center"
-                      >
-                        Nenhum produto encontrado
-                      </Typography>
-                    </Box>
-                  )}
+                          <Button
+                            variant="outlined"
+                            size="large"
+                            onClick={() => router.push("/gerenciar-vendas")}
+                          >
+                            Voltar
+                          </Button>
+                          <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            disabled={
+                              !formik.isValid ||
+                              formik.values.itens.length === 0
+                            }
+                          >
+                            {pedido ? "Atualizar Pedido" : "Criar Pedido"}
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </main>
                 </div>
 
-                <div className="p-3 border-t border-border">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Buscar produtos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+                {/* Right Sidebar - Produtos */}
+                <aside className="hidden lg:block w-96 border-l border-border bg-card">
+                  <div className="h-full flex flex-col">
+                    <div className="p-4 border-b border-border">
+                      <h2 className="font-semibold text-xl flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        Produtos
+                      </h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                      {produtos && produtos.length > 0 ? (
+                        filteredProdutos.length > 0 ? (
+                          <List sx={{ padding: 0 }}>
+                            {filteredProdutos.map((produto) => (
+                              <ListItem key={produto.id} disablePadding>
+                                <ListItemButton
+                                  onClick={() => handleAddItem(produto)}
+                                  sx={{
+                                    "&:hover": {
+                                      backgroundColor: "rgba(0, 0, 0, 0.04)",
+                                    },
+                                    padding: "12px 16px",
+                                  }}
+                                >
+                                  <ListItemText
+                                    primary={produto.nome}
+                                    secondary={produto.descricao}
+                                    primaryTypographyProps={{
+                                      fontSize: "14px",
+                                      fontWeight: 400,
+                                    }}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            ))}
+                          </List>
+                        ) : (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              height: "200px",
+                              padding: "40px 0",
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              textAlign="center"
+                            >
+                              Nenhum produto encontrado
+                            </Typography>
+                          </Box>
+                        )
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            height: "200px",
+                            padding: "40px 0",
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            textAlign="center"
+                          >
+                            Nenhum produto encontrado
+                          </Typography>
+                        </Box>
+                      )}
+                    </div>
+
+                    <div className="p-3 border-t border-border">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Buscar produtos..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </aside>
+                </aside>
 
-            {/* Modal para Adicionar/Editar Item */}
-            <NewItemModal
-              open={modalOpen}
-              onClose={() => {
-                setModalOpen(false);
-                setModalData(null);
-              }}
-              modalData={modalData}
-              adicionais={adicionais}
-              onSave={(item) => {
-                if (modalData?.index !== undefined) {
-                  // Editar item existente
-                  const newItens = [...formik.values.itens];
-                  newItens[modalData.index] = item;
-                  formik.setFieldValue("itens", newItens);
-                } else {
-                  // Adicionar novo item
-                  formik.setFieldValue("itens", [...formik.values.itens, item]);
-                }
-                setModalOpen(false);
-                setModalData(null);
-              }}
-              categorias={categorias}
-            />
-          </Form>
-        );
-      }}
-    </Formik>
+                {/* Modal para Adicionar/Editar Item */}
+                <NewItemModal
+                  open={modalOpen}
+                  onClose={() => {
+                    setModalOpen(false);
+                    setModalData(null);
+                  }}
+                  modalData={modalData}
+                  adicionais={adicionais}
+                  onSave={(item) => {
+                    if (modalData?.index !== undefined) {
+                      // Editar item existente
+                      const newItens = [...formik.values.itens];
+                      newItens[modalData.index] = item;
+                      formik.setFieldValue("itens", newItens);
+                    } else {
+                      // Adicionar novo item
+                      formik.setFieldValue("itens", [
+                        ...formik.values.itens,
+                        item,
+                      ]);
+                    }
+                    setModalOpen(false);
+                    setModalData(null);
+                  }}
+                  categorias={categorias}
+                />
+              </Form>
+              <DialogCliente
+                open={dialogClienteOpen}
+                onClose={() => setDialogClienteOpen(false)}
+                user={user}
+                cliente={clienteParaEdicao as ClienteResponse}
+                onClienteSaved={handleClienteSalvo}
+              />
+            </>
+          );
+        }}
+      </Formik>
+    </>
   );
 }
 

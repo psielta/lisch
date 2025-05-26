@@ -183,6 +183,8 @@ export const clienteSlice = createSlice({
           );
           if (index >= 0) {
             state.clientes.items[index] = action.payload;
+          } else {
+            state.clientes.items.push(action.payload);
           }
         }
       )

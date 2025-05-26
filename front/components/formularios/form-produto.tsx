@@ -245,7 +245,6 @@ function FormProduto({
 
   // Função para enviar o formulário
   const onSubmit = (data: ProdutoFormValues) => {
-    debugger;
     const cleanedData = {
       ...data,
       id: data.id || undefined,

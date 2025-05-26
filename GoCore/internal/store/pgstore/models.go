@@ -239,6 +239,7 @@ type Pedido struct {
 	TrocoPara          pgtype.Numeric     `json:"troco_para"`
 	Desconto           pgtype.Numeric     `json:"desconto"`
 	Acrescimo          pgtype.Numeric     `json:"acrescimo"`
+	Finalizado         bool               `json:"finalizado"`
 }
 
 type PedidoItemAdicionai struct {

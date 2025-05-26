@@ -33,6 +33,7 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 	dataInicio := r.URL.Query().Get("data_inicio")
 	dataFim := r.URL.Query().Get("data_fim")
 	codigoPedido := strings.TrimSpace(r.URL.Query().Get("codigo_pedido"))
+	finalizado := r.URL.Query().Get("finalizado")
 
 	// Parse limit e offset para paginação
 	limit := 20 // Default
@@ -90,6 +91,12 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 			// Adicionar um dia para incluir todo o dia final
 			dataFimFinal := data.AddDate(0, 0, 1)
 			queryMods = append(queryMods, qm.Where("pedidos.data_pedido < ?", dataFimFinal))
+		}
+	}
+
+	if finalizado != "" {
+		if finalizadoInt, err := strconv.ParseBool(finalizado); err == nil {
+			queryMods = append(queryMods, qm.Where("COALESCE(pedidos.finalizado, false) = ?", finalizadoInt))
 		}
 	}
 

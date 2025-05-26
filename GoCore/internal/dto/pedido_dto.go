@@ -165,6 +165,7 @@ type PedidoResponseDTO struct {
 	TrocoPara          *types.NullDecimal `json:"troco_para,omitempty"`
 	Desconto           types.Decimal      `json:"desconto"`
 	Acrescimo          types.Decimal      `json:"acrescimo"`
+	Finalizado         bool               `json:"finalizado"`
 	// Relacionamentos
 	Status  PedidoStatusDTO         `json:"status"`
 	Cliente PedidoClienteDTO        `json:"cliente"`
@@ -361,6 +362,7 @@ func PedidoModelToResponse(p *models.Pedido) *PedidoResponseDTO {
 		TrocoPara:          nullDecimalToPtr(p.TrocoPara),
 		Desconto:           p.Desconto,
 		Acrescimo:          p.Acrescimo,
+		Finalizado:         p.Finalizado,
 		Status:             st,
 		Cliente:            cli,
 		Itens:              itens,

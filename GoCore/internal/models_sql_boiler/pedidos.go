@@ -56,6 +56,7 @@ type Pedido struct {
 	TrocoPara          types.NullDecimal `boil:"troco_para" json:"troco_para,omitempty" toml:"troco_para" yaml:"troco_para,omitempty"`
 	Desconto           types.Decimal     `boil:"desconto" json:"desconto" toml:"desconto" yaml:"desconto"`
 	Acrescimo          types.Decimal     `boil:"acrescimo" json:"acrescimo" toml:"acrescimo" yaml:"acrescimo"`
+	Finalizado         bool              `boil:"finalizado" json:"finalizado" toml:"finalizado" yaml:"finalizado"`
 
 	R *pedidoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L pedidoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -93,6 +94,7 @@ var PedidoColumns = struct {
 	TrocoPara          string
 	Desconto           string
 	Acrescimo          string
+	Finalizado         string
 }{
 	ID:                 "id",
 	SeqID:              "seq_id",
@@ -125,6 +127,7 @@ var PedidoColumns = struct {
 	TrocoPara:          "troco_para",
 	Desconto:           "desconto",
 	Acrescimo:          "acrescimo",
+	Finalizado:         "finalizado",
 }
 
 var PedidoTableColumns = struct {
@@ -159,6 +162,7 @@ var PedidoTableColumns = struct {
 	TrocoPara          string
 	Desconto           string
 	Acrescimo          string
+	Finalizado         string
 }{
 	ID:                 "pedidos.id",
 	SeqID:              "pedidos.seq_id",
@@ -191,9 +195,19 @@ var PedidoTableColumns = struct {
 	TrocoPara:          "pedidos.troco_para",
 	Desconto:           "pedidos.desconto",
 	Acrescimo:          "pedidos.acrescimo",
+	Finalizado:         "pedidos.finalizado",
 }
 
 // Generated where
+
+type whereHelperbool struct{ field string }
+
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var PedidoWhere = struct {
 	ID                 whereHelperstring
@@ -227,6 +241,7 @@ var PedidoWhere = struct {
 	TrocoPara          whereHelpertypes_NullDecimal
 	Desconto           whereHelpertypes_Decimal
 	Acrescimo          whereHelpertypes_Decimal
+	Finalizado         whereHelperbool
 }{
 	ID:                 whereHelperstring{field: "\"pedidos\".\"id\""},
 	SeqID:              whereHelperint64{field: "\"pedidos\".\"seq_id\""},
@@ -259,6 +274,7 @@ var PedidoWhere = struct {
 	TrocoPara:          whereHelpertypes_NullDecimal{field: "\"pedidos\".\"troco_para\""},
 	Desconto:           whereHelpertypes_Decimal{field: "\"pedidos\".\"desconto\""},
 	Acrescimo:          whereHelpertypes_Decimal{field: "\"pedidos\".\"acrescimo\""},
+	Finalizado:         whereHelperbool{field: "\"pedidos\".\"finalizado\""},
 }
 
 // PedidoRels is where relationship names are stored.
@@ -339,9 +355,9 @@ func (r *pedidoR) GetIDPedidoPedidoPagamentos() PedidoPagamentoSlice {
 type pedidoL struct{}
 
 var (
-	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para", "desconto", "acrescimo"}
+	pedidoAllColumns            = []string{"id", "seq_id", "tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "pedido_pronto", "data_pedido_pronto", "cupom", "tipo_entrega", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "valor_total", "observacao", "taxa_entrega", "nome_taxa_entrega", "id_status", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para", "desconto", "acrescimo", "finalizado"}
 	pedidoColumnsWithoutDefault = []string{"tenant_id", "id_cliente", "codigo_pedido", "data_pedido", "gmt", "tipo_entrega", "valor_total", "id_status"}
-	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para", "desconto", "acrescimo"}
+	pedidoColumnsWithDefault    = []string{"id", "seq_id", "pedido_pronto", "data_pedido_pronto", "cupom", "prazo", "prazo_min", "prazo_max", "categoria_pagamento", "forma_pagamento", "observacao", "taxa_entrega", "nome_taxa_entrega", "lat", "lng", "created_at", "updated_at", "deleted_at", "valor_pago", "quitado", "troco_para", "desconto", "acrescimo", "finalizado"}
 	pedidoPrimaryKeyColumns     = []string{"id"}
 	pedidoGeneratedColumns      = []string{}
 )

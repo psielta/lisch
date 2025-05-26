@@ -381,34 +381,7 @@ export default function GerenciarVendas({
                     Resumo Financeiro
                   </Typography>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Typography variant="body2">Valor total</Typography>
-                      <Typography variant="body2">
-                        {formatCurrency(selectedPedido.valor_total)}
-                      </Typography>
-                    </div>
-
-                    {selectedPedido.desconto !== "0.00" && (
-                      <div className="flex justify-between text-red-600">
-                        <Typography variant="body2">Desconto</Typography>
-                        <Typography variant="body2">
-                          -{formatCurrency(selectedPedido.desconto)}
-                        </Typography>
-                      </div>
-                    )}
-
-                    {selectedPedido.acrescimo !== "0.00" && (
-                      <div className="flex justify-between text-green-600">
-                        <Typography variant="body2">Acréscimo</Typography>
-                        <Typography variant="body2">
-                          {formatCurrency(selectedPedido.acrescimo)}
-                        </Typography>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {selectedPedido.categoria_pagamento && (
                       <div className="flex justify-between">
                         <Typography variant="body2">
@@ -429,36 +402,40 @@ export default function GerenciarVendas({
                         </Typography>
                       </div>
                     )}
+                    <Divider />
+                    <div className="flex justify-between">
+                      <Typography variant="body2">Valor total</Typography>
+                      <Typography variant="body2">
+                        {formatCurrency(selectedPedido.valor_total)}
+                      </Typography>
+                    </div>
+
+                    {selectedPedido.desconto !== "0.00" && (
+                      <div className="flex justify-between text-red-600">
+                        <Typography variant="body2">Desconto</Typography>
+                        <Typography variant="body2">
+                          -{formatCurrency(selectedPedido.desconto)}
+                        </Typography>
+                      </div>
+                    )}
+
+                    {selectedPedido.acrescimo !== "0.00" && (
+                      <div className="flex justify-between text-green-600">
+                        <Typography variant="body2">Acréscimo</Typography>
+                        <Typography variant="body2">
+                          +{formatCurrency(selectedPedido.acrescimo)}
+                        </Typography>
+                      </div>
+                    )}
+
                     {selectedPedido.taxa_entrega !== "0.00" && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-green-600">
                         <Typography variant="body2">
                           {selectedPedido.nome_taxa_entrega ||
                             "Taxa de entrega"}
                         </Typography>
                         <Typography variant="body2">
-                          {formatCurrency(selectedPedido.taxa_entrega)}
-                        </Typography>
-                      </div>
-                    )}
-
-                    {selectedPedido.troco_para &&
-                    selectedPedido.troco_para !== "0.00" ? (
-                      <div className="flex justify-between">
-                        <Typography variant="body2">Troco para</Typography>
-                        <Typography variant="body2">
-                          {formatCurrency(selectedPedido.troco_para ?? "0.00")}
-                        </Typography>
-                      </div>
-                    ) : (
-                      <></>
-                    )}
-                    {selectedPedido.cupom && (
-                      <div className="flex justify-between text-green-600">
-                        <Typography variant="body2">
-                          Cupom: {selectedPedido.cupom}
-                        </Typography>
-                        <Typography variant="body2">
-                          Desconto aplicado
+                          +{formatCurrency(selectedPedido.taxa_entrega)}
                         </Typography>
                       </div>
                     )}
@@ -481,6 +458,17 @@ export default function GerenciarVendas({
                         )}
                       </Typography>
                     </div>
+                    {selectedPedido.troco_para &&
+                    selectedPedido.troco_para !== "0.00" ? (
+                      <div className="flex justify-between">
+                        <Typography variant="body2">Troco para</Typography>
+                        <Typography variant="body2">
+                          {formatCurrency(selectedPedido.troco_para ?? "0.00")}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <></>
+                    )}
                     {selectedPedido.troco_para &&
                     selectedPedido.troco_para !== "0.00" ? (
                       <div className="flex justify-between">

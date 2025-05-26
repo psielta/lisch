@@ -140,6 +140,7 @@ interface PedidoResponse {
   quitado?: boolean;
   desconto: string;
   acrescimo: string;
+  finalizado: boolean;
   status: PedidoStatusDTO;
   cliente: PedidoClienteDTO;
   itens: PedidoItemResponseDTO[];

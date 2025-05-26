@@ -241,7 +241,13 @@ function Vendas({
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
-    defaultCliente ? [defaultCliente] : pedido?.cliente ? [pedido.cliente] : []
+    defaultCliente && pedido?.cliente
+      ? [defaultCliente, pedido.cliente]
+      : defaultCliente
+      ? [defaultCliente]
+      : pedido?.cliente
+      ? [pedido.cliente]
+      : []
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
@@ -498,9 +504,9 @@ function Vendas({
           }, [postOrPutPedidoState, router]);
           return (
             <>
-              <Form className="flex h-full">
+              <Form className="flex h-screen overflow-hidden">
                 {/* Left Sidebar - Resumo do Pedido */}
-                <aside className="hidden lg:block w-96 border-r border-border bg-card">
+                <aside className="hidden lg:flex w-96 flex-col border-r border-border bg-secondary overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
@@ -515,7 +521,7 @@ function Vendas({
                       {formik.values.itens.length > 0 ? (
                         <div className="space-y-6">
                           {/* Header do pedido */}
-                          <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
+                          <div className="bg-gradient-to-r from-primary/25 to-primary/34 rounded-xl p-4 border border-primary/20">
                             <div className="flex items-center justify-between mb-2">
                               <Typography
                                 variant="h6"
@@ -554,7 +560,29 @@ function Vendas({
                               >
                                 Resumo Financeiro
                               </Typography>
-                              <div className="space-y-2">
+
+                              <div className="space-y-1">
+                                {formik.values.categoria_pagamento && (
+                                  <div className="flex justify-between">
+                                    <Typography variant="body2">
+                                      Categoria de pagamento
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {formik.values.categoria_pagamento}
+                                    </Typography>
+                                  </div>
+                                )}
+                                {formik.values.forma_pagamento && (
+                                  <div className="flex justify-between">
+                                    <Typography variant="body2">
+                                      Forma de pagamento
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {formik.values.forma_pagamento}
+                                    </Typography>
+                                  </div>
+                                )}
+                                <Divider />
                                 <div className="flex justify-between">
                                   <Typography variant="body2">
                                     Valor total
@@ -564,7 +592,7 @@ function Vendas({
                                   </Typography>
                                 </div>
 
-                                {parseFloat(formik.values.desconto) > 0 && (
+                                {formik.values.desconto !== "0.00" && (
                                   <div className="flex justify-between text-red-600">
                                     <Typography variant="body2">
                                       Desconto
@@ -575,23 +603,25 @@ function Vendas({
                                   </div>
                                 )}
 
-                                {parseFloat(formik.values.acrescimo) > 0 && (
+                                {formik.values.acrescimo !== "0.00" && (
                                   <div className="flex justify-between text-green-600">
                                     <Typography variant="body2">
                                       Acréscimo
                                     </Typography>
                                     <Typography variant="body2">
-                                      {formatCurrency(formik.values.acrescimo)}
+                                      +{formatCurrency(formik.values.acrescimo)}
                                     </Typography>
                                   </div>
                                 )}
-                                {parseFloat(formik.values.taxa_entrega) > 0 && (
-                                  <div className="flex justify-between">
+
+                                {formik.values.taxa_entrega !== "0.00" && (
+                                  <div className="flex justify-between text-green-600">
                                     <Typography variant="body2">
                                       {formik.values.nome_taxa_entrega ||
                                         "Taxa de entrega"}
                                     </Typography>
                                     <Typography variant="body2">
+                                      +
                                       {formatCurrency(
                                         formik.values.taxa_entrega
                                       )}
@@ -617,6 +647,44 @@ function Vendas({
                                     )}
                                   </Typography>
                                 </div>
+                                {formik.values.troco_para &&
+                                formik.values.troco_para !== "0.00" ? (
+                                  <div className="flex justify-between">
+                                    <Typography variant="body2">
+                                      Troco para
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {formatCurrency(formik.values.troco_para)}
+                                    </Typography>
+                                  </div>
+                                ) : (
+                                  <></>
+                                )}
+                                {formik.values.troco_para &&
+                                formik.values.troco_para !== "0.00" ? (
+                                  <div className="flex justify-between">
+                                    <Typography variant="subtitle2">
+                                      Valor troco esperado
+                                    </Typography>
+                                    <Typography variant="subtitle2">
+                                      {formatCurrency(
+                                        (
+                                          -(
+                                            parseFloat(
+                                              formik.values.valor_total
+                                            ) +
+                                            parseFloat(
+                                              formik.values.taxa_entrega
+                                            )
+                                          ) +
+                                          parseFloat(formik.values.troco_para)
+                                        ).toString()
+                                      )}
+                                    </Typography>
+                                  </div>
+                                ) : (
+                                  <></>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -822,7 +890,7 @@ function Vendas({
                 </aside>
 
                 {/* Main Content - Formulário */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
                   <main className="flex-1 overflow-auto p-6">
                     <Card
                       elevation={0}
@@ -1040,33 +1108,6 @@ function Vendas({
                               <TextField
                                 size="small"
                                 fullWidth
-                                label="Taxa de Entrega"
-                                name="taxa_entrega"
-                                type="number"
-                                value={formik.values.taxa_entrega}
-                                onChange={formik.handleChange}
-                                error={
-                                  formik.touched.taxa_entrega &&
-                                  Boolean(formik.errors.taxa_entrega)
-                                }
-                                helperText={
-                                  formik.touched.taxa_entrega &&
-                                  formik.errors.taxa_entrega
-                                }
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      R$
-                                    </InputAdornment>
-                                  ),
-                                }}
-                                disabled={
-                                  formik.values.tipo_entrega !== "Delivery"
-                                }
-                              />
-                              <TextField
-                                size="small"
-                                fullWidth
                                 label="Troco Para"
                                 name="troco_para"
                                 type="number"
@@ -1110,8 +1151,38 @@ function Vendas({
                             </Box>
                           </Grid>
 
+                          <Grid size={6}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              label="Taxa de Entrega"
+                              name="taxa_entrega"
+                              type="number"
+                              value={formik.values.taxa_entrega}
+                              onChange={formik.handleChange}
+                              error={
+                                formik.touched.taxa_entrega &&
+                                Boolean(formik.errors.taxa_entrega)
+                              }
+                              helperText={
+                                formik.touched.taxa_entrega &&
+                                formik.errors.taxa_entrega
+                              }
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    R$
+                                  </InputAdornment>
+                                ),
+                              }}
+                              disabled={
+                                formik.values.tipo_entrega !== "Delivery"
+                              }
+                            />
+                          </Grid>
+
                           {/* Taxa de Entrega */}
-                          <Grid size={12}>
+                          <Grid size={6}>
                             <TextField
                               size="small"
                               fullWidth
@@ -1197,7 +1268,7 @@ function Vendas({
                 </div>
 
                 {/* Right Sidebar - Produtos */}
-                <aside className="hidden lg:block w-96 border-l border-border bg-card">
+                <aside className="hidden lg:flex w-96 flex-col border-l border-border bg-card overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">

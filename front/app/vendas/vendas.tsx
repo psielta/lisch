@@ -555,6 +555,36 @@ function Vendas({
                                 Resumo Financeiro
                               </Typography>
                               <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <Typography variant="body2">
+                                    Valor total
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {formatCurrency(formik.values.valor_total)}
+                                  </Typography>
+                                </div>
+
+                                {parseFloat(formik.values.desconto) > 0 && (
+                                  <div className="flex justify-between text-red-600">
+                                    <Typography variant="body2">
+                                      Desconto
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      -{formatCurrency(formik.values.desconto)}
+                                    </Typography>
+                                  </div>
+                                )}
+
+                                {parseFloat(formik.values.acrescimo) > 0 && (
+                                  <div className="flex justify-between text-green-600">
+                                    <Typography variant="body2">
+                                      Acréscimo
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {formatCurrency(formik.values.acrescimo)}
+                                    </Typography>
+                                  </div>
+                                )}
                                 {parseFloat(formik.values.taxa_entrega) > 0 && (
                                   <div className="flex justify-between">
                                     <Typography variant="body2">
@@ -621,9 +651,7 @@ function Vendas({
                                     parseFloat(item.valor_unitario) +
                                     (item.adicionais || []).reduce(
                                       (acc, adicional) =>
-                                        acc +
-                                        parseFloat(adicional.valor) *
-                                          adicional.quantidade,
+                                        acc + parseFloat(adicional.valor),
                                       0
                                     );
 
@@ -656,7 +684,26 @@ function Vendas({
                                             </Typography>
                                           )}
                                         </div>
-                                        <div className="flex items-center gap-1">
+                                        <div className="text-right ml-4">
+                                          <Typography
+                                            variant="body2"
+                                            className="font-medium"
+                                          >
+                                            {item.quantidade}x{" "}
+                                            {formatCurrency(
+                                              valorItemComAdicional.toString()
+                                            )}
+                                          </Typography>
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            {formatCurrency(
+                                              item.valor_unitario
+                                            )}
+                                          </Typography>
+                                        </div>
+                                        <div className="flex items-center gap-1 ml-2">
                                           <IconButton
                                             size="small"
                                             onClick={() =>
@@ -681,17 +728,6 @@ function Vendas({
                                             <Delete fontSize="small" />
                                           </IconButton>
                                         </div>
-                                      </div>
-                                      <div className="flex justify-between items-center">
-                                        <Typography
-                                          variant="body2"
-                                          className="font-medium"
-                                        >
-                                          {item.quantidade}x{" "}
-                                          {formatCurrency(
-                                            valorItemComAdicional.toString()
-                                          )}
-                                        </Typography>
                                       </div>
 
                                       {/* Adicionais */}
@@ -735,10 +771,9 @@ function Vendas({
                                                       {adicionalData?.opcao
                                                         .nome ||
                                                         "Adicional não encontrado ou excluído do sistema"}
-                                                      {` (${
-                                                        adicional.quantidade ??
-                                                        0
-                                                      }x)`}
+                                                      {adicional.quantidade >
+                                                        1 &&
+                                                        ` (${adicional.quantidade}x)`}
                                                     </span>
                                                     <span className="text-muted-foreground">
                                                       {formatCurrency(

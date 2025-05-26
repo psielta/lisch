@@ -243,7 +243,9 @@ export default function GerenciarVendas({
                               {formatCurrency(
                                 (
                                   parseFloat(pedido.valor_total ?? "0") +
-                                  parseFloat(pedido.taxa_entrega ?? "0")
+                                  parseFloat(pedido.taxa_entrega ?? "0") -
+                                  parseFloat(pedido.desconto ?? "0") +
+                                  parseFloat(pedido.acrescimo ?? "0")
                                 ).toString()
                               )}
                             </Typography>
@@ -380,6 +382,33 @@ export default function GerenciarVendas({
                   </Typography>
 
                   <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Typography variant="body2">Valor total</Typography>
+                      <Typography variant="body2">
+                        {formatCurrency(selectedPedido.valor_total)}
+                      </Typography>
+                    </div>
+
+                    {selectedPedido.desconto !== "0.00" && (
+                      <div className="flex justify-between text-red-600">
+                        <Typography variant="body2">Desconto</Typography>
+                        <Typography variant="body2">
+                          -{formatCurrency(selectedPedido.desconto)}
+                        </Typography>
+                      </div>
+                    )}
+
+                    {selectedPedido.acrescimo !== "0.00" && (
+                      <div className="flex justify-between text-green-600">
+                        <Typography variant="body2">Acréscimo</Typography>
+                        <Typography variant="body2">
+                          {formatCurrency(selectedPedido.acrescimo)}
+                        </Typography>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
                     {selectedPedido.categoria_pagamento && (
                       <div className="flex justify-between">
                         <Typography variant="body2">
@@ -445,7 +474,9 @@ export default function GerenciarVendas({
                         {formatCurrency(
                           (
                             parseFloat(selectedPedido.valor_total ?? "0") +
-                            parseFloat(selectedPedido.taxa_entrega ?? "0")
+                            parseFloat(selectedPedido.taxa_entrega ?? "0") -
+                            parseFloat(selectedPedido.desconto ?? "0") +
+                            parseFloat(selectedPedido.acrescimo ?? "0")
                           ).toString()
                         )}
                       </Typography>

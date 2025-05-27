@@ -758,6 +758,15 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                         <div>
                           <Typography variant="subtitle1">
                             {p.forma_pagamento}
+                            {p.id_conta_receber && (
+                              <Chip
+                                size="small"
+                                label="Recebimento de parcela"
+                                variant="outlined"
+                                color="success"
+                                className="ml-2"
+                              />
+                            )}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {new Date(p.created_at).toLocaleString("pt-BR")}

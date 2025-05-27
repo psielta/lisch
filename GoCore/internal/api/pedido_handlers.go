@@ -1071,21 +1071,21 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Remover duplicatas
-	categoriaIDs = removeDuplicateStrings(categoriaIDs)
-	produtoIDs = removeDuplicateStrings(produtoIDs)
-	categoriaOpcaoIDs = removeDuplicateStrings(categoriaOpcaoIDs)
-	adicionalOpcaoIDs = removeDuplicateStrings(adicionalOpcaoIDs)
+	categoriaIDs = api.removeDuplicateStrings(categoriaIDs)
+	produtoIDs = api.removeDuplicateStrings(produtoIDs)
+	categoriaOpcaoIDs = api.removeDuplicateStrings(categoriaOpcaoIDs)
+	adicionalOpcaoIDs = api.removeDuplicateStrings(adicionalOpcaoIDs)
 
 	// 4. Buscar categorias relacionadas (incluindo soft-deleted) com opções específicas
 	var categorias models_sql_boiler.CategoriaSlice
 	if len(categoriaIDs) > 0 && len(categoriaOpcaoIDs) > 0 {
 		categorias, err = models_sql_boiler.Categorias(
-			qm.WhereIn("id IN ?", convertStringsToInterfaces(categoriaIDs)...),
+			qm.WhereIn("id IN ?", api.convertStringsToInterfaces(categoriaIDs)...),
 			qm.Where("id_tenant = ?", tenantID.String()),
 			// IMPORTANTE: NÃO filtrar por deleted_at - queremos incluir soft-deleted
 			qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes,
 				// Carregar APENAS as opções usadas no pedido
-				qm.WhereIn("id IN ?", convertStringsToInterfaces(categoriaOpcaoIDs)...)),
+				qm.WhereIn("id IN ?", api.convertStringsToInterfaces(categoriaOpcaoIDs)...)),
 		).All(r.Context(), api.SQLBoilerDB.GetDB())
 
 		if err != nil {
@@ -1099,13 +1099,13 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 	var produtos models_sql_boiler.ProdutoSlice
 	if len(produtoIDs) > 0 && len(categoriaOpcaoIDs) > 0 {
 		produtos, err = models_sql_boiler.Produtos(
-			qm.WhereIn("produtos.id IN ?", convertStringsToInterfaces(produtoIDs)...),
+			qm.WhereIn("produtos.id IN ?", api.convertStringsToInterfaces(produtoIDs)...),
 			// IMPORTANTE: NÃO filtrar por deleted_at - queremos incluir soft-deleted
 			qm.InnerJoin("categorias c on c.id = produtos.id_categoria"),
 			qm.Where("c.id_tenant = ?", tenantID.String()),
 			qm.Load(models_sql_boiler.ProdutoRels.IDProdutoProdutoPrecos,
 				// Carregar APENAS os preços das opções usadas no pedido
-				qm.WhereIn("id_categoria_opcao IN ?", convertStringsToInterfaces(categoriaOpcaoIDs)...),
+				qm.WhereIn("id_categoria_opcao IN ?", api.convertStringsToInterfaces(categoriaOpcaoIDs)...),
 				// NÃO filtrar por deleted_at para incluir preços soft-deleted
 				qm.Load(models_sql_boiler.ProdutoPrecoRels.IDCategoriaOpcaoCategoriaOpco)),
 		).All(r.Context(), api.SQLBoilerDB.GetDB())
@@ -1123,7 +1123,7 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 		// Primeiro, buscar os IDs dos adicionais a partir das opções ESPECÍFICAS do pedido
 		adicionalIDs, err := models_sql_boiler.CategoriaAdicionalOpcoes(
 			qm.Select("DISTINCT id_categoria_adicional"),
-			qm.WhereIn("id IN ?", convertStringsToInterfaces(adicionalOpcaoIDs)...),
+			qm.WhereIn("id IN ?", api.convertStringsToInterfaces(adicionalOpcaoIDs)...),
 			// IMPORTANTE: NÃO filtrar por deleted_at para pegar opções soft-deleted
 		).All(r.Context(), api.SQLBoilerDB.GetDB())
 
@@ -1140,13 +1140,13 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 			}
 
 			adicionais, err = models_sql_boiler.CategoriaAdicionais(
-				qm.WhereIn("categoria_adicionais.id IN ?", convertStringsToInterfaces(adicionalIDsStrings)...),
+				qm.WhereIn("categoria_adicionais.id IN ?", api.convertStringsToInterfaces(adicionalIDsStrings)...),
 				// IMPORTANTE: NÃO filtrar por deleted_at para pegar adicionais soft-deleted
 				qm.InnerJoin("categorias c on c.id = categoria_adicionais.id_categoria"),
 				qm.Where("c.id_tenant = ?", tenantID.String()),
 				qm.Load(models_sql_boiler.CategoriaAdicionalRels.IDCategoriaAdicionalCategoriaAdicionalOpcoes,
 					// Carregar APENAS as opções usadas no pedido
-					qm.WhereIn("id IN ?", convertStringsToInterfaces(adicionalOpcaoIDs)...)),
+					qm.WhereIn("id IN ?", api.convertStringsToInterfaces(adicionalOpcaoIDs)...)),
 			).All(r.Context(), api.SQLBoilerDB.GetDB())
 
 			if err != nil {
@@ -1160,27 +1160,4 @@ func (api *Api) handlePedidos_GetDadosEdicao(w http.ResponseWriter, r *http.Requ
 	// 7. Converter para DTO e retornar
 	resp := dto.ConvertPedidoToEdicaoResponse(pedido, categorias, produtos, adicionais)
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
-}
-
-// Funções auxiliares
-func removeDuplicateStrings(slice []string) []string {
-	keys := make(map[string]bool)
-	result := []string{}
-
-	for _, item := range slice {
-		if !keys[item] {
-			keys[item] = true
-			result = append(result, item)
-		}
-	}
-
-	return result
-}
-
-func convertStringsToInterfaces(strings []string) []interface{} {
-	interfaces := make([]interface{}, len(strings))
-	for i, s := range strings {
-		interfaces[i] = s
-	}
-	return interfaces
 }

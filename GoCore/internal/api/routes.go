@@ -81,6 +81,19 @@ func (api *Api) BindRoutes() {
 				})
 			})
 
+			r.Route("/pedido-pagamentos", func(r chi.Router) {
+				r.Get("/", api.handlePedidoPagamentos_List)
+				r.Post("/", api.handlePedidoPagamentos_Post)
+				r.Post("/bulk", api.handlePedidoPagamentos_BulkPost) // novo
+				r.Delete("/{id}", api.handlePedidoPagamentos_Delete)
+			})
+
+			r.Route("/contas-receber", func(r chi.Router) {
+				r.Get("/", api.handleContasReceber_List)
+				r.Post("/", api.handleContasReceber_Post)
+				r.Post("/bulk", api.handleContasReceber_BulkPost) // novo
+			})
+
 			r.Route("/pedidos", func(r chi.Router) {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)

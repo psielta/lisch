@@ -4,6 +4,7 @@ import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adiciona
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import { PedidoResponse } from "@/rxjs/pedido/pedido.model";
+import api from "@/lib/api";
 import {
   List,
   ListItem,
@@ -38,6 +39,15 @@ import {
   Add,
 } from "@mui/icons-material";
 import { useState, useMemo } from "react";
+import {
+  PagamentoContasService,
+  PedidoPagamentoCreateDTO,
+  PedidoPagamentoResponseDTO,
+  PedidoPagamentoBulkDTO,
+  ContasReceberCreateDTO,
+  ContasReceberResponseDTO,
+  ContasReceberBulkDTO,
+} from "@/proxies/pagamentos";
 import { useRouter } from "next/navigation";
 
 export default function GerenciarVendas({
@@ -316,11 +326,11 @@ export default function GerenciarVendas({
 
           <div className="h-full px-4 py-6 sm:px-6 lg:pl-8 xl:flex-1 xl:pl-6 bg-card">
             {/* Main area - pode ser usado para outras funcionalidades futuras */}
-            <div className="h-full flex items-center justify-center">
+            <main className="h-full flex items-center justify-center">
               <Typography variant="h6" color="text.secondary">
                 Área principal disponível para expansão
               </Typography>
-            </div>
+            </main>
           </div>
         </div>
 

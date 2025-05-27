@@ -432,6 +432,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [parcelaParaBaixar, setParcelaParaBaixar] = useState<any>(null);
+  const [notasSelecionadas, setNotasSelecionadas] = useState<number[]>([]);
 
   const service = useMemo(() => new PagamentoContasService(api), []);
 
@@ -911,319 +912,438 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                         </StepLabel>
                         <StepContent>
                           <FieldArray name="pagamentos_vista">
-                            {({ push, remove }) => (
-                              <>
-                                {/* Botões de atalho para pagamento total */}
-                                {!pedidoQuitado &&
-                                  values.pagamentos_vista.length === 0 && (
-                                    <Card variant="outlined" className="mb-4">
-                                      <CardContent>
-                                        <Typography
-                                          variant="subtitle2"
-                                          className="mb-3"
-                                        >
-                                          Pagamento Total Rápido:
-                                        </Typography>
-                                        <Box className="flex gap-2 flex-wrap mb-3">
-                                          <Button
-                                            size="small"
-                                            variant="contained"
-                                            color="primary"
-                                            startIcon={<Banknote size={16} />}
-                                            onClick={() => {
-                                              const valorRestante = Math.max(
-                                                0,
-                                                faltaPagar
-                                              );
-                                              const troco = calcularTroco(
-                                                valorRestante,
-                                                valorRestante
-                                              );
-                                              push({
-                                                categoria_pagamento: "Dinheiro",
-                                                forma_pagamento: "Espécie",
-                                                valor_pago: valorRestante,
-                                                troco: troco,
-                                                observacao: "",
-                                              });
-                                            }}
+                            {({ push, remove }) => {
+                              // Estado para gerenciar notas selecionadas
+
+                              // Calcular total das notas selecionadas
+                              const totalNotas = notasSelecionadas.reduce(
+                                (sum, nota) => sum + nota,
+                                0
+                              );
+
+                              // Definir notas disponíveis
+                              const notasDisponiveis = [
+                                2, 5, 10, 20, 50, 100, 200,
+                              ];
+
+                              // Filtrar notas com base em faltaPagar
+                              const notasFiltradas = notasDisponiveis.filter(
+                                (nota) => {
+                                  if (faltaPagar <= 20) return nota <= 20;
+                                  if (faltaPagar <= 50) return nota <= 50;
+                                  if (faltaPagar <= 100) return nota <= 100;
+                                  return true;
+                                }
+                              );
+
+                              return (
+                                <>
+                                  {/* Botões de atalho para pagamento total e seleção de notas */}
+                                  {!pedidoQuitado &&
+                                    values.pagamentos_vista.length === 0 && (
+                                      <Card variant="outlined" className="mb-4">
+                                        <CardContent>
+                                          <Typography
+                                            variant="subtitle2"
+                                            className="mb-3"
                                           >
-                                            Total em Dinheiro (
-                                            {formatCurrency(faltaPagar)})
-                                          </Button>
-                                          <Button
-                                            size="small"
-                                            variant="contained"
-                                            color="primary"
-                                            startIcon={<CreditCard size={16} />}
-                                            onClick={() => {
-                                              push({
-                                                categoria_pagamento: "Cartão",
-                                                forma_pagamento: "Débito",
-                                                valor_pago: Math.max(
-                                                  0,
-                                                  faltaPagar
-                                                ),
-                                                troco: 0,
-                                                observacao: "",
-                                              });
-                                            }}
-                                          >
-                                            Total em Cartão (
-                                            {formatCurrency(faltaPagar)})
-                                          </Button>
-                                          <Button
-                                            size="small"
-                                            variant="contained"
-                                            color="primary"
-                                            startIcon={<Receipt size={16} />}
-                                            onClick={() => {
-                                              push({
-                                                categoria_pagamento: "Pix",
-                                                forma_pagamento: "Pix",
-                                                valor_pago: Math.max(
-                                                  0,
-                                                  faltaPagar
-                                                ),
-                                                troco: 0,
-                                                observacao: "",
-                                              });
-                                            }}
-                                          >
-                                            Total em Pix (
-                                            {formatCurrency(faltaPagar)})
-                                          </Button>
-                                        </Box>
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                        >
-                                          Escolha uma opção para preencher
-                                          automaticamente o pagamento total, ou
-                                          adicione manualmente abaixo.
-                                        </Typography>
-                                      </CardContent>
-                                    </Card>
-                                  )}
-
-                                {values.pagamentos_vista.map((_, index) => (
-                                  <Card
-                                    key={index}
-                                    variant="outlined"
-                                    className="mb-4"
-                                  >
-                                    <CardContent>
-                                      <Box className="flex justify-between items-center mb-3">
-                                        <Typography
-                                          variant="subtitle1"
-                                          className="font-semibold"
-                                        >
-                                          Pagamento {index + 1}
-                                        </Typography>
-                                        {values.pagamentos_vista.length > 0 && (
-                                          <IconButton
-                                            size="small"
-                                            onClick={() => remove(index)}
-                                            color="error"
-                                          >
-                                            <Delete size={16} />
-                                          </IconButton>
-                                        )}
-                                      </Box>
-
-                                      <Grid container spacing={2}>
-                                        <Grid size={4}>
-                                          <FormControl fullWidth size="small">
-                                            <InputLabel>Categoria *</InputLabel>
-                                            <Select
-                                              value={
-                                                values.pagamentos_vista[index]
-                                                  .categoria_pagamento
-                                              }
-                                              onChange={(e) => {
-                                                setFieldValue(
-                                                  `pagamentos_vista.${index}.categoria_pagamento`,
-                                                  e.target.value
-                                                );
-                                                // Reset troco quando não for dinheiro
-                                                if (
-                                                  e.target.value !== "Dinheiro"
-                                                ) {
-                                                  setFieldValue(
-                                                    `pagamentos_vista.${index}.troco`,
-                                                    0
-                                                  );
-                                                }
-                                                // Sugerir forma de pagamento baseada na categoria
-                                                const formas = {
-                                                  Cartão: "Débito",
-                                                  Dinheiro: "Espécie",
-                                                  Pix: "Pix",
-                                                };
-                                                setFieldValue(
-                                                  `pagamentos_vista.${index}.forma_pagamento`,
-                                                  formas[
-                                                    e.target
-                                                      .value as keyof typeof formas
-                                                  ]
-                                                );
-                                              }}
-                                              label="Categoria *"
-                                            >
-                                              <MenuItem value="Cartão">
-                                                <Box className="flex items-center gap-2">
-                                                  <CreditCard size={16} />
-                                                  Cartão
-                                                </Box>
-                                              </MenuItem>
-                                              <MenuItem value="Dinheiro">
-                                                <Box className="flex items-center gap-2">
-                                                  <Banknote size={16} />
-                                                  Dinheiro
-                                                </Box>
-                                              </MenuItem>
-                                              <MenuItem value="Pix">
-                                                Pix
-                                              </MenuItem>
-                                            </Select>
-                                          </FormControl>
-                                        </Grid>
-
-                                        <Grid size={4}>
-                                          <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Forma/Bandeira *"
-                                            value={
-                                              values.pagamentos_vista[index]
-                                                .forma_pagamento
-                                            }
-                                            onChange={(e) =>
-                                              setFieldValue(
-                                                `pagamentos_vista.${index}.forma_pagamento`,
-                                                e.target.value
-                                              )
-                                            }
-                                            error={
-                                              isNestedTouched(
-                                                touched,
-                                                `pagamentos_vista.${index}.forma_pagamento`
-                                              ) &&
-                                              !!getNestedError(
-                                                errors,
-                                                `pagamentos_vista.${index}.forma_pagamento`
-                                              )
-                                            }
-                                            helperText={
-                                              isNestedTouched(
-                                                touched,
-                                                `pagamentos_vista.${index}.forma_pagamento`
-                                              ) &&
-                                              getNestedError(
-                                                errors,
-                                                `pagamentos_vista.${index}.forma_pagamento`
-                                              )
-                                            }
-                                          />
-                                        </Grid>
-
-                                        <Grid size={4}>
-                                          <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Valor Pago *"
-                                            type="number"
-                                            value={
-                                              values.pagamentos_vista[index]
-                                                .valor_pago
-                                            }
-                                            onChange={(e) => {
-                                              const valor =
-                                                parseFloat(e.target.value) || 0;
-                                              setFieldValue(
-                                                `pagamentos_vista.${index}.valor_pago`,
-                                                valor
-                                              );
-
-                                              // Calcular troco automático para dinheiro
-                                              if (
-                                                values.pagamentos_vista[index]
-                                                  .categoria_pagamento ===
-                                                "Dinheiro"
-                                              ) {
+                                            Pagamento Rápido:
+                                          </Typography>
+                                          <Box className="flex gap-2 flex-wrap mb-3">
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="primary"
+                                              startIcon={<Banknote size={16} />}
+                                              onClick={() => {
                                                 const valorRestante = Math.max(
                                                   0,
-                                                  faltaPagar -
-                                                    values.pagamentos_vista
-                                                      .filter(
-                                                        (_, i) => i !== index
-                                                      )
-                                                      .reduce(
-                                                        (s, p) =>
-                                                          s +
-                                                          p.valor_pago -
-                                                          (p.troco || 0),
-                                                        0
-                                                      ) -
-                                                    values.parcelas_prazo.reduce(
-                                                      (s, p) =>
-                                                        s + p.valor_devido,
-                                                      0
-                                                    )
+                                                  faltaPagar
                                                 );
                                                 const troco = calcularTroco(
-                                                  valor,
+                                                  valorRestante,
                                                   valorRestante
                                                 );
-                                                setFieldValue(
-                                                  `pagamentos_vista.${index}.troco`,
-                                                  troco
-                                                );
+                                                push({
+                                                  categoria_pagamento:
+                                                    "Dinheiro",
+                                                  forma_pagamento: "Espécie",
+                                                  valor_pago: valorRestante,
+                                                  troco: troco,
+                                                  observacao: "",
+                                                });
+                                              }}
+                                            >
+                                              Total em Dinheiro (
+                                              {formatCurrency(faltaPagar)})
+                                            </Button>
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="primary"
+                                              startIcon={
+                                                <CreditCard size={16} />
                                               }
-                                            }}
-                                            error={
-                                              isNestedTouched(
-                                                touched,
-                                                `pagamentos_vista.${index}.valor_pago`
-                                              ) &&
-                                              !!getNestedError(
-                                                errors,
-                                                `pagamentos_vista.${index}.valor_pago`
-                                              )
-                                            }
-                                            helperText={
-                                              isNestedTouched(
-                                                touched,
-                                                `pagamentos_vista.${index}.valor_pago`
-                                              ) &&
-                                              getNestedError(
-                                                errors,
-                                                `pagamentos_vista.${index}.valor_pago`
-                                              )
-                                            }
-                                            InputProps={{
-                                              startAdornment: (
-                                                <InputAdornment position="start">
-                                                  R$
-                                                </InputAdornment>
-                                              ),
-                                            }}
-                                          />
-                                        </Grid>
+                                              onClick={() => {
+                                                push({
+                                                  categoria_pagamento: "Cartão",
+                                                  forma_pagamento: "Débito",
+                                                  valor_pago: Math.max(
+                                                    0,
+                                                    faltaPagar
+                                                  ),
+                                                  troco: 0,
+                                                  observacao: "",
+                                                });
+                                              }}
+                                            >
+                                              Total em Cartão (
+                                              {formatCurrency(faltaPagar)})
+                                            </Button>
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="primary"
+                                              startIcon={<Receipt size={16} />}
+                                              onClick={() => {
+                                                push({
+                                                  categoria_pagamento: "Pix",
+                                                  forma_pagamento: "Pix",
+                                                  valor_pago: Math.max(
+                                                    0,
+                                                    faltaPagar
+                                                  ),
+                                                  troco: 0,
+                                                  observacao: "",
+                                                });
+                                              }}
+                                            >
+                                              Total em Pix (
+                                              {formatCurrency(faltaPagar)})
+                                            </Button>
+                                          </Box>
 
-                                        {values.pagamentos_vista[index]
-                                          .categoria_pagamento ===
-                                          "Dinheiro" && (
-                                          <Grid size={6}>
+                                          {/* Seção para seleção de notas */}
+                                          <Divider className="my-3" />
+                                          <Typography
+                                            variant="subtitle2"
+                                            className="mb-3"
+                                          >
+                                            Selecionar Notas (Dinheiro):
+                                          </Typography>
+                                          <Box className="flex gap-2 flex-wrap mb-3">
+                                            {notasFiltradas.map((nota) => (
+                                              <Button
+                                                key={nota}
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() =>
+                                                  setNotasSelecionadas([
+                                                    ...notasSelecionadas,
+                                                    nota,
+                                                  ])
+                                                }
+                                              >
+                                                R${nota}
+                                              </Button>
+                                            ))}
+                                          </Box>
+                                          {notasSelecionadas.length > 0 && (
+                                            <Box className="mb-3">
+                                              <Typography
+                                                variant="body2"
+                                                className="mb-2"
+                                              >
+                                                Notas Selecionadas:
+                                              </Typography>
+                                              <Box className="flex gap-2 flex-wrap">
+                                                {notasSelecionadas.map(
+                                                  (nota, idx) => (
+                                                    <Chip
+                                                      key={`${nota}-${idx}`}
+                                                      label={`R$${nota}`}
+                                                      onDelete={() =>
+                                                        setNotasSelecionadas(
+                                                          notasSelecionadas.filter(
+                                                            (_, i) => i !== idx
+                                                          )
+                                                        )
+                                                      }
+                                                      color="primary"
+                                                      variant="outlined"
+                                                    />
+                                                  )
+                                                )}
+                                              </Box>
+                                              <Typography
+                                                variant="body1"
+                                                className="mt-2 font-semibold"
+                                              >
+                                                Total Selecionado:{" "}
+                                                {formatCurrency(totalNotas)}
+                                              </Typography>
+                                              <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                              >
+                                                Troco Estimado:{" "}
+                                                {formatCurrency(
+                                                  calcularTroco(
+                                                    totalNotas,
+                                                    Math.min(
+                                                      totalNotas,
+                                                      faltaPagar
+                                                    )
+                                                  )
+                                                )}
+                                              </Typography>
+                                            </Box>
+                                          )}
+                                          {notasSelecionadas.length > 0 && (
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="success"
+                                              onClick={() => {
+                                                if (totalNotas <= 0) {
+                                                  toast.error(
+                                                    "Selecione pelo menos uma nota válida"
+                                                  );
+                                                  return;
+                                                }
+                                                const troco = calcularTroco(
+                                                  totalNotas,
+                                                  Math.min(
+                                                    totalNotas,
+                                                    faltaPagar
+                                                  )
+                                                );
+                                                push({
+                                                  categoria_pagamento:
+                                                    "Dinheiro",
+                                                  forma_pagamento: "Espécie",
+                                                  valor_pago: totalNotas,
+                                                  troco: troco,
+                                                  observacao: `Notas: ${notasSelecionadas.join(
+                                                    ", "
+                                                  )}`,
+                                                });
+                                                setNotasSelecionadas([]); // Resetar após confirmar
+                                              }}
+                                            >
+                                              Confirmar Notas
+                                            </Button>
+                                          )}
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            Escolha notas para pagamento em
+                                            dinheiro, ou use as opções de
+                                            pagamento total acima, ou adicione
+                                            manualmente abaixo.
+                                          </Typography>
+                                        </CardContent>
+                                      </Card>
+                                    )}
+
+                                  {values.pagamentos_vista.map((_, index) => (
+                                    <Card
+                                      key={index}
+                                      variant="outlined"
+                                      className="mb-4"
+                                    >
+                                      <CardContent>
+                                        <Box className="flex justify-between items-center mb-3">
+                                          <Typography
+                                            variant="subtitle1"
+                                            className="font-semibold"
+                                          >
+                                            Pagamento {index + 1}
+                                          </Typography>
+                                          {values.pagamentos_vista.length >
+                                            0 && (
+                                            <IconButton
+                                              size="small"
+                                              onClick={() => remove(index)}
+                                              color="error"
+                                            >
+                                              <Delete size={16} />
+                                            </IconButton>
+                                          )}
+                                        </Box>
+
+                                        <Grid container spacing={2}>
+                                          <Grid size={4}>
+                                            <FormControl fullWidth size="small">
+                                              <InputLabel>
+                                                Categoria *
+                                              </InputLabel>
+                                              <Select
+                                                value={
+                                                  values.pagamentos_vista[index]
+                                                    .categoria_pagamento
+                                                }
+                                                onChange={(e) => {
+                                                  setFieldValue(
+                                                    `pagamentos_vista.${index}.categoria_pagamento`,
+                                                    e.target.value
+                                                  );
+                                                  if (
+                                                    e.target.value !==
+                                                    "Dinheiro"
+                                                  ) {
+                                                    setFieldValue(
+                                                      `pagamentos_vista.${index}.troco`,
+                                                      0
+                                                    );
+                                                  }
+                                                  const formas = {
+                                                    Cartão: "Débito",
+                                                    Dinheiro: "Espécie",
+                                                    Pix: "Pix",
+                                                  };
+                                                  setFieldValue(
+                                                    `pagamentos_vista.${index}.forma_pagamento`,
+                                                    formas[
+                                                      e.target
+                                                        .value as keyof typeof formas
+                                                    ]
+                                                  );
+                                                }}
+                                                label="Categoria *"
+                                              >
+                                                <MenuItem value="Cartão">
+                                                  <Box className="flex items-center gap-2">
+                                                    <CreditCard size={16} />
+                                                    Cartão
+                                                  </Box>
+                                                </MenuItem>
+                                                <MenuItem value="Dinheiro">
+                                                  <Box className="flex items-center gap-2">
+                                                    <Banknote size={16} />
+                                                    Dinheiro
+                                                  </Box>
+                                                </MenuItem>
+                                                <MenuItem value="Pix">
+                                                  Pix
+                                                </MenuItem>
+                                              </Select>
+                                            </FormControl>
+                                          </Grid>
+
+                                          <Grid size={4}>
                                             <TextField
                                               fullWidth
                                               size="small"
-                                              label="Troco (Calculado Automaticamente)"
-                                              type="number"
-                                              disabled
+                                              label="Forma/Bandeira *"
                                               value={
                                                 values.pagamentos_vista[index]
-                                                  .troco || 0
+                                                  .forma_pagamento
+                                              }
+                                              onChange={(e) =>
+                                                setFieldValue(
+                                                  `pagamentos_vista.${index}.forma_pagamento`,
+                                                  e.target.value
+                                                )
+                                              }
+                                              error={
+                                                isNestedTouched(
+                                                  touched,
+                                                  `pagamentos_vista.${index}.forma_pagamento`
+                                                ) &&
+                                                !!getNestedError(
+                                                  errors,
+                                                  `pagamentos_vista.${index}.forma_pagamento`
+                                                )
+                                              }
+                                              helperText={
+                                                isNestedTouched(
+                                                  touched,
+                                                  `pagamentos_vista.${index}.forma_pagamento`
+                                                ) &&
+                                                getNestedError(
+                                                  errors,
+                                                  `pagamentos_vista.${index}.forma_pagamento`
+                                                )
+                                              }
+                                            />
+                                          </Grid>
+
+                                          <Grid size={4}>
+                                            <TextField
+                                              fullWidth
+                                              size="small"
+                                              label="Valor Pago *"
+                                              type="number"
+                                              value={
+                                                values.pagamentos_vista[index]
+                                                  .valor_pago
+                                              }
+                                              onChange={(e) => {
+                                                const valor =
+                                                  parseFloat(e.target.value) ||
+                                                  0;
+                                                setFieldValue(
+                                                  `pagamentos_vista.${index}.valor_pago`,
+                                                  valor
+                                                );
+                                                if (
+                                                  values.pagamentos_vista[index]
+                                                    .categoria_pagamento ===
+                                                  "Dinheiro"
+                                                ) {
+                                                  const valorRestante =
+                                                    Math.max(
+                                                      0,
+                                                      faltaPagar -
+                                                        values.pagamentos_vista
+                                                          .filter(
+                                                            (_, i) =>
+                                                              i !== index
+                                                          )
+                                                          .reduce(
+                                                            (s, p) =>
+                                                              s +
+                                                              p.valor_pago -
+                                                              (p.troco || 0),
+                                                            0
+                                                          ) -
+                                                        values.parcelas_prazo.reduce(
+                                                          (s, p) =>
+                                                            s + p.valor_devido,
+                                                          0
+                                                        )
+                                                    );
+                                                  const troco = calcularTroco(
+                                                    valor,
+                                                    valorRestante
+                                                  );
+                                                  setFieldValue(
+                                                    `pagamentos_vista.${index}.troco`,
+                                                    troco
+                                                  );
+                                                }
+                                              }}
+                                              error={
+                                                isNestedTouched(
+                                                  touched,
+                                                  `pagamentos_vista.${index}.valor_pago`
+                                                ) &&
+                                                !!getNestedError(
+                                                  errors,
+                                                  `pagamentos_vista.${index}.valor_pago`
+                                                )
+                                              }
+                                              helperText={
+                                                isNestedTouched(
+                                                  touched,
+                                                  `pagamentos_vista.${index}.valor_pago`
+                                                ) &&
+                                                getNestedError(
+                                                  errors,
+                                                  `pagamentos_vista.${index}.valor_pago`
+                                                )
                                               }
                                               InputProps={{
                                                 startAdornment: (
@@ -1233,60 +1353,85 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                 ),
                                               }}
                                             />
-                                            <Typography
-                                              variant="caption"
-                                              color="text.secondary"
-                                            >
-                                              O troco é calculado
-                                              automaticamente baseado no valor
-                                              restante
-                                            </Typography>
                                           </Grid>
-                                        )}
 
-                                        <Grid size={12}>
-                                          <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Observação"
-                                            multiline
-                                            rows={2}
-                                            value={
-                                              values.pagamentos_vista[index]
-                                                .observacao
-                                            }
-                                            onChange={(e) =>
-                                              setFieldValue(
-                                                `pagamentos_vista.${index}.observacao`,
-                                                e.target.value
-                                              )
-                                            }
-                                            placeholder="Observações sobre este pagamento..."
-                                          />
+                                          {values.pagamentos_vista[index]
+                                            .categoria_pagamento ===
+                                            "Dinheiro" && (
+                                            <Grid size={6}>
+                                              <TextField
+                                                fullWidth
+                                                size="small"
+                                                label="Troco (Calculado Automaticamente)"
+                                                type="number"
+                                                disabled
+                                                value={
+                                                  values.pagamentos_vista[index]
+                                                    .troco || 0
+                                                }
+                                                InputProps={{
+                                                  startAdornment: (
+                                                    <InputAdornment position="start">
+                                                      R$
+                                                    </InputAdornment>
+                                                  ),
+                                                }}
+                                              />
+                                              <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                              >
+                                                O troco é calculado
+                                                automaticamente baseado no valor
+                                                restante
+                                              </Typography>
+                                            </Grid>
+                                          )}
+
+                                          <Grid size={12}>
+                                            <TextField
+                                              fullWidth
+                                              size="small"
+                                              label="Observação"
+                                              multiline
+                                              rows={2}
+                                              value={
+                                                values.pagamentos_vista[index]
+                                                  .observacao
+                                              }
+                                              onChange={(e) =>
+                                                setFieldValue(
+                                                  `pagamentos_vista.${index}.observacao`,
+                                                  e.target.value
+                                                )
+                                              }
+                                              placeholder="Observações sobre este pagamento..."
+                                            />
+                                          </Grid>
                                         </Grid>
-                                      </Grid>
-                                    </CardContent>
-                                  </Card>
-                                ))}
+                                      </CardContent>
+                                    </Card>
+                                  ))}
 
-                                <Button
-                                  startIcon={<Add />}
-                                  onClick={() =>
-                                    push({
-                                      categoria_pagamento: "Cartão",
-                                      forma_pagamento: "Débito",
-                                      valor_pago: 0,
-                                      troco: 0,
-                                      observacao: "",
-                                    })
-                                  }
-                                  variant="outlined"
-                                  className="mb-4"
-                                >
-                                  Adicionar Pagamento Manual
-                                </Button>
-                              </>
-                            )}
+                                  <Button
+                                    startIcon={<Add />}
+                                    onClick={() =>
+                                      push({
+                                        categoria_pagamento: "Cartão",
+                                        forma_pagamento: "Débito",
+                                        valor_pago: 0,
+                                        troco: 0,
+                                        observacao: "",
+                                      })
+                                    }
+                                    variant="outlined"
+                                    className="mb-4"
+                                  >
+                                    Adicionar Pagamento Manual
+                                  </Button>
+                                </>
+                              );
+                            }}
                           </FieldArray>
 
                           <Box className="flex gap-2 mt-4">

@@ -34,6 +34,7 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 	dataFim := r.URL.Query().Get("data_fim")
 	codigoPedido := strings.TrimSpace(r.URL.Query().Get("codigo_pedido"))
 	finalizado := r.URL.Query().Get("finalizado")
+	quitado := r.URL.Query().Get("quitado")
 
 	// Parse limit e offset para paginação
 	limit := 20 // Default
@@ -97,6 +98,12 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 	if finalizado != "" {
 		if finalizadoInt, err := strconv.ParseBool(finalizado); err == nil {
 			queryMods = append(queryMods, qm.Where("COALESCE(pedidos.finalizado, false) = ?", finalizadoInt))
+		}
+	}
+
+	if quitado != "" {
+		if quitadoInt, err := strconv.ParseBool(quitado); err == nil {
+			queryMods = append(queryMods, qm.Where("COALESCE(pedidos.quitado, false) = ?", quitadoInt))
 		}
 	}
 

@@ -87,6 +87,7 @@ interface BaixarParcelaData {
   forma_pagamento: string;
   desconto?: number;
   observacao?: string;
+  troco?: number;
 }
 
 // Função helper para acessar erros aninhados com segurança
@@ -222,16 +223,28 @@ function BaixarParcelaDialog({
   const valorJaPago = parseFloat(parcela.valor_pago || "0");
   const valorRestante = valorDevido - valorJaPago;
 
+  // Schema de validação atualizado
   const baixarSchema = Yup.object({
     valor_recebido: Yup.number()
       .min(0.01, "Valor deve ser maior que zero")
-      .max(valorRestante, "Valor não pode ser maior que o restante")
+      .when("categoria_pagamento", {
+        is: (val: string) => val !== "Dinheiro",
+        then: (schema) =>
+          schema.max(valorRestante, "Valor não pode ser maior que o restante"),
+        otherwise: (schema) => schema.max(10000, "Valor muito alto, verifique"),
+      })
       .required("Valor obrigatório"),
     categoria_pagamento: Yup.string()
       .oneOf(["Cartão", "Dinheiro", "Pix"])
       .required("Categoria obrigatória"),
     forma_pagamento: Yup.string().required("Forma obrigatória"),
-    desconto: Yup.number().min(0, "Desconto não pode ser negativo").default(0),
+    troco: Yup.number()
+      .min(0, "Troco não pode ser negativo")
+      .when("categoria_pagamento", {
+        is: "Dinheiro",
+        then: (schema) => schema.required("Troco deve ser calculado"),
+        otherwise: (schema) => schema.default(0),
+      }),
   });
 
   const formatCurrency = (value: number) => {
@@ -239,6 +252,27 @@ function BaixarParcelaDialog({
       style: "currency",
       currency: "BRL",
     }).format(value);
+  };
+
+  // Função para calcular troco
+  const calcularTroco = (valorRecebido: number, valorDue: number) => {
+    return Math.max(0, valorRecebido - valorDue);
+  };
+
+  interface BaixarParcelaFormValues {
+    valor_recebido: number;
+    categoria_pagamento: "Cartão" | "Dinheiro" | "Pix";
+    forma_pagamento: string;
+    observacao: string;
+    troco: number;
+  }
+
+  const initialBaixarValues: BaixarParcelaFormValues = {
+    valor_recebido: valorRestante,
+    categoria_pagamento: "Dinheiro", // ← AGORA é união, não literal fixo
+    forma_pagamento: "Espécie",
+    observacao: "",
+    troco: 0,
   };
 
   return (
@@ -256,21 +290,19 @@ function BaixarParcelaDialog({
         </IconButton>
       </DialogTitle>
 
-      <Formik
-        initialValues={{
-          valor_recebido: valorRestante,
-          categoria_pagamento: "Cartão" as const,
-          forma_pagamento: "Débito",
-          desconto: 0,
-          observacao: "",
-        }}
+      <Formik<BaixarParcelaFormValues>
+        initialValues={initialBaixarValues}
         validationSchema={baixarSchema}
         onSubmit={async (values, { setSubmitting }) => {
           try {
-            await onBaixar(parcela.id, values);
+            await onBaixar(parcela.id, {
+              ...values,
+              troco: values.troco, // Inclui troco no DTO
+            });
             onClose();
           } catch (error) {
             console.error("Erro ao baixar parcela:", error);
+            toast.error("Erro ao baixar parcela");
           } finally {
             setSubmitting(false);
           }
@@ -283,144 +315,188 @@ function BaixarParcelaDialog({
           errors,
           touched,
           isSubmitting,
-        }) => (
-          <Form>
-            <DialogContent className="space-y-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
+        }) => {
+          // Calcular troco automaticamente quando categoria é Dinheiro
+          useEffect(() => {
+            if (values.categoria_pagamento === "Dinheiro") {
+              const troco = calcularTroco(values.valor_recebido, valorRestante);
+              setFieldValue("troco", troco);
+            } else {
+              setFieldValue("troco", 0);
+            }
+          }, [
+            values.valor_recebido,
+            values.categoria_pagamento,
+            setFieldValue,
+          ]);
+
+          return (
+            <Form>
+              <DialogContent className="space-y-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <Grid container spacing={2}>
+                    <Grid size={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Devido
+                      </Typography>
+                      <Typography variant="h6">
+                        {formatCurrency(valorDevido)}
+                      </Typography>
+                    </Grid>
+                    <Grid size={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Pago
+                      </Typography>
+                      <Typography variant="h6" color="success.main">
+                        {formatCurrency(valorJaPago)}
+                      </Typography>
+                    </Grid>
+                    <Grid size={4}>
+                      <Typography variant="body2" color="text.secondary">
+                        Restante
+                      </Typography>
+                      <Typography variant="h6" color="error.main">
+                        {formatCurrency(valorRestante)}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </div>
+
                 <Grid container spacing={2}>
-                  <Grid size={4}>
-                    <Typography variant="body2" color="text.secondary">
-                      Devido
-                    </Typography>
-                    <Typography variant="h6">
-                      {formatCurrency(valorDevido)}
-                    </Typography>
+                  <Grid size={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Categoria</InputLabel>
+                      <Select
+                        name="categoria_pagamento"
+                        value={values.categoria_pagamento}
+                        onChange={(e) => {
+                          handleChange(e);
+                          const formas = {
+                            Cartão: "Débito",
+                            Dinheiro: "Espécie",
+                            Pix: "Pix",
+                          };
+                          setFieldValue(
+                            "forma_pagamento",
+                            formas[e.target.value as keyof typeof formas]
+                          );
+                        }}
+                        label="Categoria"
+                      >
+                        <MenuItem value="Cartão">Cartão</MenuItem>
+                        <MenuItem value="Dinheiro">Dinheiro</MenuItem>
+                        <MenuItem value="Pix">Pix</MenuItem>
+                      </Select>
+                    </FormControl>
                   </Grid>
-                  <Grid size={4}>
-                    <Typography variant="body2" color="text.secondary">
-                      Pago
-                    </Typography>
-                    <Typography variant="h6" color="success.main">
-                      {formatCurrency(valorJaPago)}
-                    </Typography>
-                  </Grid>
-                  <Grid size={4}>
-                    <Typography variant="body2" color="text.secondary">
-                      Restante
-                    </Typography>
-                    <Typography variant="h6" color="error.main">
-                      {formatCurrency(valorRestante)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </div>
-
-              <Grid container spacing={2}>
-                <Grid size={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Categoria</InputLabel>
-                    <Select
-                      name="categoria_pagamento"
-                      value={values.categoria_pagamento}
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="forma_pagamento"
+                      label="Forma/Bandeira"
+                      value={values.forma_pagamento}
                       onChange={handleChange}
-                      label="Categoria"
-                    >
-                      <MenuItem value="Cartão">Cartão</MenuItem>
-                      <MenuItem value="Dinheiro">Dinheiro</MenuItem>
-                      <MenuItem value="Pix">Pix</MenuItem>
-                    </Select>
-                  </FormControl>
+                      error={
+                        touched.forma_pagamento && !!errors.forma_pagamento
+                      }
+                      helperText={
+                        touched.forma_pagamento && errors.forma_pagamento
+                      }
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="valor_recebido"
+                      label="Valor Recebido"
+                      type="number"
+                      value={values.valor_recebido}
+                      onChange={handleChange}
+                      error={touched.valor_recebido && !!errors.valor_recebido}
+                      helperText={
+                        touched.valor_recebido && errors.valor_recebido
+                      }
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">R$</InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  {values.categoria_pagamento === "Dinheiro" && (
+                    <Grid size={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        name="troco"
+                        label="Troco (Calculado Automaticamente)"
+                        type="number"
+                        value={values.troco}
+                        disabled
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">R$</InputAdornment>
+                          ),
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        O troco é calculado automaticamente baseado no valor
+                        restante
+                      </Typography>
+                    </Grid>
+                  )}
+
+                  <Grid size={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="observacao"
+                      label="Observação"
+                      multiline
+                      rows={2}
+                      value={values.observacao}
+                      onChange={handleChange}
+                    />
+                  </Grid>
                 </Grid>
-                <Grid size={6}>
-                  <TextField
-                    fullWidth
+
+                <div className="flex gap-2">
+                  <Button
                     size="small"
-                    name="forma_pagamento"
-                    label="Forma/Bandeira"
-                    value={values.forma_pagamento}
-                    onChange={handleChange}
-                    error={touched.forma_pagamento && !!errors.forma_pagamento}
-                    helperText={
-                      touched.forma_pagamento && errors.forma_pagamento
+                    variant="outlined"
+                    onClick={() =>
+                      setFieldValue("valor_recebido", valorRestante)
                     }
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    fullWidth
+                  >
+                    Valor Total
+                  </Button>
+                  <Button
                     size="small"
-                    name="valor_recebido"
-                    label="Valor Recebido"
-                    type="number"
-                    value={values.valor_recebido}
-                    onChange={handleChange}
-                    error={touched.valor_recebido && !!errors.valor_recebido}
-                    helperText={touched.valor_recebido && errors.valor_recebido}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">R$</InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="desconto"
-                    label="Desconto"
-                    type="number"
-                    value={values.desconto}
-                    onChange={handleChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">R$</InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="observacao"
-                    label="Observação"
-                    multiline
-                    rows={2}
-                    value={values.observacao}
-                    onChange={handleChange}
-                  />
-                </Grid>
-              </Grid>
+                    variant="outlined"
+                    onClick={() =>
+                      setFieldValue("valor_recebido", valorRestante / 2)
+                    }
+                  >
+                    50%
+                  </Button>
+                </div>
+              </DialogContent>
 
-              <div className="flex gap-2">
+              <DialogActions>
+                <Button onClick={onClose}>Cancelar</Button>
                 <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => setFieldValue("valor_recebido", valorRestante)}
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
                 >
-                  Valor Total
+                  {isSubmitting ? "Processando..." : "Baixar"}
                 </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() =>
-                    setFieldValue("valor_recebido", valorRestante / 2)
-                  }
-                >
-                  50%
-                </Button>
-              </div>
-            </DialogContent>
-
-            <DialogActions>
-              <Button onClick={onClose}>Cancelar</Button>
-              <Button type="submit" variant="contained" disabled={isSubmitting}>
-                {isSubmitting ? "Processando..." : "Baixar"}
-              </Button>
-            </DialogActions>
-          </Form>
-        )}
+              </DialogActions>
+            </Form>
+          );
+        }}
       </Formik>
     </Dialog>
   );
@@ -612,7 +688,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
         categoria_pagamento: dados.categoria_pagamento,
         forma_pagamento: dados.forma_pagamento,
         valor_pago: dados.valor_recebido.toFixed(2),
-        troco: "0.00",
+        troco: (dados.troco || 0).toFixed(2), // Usa o troco enviado
         observacao: dados.observacao || undefined,
       };
 
@@ -626,7 +702,6 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
       setLoading(false);
     }
   };
-
   const initialValues: FormValues = {
     pagamentos_vista: [], // começa vazio
     parcelas_prazo: [],

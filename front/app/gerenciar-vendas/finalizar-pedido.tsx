@@ -913,6 +913,99 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                           <FieldArray name="pagamentos_vista">
                             {({ push, remove }) => (
                               <>
+                                {/* Botões de atalho para pagamento total */}
+                                {!pedidoQuitado &&
+                                  values.pagamentos_vista.length === 0 && (
+                                    <Card variant="outlined" className="mb-4">
+                                      <CardContent>
+                                        <Typography
+                                          variant="subtitle2"
+                                          className="mb-3"
+                                        >
+                                          Pagamento Total Rápido:
+                                        </Typography>
+                                        <Box className="flex gap-2 flex-wrap mb-3">
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<Banknote size={16} />}
+                                            onClick={() => {
+                                              const valorRestante = Math.max(
+                                                0,
+                                                faltaPagar
+                                              );
+                                              const troco = calcularTroco(
+                                                valorRestante,
+                                                valorRestante
+                                              );
+                                              push({
+                                                categoria_pagamento: "Dinheiro",
+                                                forma_pagamento: "Espécie",
+                                                valor_pago: valorRestante,
+                                                troco: troco,
+                                                observacao: "",
+                                              });
+                                            }}
+                                          >
+                                            Total em Dinheiro (
+                                            {formatCurrency(faltaPagar)})
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<CreditCard size={16} />}
+                                            onClick={() => {
+                                              push({
+                                                categoria_pagamento: "Cartão",
+                                                forma_pagamento: "Débito",
+                                                valor_pago: Math.max(
+                                                  0,
+                                                  faltaPagar
+                                                ),
+                                                troco: 0,
+                                                observacao: "",
+                                              });
+                                            }}
+                                          >
+                                            Total em Cartão (
+                                            {formatCurrency(faltaPagar)})
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<Receipt size={16} />}
+                                            onClick={() => {
+                                              push({
+                                                categoria_pagamento: "Pix",
+                                                forma_pagamento: "Pix",
+                                                valor_pago: Math.max(
+                                                  0,
+                                                  faltaPagar
+                                                ),
+                                                troco: 0,
+                                                observacao: "",
+                                              });
+                                            }}
+                                          >
+                                            Total em Pix (
+                                            {formatCurrency(faltaPagar)})
+                                          </Button>
+                                        </Box>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                        >
+                                          Escolha uma opção para preencher
+                                          automaticamente o pagamento total, ou
+                                          adicione manualmente abaixo.
+                                        </Typography>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+
                                 {values.pagamentos_vista.map((_, index) => (
                                   <Card
                                     key={index}
@@ -1190,7 +1283,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                   variant="outlined"
                                   className="mb-4"
                                 >
-                                  Adicionar Outro Pagamento
+                                  Adicionar Pagamento Manual
                                 </Button>
                               </>
                             )}

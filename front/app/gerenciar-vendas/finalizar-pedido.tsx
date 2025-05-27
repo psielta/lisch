@@ -481,9 +481,9 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
     return parcelas.reduce((s, p) => s + parseFloat(p.valor_devido ?? "0"), 0);
   }, [parcelas]);
 
-  const faltaPagar = totalPedido - valorPago - valorParcelas;
+  const faltaPagar = totalPedido - valorPago;
   const pedidoQuitado = Math.abs(faltaPagar) <= 0.01;
-  const percentualPago = ((valorPago + valorParcelas) / totalPedido) * 100;
+  const percentualPago = (valorPago / totalPedido) * 100;
 
   // Helpers
   const formatCurrency = (value: number) => {
@@ -767,19 +767,22 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                           <Typography variant="h6" className="font-semibold">
                             {formatCurrency(parseFloat(p.valor_pago))}
                           </Typography>
-                          {p.troco && parseFloat(p.troco) > 0 && (
+                          {p.troco && parseFloat(p.troco) > 0 ? (
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
                               Troco: {formatCurrency(parseFloat(p.troco))}
                             </Typography>
+                          ) : (
+                            <></>
                           )}
                         </div>
                       </Box>
                     }
                   />
                   <Chip
+                    className="ml-2"
                     size="small"
                     label={p.categoria_pagamento}
                     variant="outlined"
@@ -833,23 +836,25 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                             {new Date(p.vencimento).toLocaleDateString("pt-BR")}
                           </Typography>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex items-center gap-2">
                           <Typography variant="h6" className="font-semibold">
                             {formatCurrency(parseFloat(p.valor_devido))}
                           </Typography>
-                          {p.valor_pago && parseFloat(p.valor_pago) > 0 && (
+                          {p.valor_pago && parseFloat(p.valor_pago) > 0 ? (
                             <Typography variant="caption" color="success.main">
                               Pago: {formatCurrency(parseFloat(p.valor_pago))}
                             </Typography>
+                          ) : (
+                            <></>
                           )}
+                          <Chip
+                            size="small"
+                            label={p.quitado ? "Quitada" : "Pendente"}
+                            color={p.quitado ? "success" : "warning"}
+                          />
                         </div>
                       </Box>
                     }
-                  />
-                  <Chip
-                    size="small"
-                    label={p.quitado ? "Quitada" : "Pendente"}
-                    color={p.quitado ? "success" : "warning"}
                   />
                 </ListItem>
               ))}

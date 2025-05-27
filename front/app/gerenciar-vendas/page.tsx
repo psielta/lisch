@@ -19,7 +19,7 @@ async function page() {
   let adicionais: CategoriaAdicionalListResponse | null | undefined = null;
   try {
     pedidos = await apiServer<PedidoListResponse | null | undefined>(
-      "/pedidos?limit=2147483647&finalizado=false"
+      "/pedidos?limit=2147483647"
     );
     page = await apiServer<ProdutoListResponse | null | undefined>(
       "/produtos?limit=2147483647"

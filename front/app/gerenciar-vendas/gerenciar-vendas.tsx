@@ -49,6 +49,7 @@ import {
   ContasReceberBulkDTO,
 } from "@/proxies/pagamentos";
 import { useRouter } from "next/navigation";
+import FinalizarPedido from "./finalizar-pedido";
 
 export default function GerenciarVendas({
   pedidos,
@@ -326,10 +327,19 @@ export default function GerenciarVendas({
 
           <div className="h-full px-4 py-6 sm:px-6 lg:pl-8 xl:flex-1 xl:pl-6 bg-card">
             {/* Main area - pode ser usado para outras funcionalidades futuras */}
-            <main className="h-full flex items-center justify-center">
-              <Typography variant="h6" color="text.secondary">
-                Área principal disponível para expansão
-              </Typography>
+            <main className="h-full">
+              {selectedPedido ? (
+                <FinalizarPedido
+                  pedido={selectedPedido}
+                  onFinished={() => router.refresh()}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  <Typography variant="h6">
+                    Selecione um pedido à esquerda
+                  </Typography>
+                </div>
+              )}
             </main>
           </div>
         </div>

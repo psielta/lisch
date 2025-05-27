@@ -20,9 +20,9 @@ type PedidoPagamentoCreateDTO struct {
 	IDPedido       string  `json:"id_pedido"        validate:"required,uuid"`
 	IDContaReceber *string `json:"id_conta_receber,omitempty" validate:"omitempty,uuid"`
 	Categoria      *string `json:"categoria_pagamento,omitempty"`
-	Forma          string  `json:"forma_pagamento"  validate:"required,max=100"`
-	ValorPago      string  `json:"valor_pago"       validate:"required,decimal128,max=999999.99"`
-	Troco          string  `json:"troco"            validate:"decimal128"`
+	Forma          string  `json:"forma_pagamento"  validate:"required"`
+	ValorPago      string  `json:"valor_pago"       validate:"required"`
+	Troco          string  `json:"troco"            `
 	Observacao     *string `json:"observacao,omitempty"`
 }
 
@@ -33,7 +33,7 @@ type ContasReceberCreateDTO struct {
 	IDPedido    string `json:"id_pedido"   validate:"required,uuid"`
 	Parcela     int16  `json:"parcela"     validate:"required,min=1"`
 	Vencimento  string `json:"vencimento"  validate:"required,datetime=2006-01-02"`
-	ValorDevido string `json:"valor_devido" validate:"required,decimal128,max=999999.99"`
+	ValorDevido string `json:"valor_devido" validate:"required"`
 }
 
 type PedidoPagamentoBulkDTO []PedidoPagamentoCreateDTO

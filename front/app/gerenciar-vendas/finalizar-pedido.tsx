@@ -31,6 +31,7 @@ import {
   StepLabel,
   StepContent,
   LinearProgress,
+  Tooltip,
 } from "@mui/material";
 import {
   X,
@@ -43,6 +44,8 @@ import {
   Delete,
   Calculator,
   DollarSign,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { Formik, Form, Field, FieldArray, FormikErrors } from "formik";
 import * as Yup from "yup";
@@ -88,6 +91,49 @@ interface BaixarParcelaData {
   desconto?: number;
   observacao?: string;
   troco?: number;
+}
+
+// Dialog de confirmação para estorno/exclusão
+function ConfirmDeleteDialog({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  isLoading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  isLoading?: boolean;
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle className="flex items-center gap-2">
+        <AlertTriangle className="text-orange-500" size={24} />
+        {title}
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body1">{message}</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={isLoading}
+          startIcon={<Trash2 size={16} />}
+        >
+          {isLoading ? "Processando..." : "Confirmar"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
 // Função helper para acessar erros aninhados com segurança
@@ -201,8 +247,6 @@ const validationSchema = Yup.object({
         return numeros.length === uniqueNumeros.size;
       }
     ),
-  // Removemos a validação de valor total - deixamos o backend validar
-  // pois as triggers do PostgreSQL já fazem essa validação corretamente
 });
 
 // Dialog para baixar parcela
@@ -269,7 +313,7 @@ function BaixarParcelaDialog({
 
   const initialBaixarValues: BaixarParcelaFormValues = {
     valor_recebido: valorRestante,
-    categoria_pagamento: "Dinheiro", // ← AGORA é união, não literal fixo
+    categoria_pagamento: "Dinheiro",
     forma_pagamento: "Espécie",
     observacao: "",
     troco: 0,
@@ -297,7 +341,7 @@ function BaixarParcelaDialog({
           try {
             await onBaixar(parcela.id, {
               ...values,
-              troco: values.troco, // Inclui troco no DTO
+              troco: values.troco,
             });
             onClose();
           } catch (error) {
@@ -510,6 +554,21 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
   const [parcelaParaBaixar, setParcelaParaBaixar] = useState<any>(null);
   const [notasSelecionadas, setNotasSelecionadas] = useState<number[]>([]);
 
+  // Estados para dialogs de confirmação
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<{
+    open: boolean;
+    type: "pagamento" | "conta";
+    item: any;
+    title: string;
+    message: string;
+  }>({
+    open: false,
+    type: "pagamento",
+    item: null,
+    title: "",
+    message: "",
+  });
+
   const service = useMemo(() => new PagamentoContasService(api), []);
 
   // Fetch dados existentes
@@ -532,6 +591,98 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
   useEffect(() => {
     fetchDados();
   }, [fetchDados]);
+
+  // Função para estornar pagamento
+  const handleEstornarPagamento = async (pagamentoId: string) => {
+    try {
+      setLoading(true);
+      await service.deletePedidoPagamento(pagamentoId);
+      toast.success("Pagamento estornado com sucesso!");
+      await fetchDados();
+      onFinished();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao estornar pagamento");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para excluir conta a receber
+  const handleExcluirConta = async (contaId: string) => {
+    try {
+      setLoading(true);
+      await service.deleteContaReceber(contaId);
+      toast.success("Conta a receber excluída com sucesso!");
+      await fetchDados();
+      onFinished();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao excluir conta a receber");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para verificar se uma conta pode ser excluída
+  const podeExcluirConta = (conta: any) => {
+    const valorPago = parseFloat(conta.valor_pago || "0");
+    return valorPago === 0 && !conta.quitado;
+  };
+
+  // Função para abrir dialog de confirmação
+  const abrirConfirmDialog = (type: "pagamento" | "conta", item: any) => {
+    if (type === "pagamento") {
+      setConfirmDeleteDialog({
+        open: true,
+        type: "pagamento",
+        item,
+        title: "Estornar Pagamento",
+        message: `Tem certeza que deseja estornar o pagamento de ${new Intl.NumberFormat(
+          "pt-BR",
+          {
+            style: "currency",
+            currency: "BRL",
+          }
+        ).format(parseFloat(item.valor_pago))} via ${
+          item.forma_pagamento
+        }? Esta ação não pode ser desfeita.`,
+      });
+    } else {
+      if (!podeExcluirConta(item)) {
+        toast.warning(
+          "Esta conta possui pagamentos e não pode ser excluída. Estorne os pagamentos relacionados primeiro."
+        );
+        return;
+      }
+
+      setConfirmDeleteDialog({
+        open: true,
+        type: "conta",
+        item,
+        title: "Excluir Conta a Receber",
+        message: `Tem certeza que deseja excluir a parcela ${
+          item.parcela
+        } no valor de ${new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(
+          parseFloat(item.valor_devido)
+        )}? Esta ação não pode ser desfeita.`,
+      });
+    }
+  };
+
+  // Função para confirmar exclusão/estorno
+  const confirmarAcao = async () => {
+    const { type, item } = confirmDeleteDialog;
+
+    if (type === "pagamento") {
+      await handleEstornarPagamento(item.id);
+    } else {
+      await handleExcluirConta(item.id);
+    }
+
+    setConfirmDeleteDialog({ ...confirmDeleteDialog, open: false });
+  };
 
   // Cálculos principais
   const totalPedido = useMemo(() => {
@@ -688,7 +839,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
         categoria_pagamento: dados.categoria_pagamento,
         forma_pagamento: dados.forma_pagamento,
         valor_pago: dados.valor_recebido.toFixed(2),
-        troco: (dados.troco || 0).toFixed(2), // Usa o troco enviado
+        troco: (dados.troco || 0).toFixed(2),
         observacao: dados.observacao || undefined,
       };
 
@@ -702,8 +853,9 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
       setLoading(false);
     }
   };
+
   const initialValues: FormValues = {
-    pagamentos_vista: [], // começa vazio
+    pagamentos_vista: [],
     parcelas_prazo: [],
   };
 
@@ -865,12 +1017,23 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                       </Box>
                     }
                   />
-                  <Chip
-                    className="ml-2"
-                    size="small"
-                    label={p.categoria_pagamento}
-                    variant="outlined"
-                  />
+                  <div className="flex items-center gap-2 ml-2">
+                    <Chip
+                      size="small"
+                      label={p.categoria_pagamento}
+                      variant="outlined"
+                    />
+                    <Tooltip title="Estornar Pagamento">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => abrirConfirmDialog("pagamento", p)}
+                        disabled={loading}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
                 </ListItem>
               ))}
             </List>
@@ -891,57 +1054,85 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
           </AccordionSummary>
           <AccordionDetails>
             <List>
-              {parcelas.map((p) => (
-                <ListItem
-                  key={p.id}
-                  divider
-                  secondaryAction={
-                    !p.quitado && (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => setParcelaParaBaixar(p)}
-                        startIcon={<Receipt />}
-                      >
-                        Baixar
-                      </Button>
-                    )
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <Box className="flex justify-between items-center mr-24">
-                        <div>
-                          <Typography variant="subtitle1">
-                            Parcela {p.parcela}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Vencimento:{" "}
-                            {new Date(p.vencimento).toLocaleDateString("pt-BR")}
-                          </Typography>
-                        </div>
-                        <div className="text-right flex items-center gap-2">
-                          <Typography variant="h6" className="font-semibold">
-                            {formatCurrency(parseFloat(p.valor_devido))}
-                          </Typography>
-                          {p.valor_pago && parseFloat(p.valor_pago) > 0 ? (
-                            <Typography variant="caption" color="success.main">
-                              Pago: {formatCurrency(parseFloat(p.valor_pago))}
-                            </Typography>
-                          ) : (
-                            <></>
-                          )}
-                          <Chip
+              {parcelas.map((p) => {
+                const podeExcluir = podeExcluirConta(p);
+                const valorPago = parseFloat(p.valor_pago || "0");
+                const tooltipMessage = podeExcluir
+                  ? "Excluir conta a receber"
+                  : "Esta conta possui pagamentos e não pode ser excluída. Estorne os pagamentos relacionados primeiro.";
+
+                return (
+                  <ListItem
+                    key={p.id}
+                    divider
+                    secondaryAction={
+                      <div className="flex items-center gap-2">
+                        {!p.quitado && (
+                          <Button
                             size="small"
-                            label={p.quitado ? "Quitada" : "Pendente"}
-                            color={p.quitado ? "success" : "warning"}
-                          />
-                        </div>
-                      </Box>
+                            variant="contained"
+                            onClick={() => setParcelaParaBaixar(p)}
+                            startIcon={<Receipt />}
+                          >
+                            Baixar
+                          </Button>
+                        )}
+                        <Tooltip title={tooltipMessage}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => abrirConfirmDialog("conta", p)}
+                              disabled={loading || !podeExcluir}
+                            >
+                              <Trash2 size={16} />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </div>
                     }
-                  />
-                </ListItem>
-              ))}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box className="flex justify-between items-center mr-32">
+                          <div>
+                            <Typography variant="subtitle1">
+                              Parcela {p.parcela}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Vencimento:{" "}
+                              {new Date(p.vencimento).toLocaleDateString(
+                                "pt-BR"
+                              )}
+                            </Typography>
+                          </div>
+                          <div className="text-right flex items-center gap-2">
+                            <Typography variant="h6" className="font-semibold">
+                              {formatCurrency(parseFloat(p.valor_devido))}
+                            </Typography>
+                            {valorPago > 0 && (
+                              <Typography
+                                variant="caption"
+                                color="success.main"
+                              >
+                                Pago: {formatCurrency(valorPago)}
+                              </Typography>
+                            )}
+                            <Chip
+                              size="small"
+                              label={p.quitado ? "Quitada" : "Pendente"}
+                              color={p.quitado ? "success" : "warning"}
+                            />
+                          </div>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
             </List>
           </AccordionDetails>
         </Accordion>
@@ -1002,8 +1193,6 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                         <StepContent>
                           <FieldArray name="pagamentos_vista">
                             {({ push, remove }) => {
-                              // Estado para gerenciar notas selecionadas
-
                               // Calcular total das notas selecionadas
                               const totalNotas = notasSelecionadas.reduce(
                                 (sum, nota) => sum + nota,
@@ -1150,7 +1339,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                   (nota, idx) => (
                                                     <Chip
                                                       key={`${nota}-${idx}`}
-                                                      label={`R$${nota}`}
+                                                      label={`R${nota}`}
                                                       onDelete={() =>
                                                         setNotasSelecionadas(
                                                           notasSelecionadas.filter(
@@ -2191,6 +2380,18 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
         onClose={() => setParcelaParaBaixar(null)}
         parcela={parcelaParaBaixar}
         onBaixar={handleBaixarParcela}
+      />
+
+      {/* Dialog de confirmação para estorno/exclusão */}
+      <ConfirmDeleteDialog
+        open={confirmDeleteDialog.open}
+        onClose={() =>
+          setConfirmDeleteDialog({ ...confirmDeleteDialog, open: false })
+        }
+        onConfirm={confirmarAcao}
+        title={confirmDeleteDialog.title}
+        message={confirmDeleteDialog.message}
+        isLoading={loading}
       />
     </div>
   );

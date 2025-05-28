@@ -10,7 +10,7 @@ import (
 
 func (api *Api) BindRoutes() {
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://psielt.com.br", "http://localhost:3000"},
+		AllowedOrigins:   []string{"https://psielt.com.br", "http://localhost:3006"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

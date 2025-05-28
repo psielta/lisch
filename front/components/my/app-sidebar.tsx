@@ -82,31 +82,6 @@ export const cadastrosItems = [
   { title: "Clientes", url: "/cadastros/clientes", icon: PersonOutline },
 ] as const;
 
-export const movimentoItems = [
-  { title: "Pedidos", url: "/movimento/pedido", icon: ViewTimelineIcon },
-] as const;
-export const financeiroItems = [
-  {
-    title: "Contas a receber",
-    url: "/financeiro/contas-a-receber",
-    icon: PriceCheckIcon,
-  },
-] as const;
-
-export const estoqueItems = [
-  { title: "Depósitos", url: "/cadastros/depositos", icon: WarehouseOutlined },
-  {
-    title: "Movimentações",
-    url: "/cadastros/movimentos-estoque",
-    icon: ViewTimelineIcon,
-  },
-  {
-    title: "Estoques",
-    url: "/cadastros/produto-estoques",
-    icon: Inventory2Outlined,
-  },
-] as const;
-
 function handleVerificaSeUmDosItensEstaNaRotaAtual(
   items: readonly { title: string; url: string; icon: any }[],
   pathname: string
@@ -298,13 +273,6 @@ export default function AppSidebarMui() {
   const cadastrosActive = cadastrosItems.some((i) =>
     pathname.startsWith(i.url)
   );
-  const estoqueActive = estoqueItems.some((i) => pathname.startsWith(i.url));
-  const movimentoActive = movimentoItems.some((i) =>
-    pathname.startsWith(i.url)
-  );
-  const financeiroActive = financeiroItems.some((i) =>
-    pathname.startsWith(i.url)
-  );
 
   /* ② ouça o evento transitionend */
   useEffect(() => {
@@ -370,7 +338,7 @@ export default function AppSidebarMui() {
         })}
       >
         {/* LOGO ------------------------------------------------------------- */}
-        {/* <div className={`flex items-center justify-center h-[7rem]`}>
+        <div className={`flex items-center justify-center h-[7rem]`}>
           {!collapsed ? (
             <>
               <Image
@@ -407,7 +375,7 @@ export default function AppSidebarMui() {
             </div>
           )}
         </div>
-        <Divider /> */}
+        <Divider />
 
         {/* HOME ------------------------------------------------------------- */}
         <List sx={{ py: 0 }}>
@@ -570,51 +538,6 @@ export default function AppSidebarMui() {
         >
           <RenderMenuItems
             items={cadastrosItems}
-            pathname={pathname}
-            collapsed={collapsed}
-          />
-        </GroupAccordion>
-
-        {/* GRUPO ESTOQUE ---------------------------------------------------- */}
-        <GroupAccordion
-          title="Controle de Estoque"
-          defaultExpanded={estoqueActive}
-          collapsed={collapsed}
-          items={estoqueItems}
-          pathname={pathname}
-        >
-          <RenderMenuItems
-            items={estoqueItems}
-            pathname={pathname}
-            collapsed={collapsed}
-          />
-        </GroupAccordion>
-
-        {/* GRUPO MOVIMENTO --------------------------------------------------- */}
-        <GroupAccordion
-          title="Movimentações"
-          defaultExpanded={movimentoActive}
-          collapsed={collapsed}
-          items={movimentoItems}
-          pathname={pathname}
-        >
-          <RenderMenuItems
-            items={movimentoItems}
-            pathname={pathname}
-            collapsed={collapsed}
-          />
-        </GroupAccordion>
-
-        {/* GRUPO FINANCEIRO --------------------------------------------------- */}
-        <GroupAccordion
-          title="Financeiro"
-          defaultExpanded={financeiroActive}
-          collapsed={collapsed}
-          items={financeiroItems}
-          pathname={pathname}
-        >
-          <RenderMenuItems
-            items={financeiroItems}
             pathname={pathname}
             collapsed={collapsed}
           />

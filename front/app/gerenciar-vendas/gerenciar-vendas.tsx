@@ -526,7 +526,7 @@ export default function GerenciarVendas({
           </div>
         </div>
 
-        <div className="h-full shrink-0 border-t border-border px-4 py-6 sm:px-6 lg:w-96 lg:border-t-0 lg:border-l lg:pr-8 xl:pr-6 bg-card overflow-y-auto">
+        <div className="h-full shrink-0 border-t border-border px-4 py-6 sm:px-6 lg:w-85 lg:border-t-0 lg:border-l lg:pr-8 xl:pr-6 bg-card overflow-y-auto">
           {selectedPedido ? (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">

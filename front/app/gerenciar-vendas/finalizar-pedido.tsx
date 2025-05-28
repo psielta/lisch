@@ -375,7 +375,13 @@ function BaixarParcelaDialog({
           ]);
 
           return (
-            <Form>
+            <Form
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault(); // impede o submit
+                }
+              }}
+            >
               <DialogContent className="space-y-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <Grid container spacing={2}>
@@ -1179,8 +1185,172 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                   errors: errors,
                 });
 
+                async function finalizarSubmit() {
+                  console.log("🔘 Botão Finalizar clicado!");
+
+                  // Verificar se há pelo menos um pagamento ou parcela
+                  if (
+                    values.pagamentos_vista.length === 0 &&
+                    values.parcelas_prazo.length === 0
+                  ) {
+                    toast.error("Adicione pelo menos um pagamento ou parcela");
+                    return;
+                  }
+
+                  // Validação básica - deixamos o backend fazer as validações complexas
+                  let hasError = false;
+
+                  // Verificar pagamentos à vista
+                  for (const [
+                    index,
+                    pag,
+                  ] of values.pagamentos_vista.entries()) {
+                    if (!pag.forma_pagamento.trim()) {
+                      toast.error(
+                        `Pagamento ${
+                          index + 1
+                        }: Forma de pagamento é obrigatória`
+                      );
+                      hasError = true;
+                      break;
+                    }
+                    if (pag.valor_pago <= 0) {
+                      toast.error(
+                        `Pagamento ${index + 1}: Valor deve ser maior que zero`
+                      );
+                      hasError = true;
+                      break;
+                    }
+                  }
+
+                  // Verificar parcelas
+                  if (!hasError) {
+                    for (const [
+                      index,
+                      parc,
+                    ] of values.parcelas_prazo.entries()) {
+                      if (parc.parcela <= 0) {
+                        toast.error(
+                          `Parcela ${
+                            index + 1
+                          }: Número da parcela deve ser maior que zero`
+                        );
+                        hasError = true;
+                        break;
+                      }
+                      if (parc.valor_devido <= 0) {
+                        toast.error(
+                          `Parcela ${index + 1}: Valor deve ser maior que zero`
+                        );
+                        hasError = true;
+                        break;
+                      }
+                      if (!parc.vencimento) {
+                        toast.error(
+                          `Parcela ${
+                            index + 1
+                          }: Data de vencimento é obrigatória`
+                        );
+                        hasError = true;
+                        break;
+                      }
+                    }
+                  }
+
+                  if (hasError) return;
+
+                  console.log("✅ Validação básica passou, enviando...");
+                  try {
+                    await handleSubmit(values);
+                  } catch (error) {
+                    console.error("❌ Erro ao submeter:", error);
+                  }
+                }
+
+                useEffect(() => {
+                  const handleKeyDown = (event: KeyboardEvent) => {
+                    if (pedidoQuitado) return; // Ignora teclas se o pedido está quitado
+
+                    const valorRestante = Math.max(0, faltaPagar);
+
+                    if (event.key === "F1") {
+                      event.preventDefault();
+                      const troco = calcularTroco(valorRestante, valorRestante);
+                      setFieldValue("pagamentos_vista", [
+                        {
+                          categoria_pagamento: "Dinheiro",
+                          forma_pagamento: "Espécie",
+                          valor_pago: valorRestante,
+                          troco: troco,
+                          observacao: "Pagamento via atalho F1",
+                        },
+                      ]);
+                      setActiveStep(2);
+                      toast.info("Pagamento em Dinheiro adicionado (F1)");
+                    } else if (event.key === "F2") {
+                      event.preventDefault();
+                      setFieldValue("pagamentos_vista", [
+                        {
+                          categoria_pagamento: "Cartão",
+                          forma_pagamento: "Débito",
+                          valor_pago: valorRestante,
+                          troco: 0,
+                          observacao: "Pagamento via atalho F2",
+                        },
+                      ]);
+                      setActiveStep(2);
+                      toast.info("Pagamento em Cartão adicionado (F2)");
+                    } else if (event.key === "F3") {
+                      event.preventDefault();
+                      setFieldValue("pagamentos_vista", [
+                        {
+                          categoria_pagamento: "Pix",
+                          forma_pagamento: "Pix",
+                          valor_pago: valorRestante,
+                          troco: 0,
+                          observacao: "Pagamento via atalho F3",
+                        },
+                      ]);
+                      setActiveStep(2);
+                      toast.info("Pagamento em Pix adicionado (F3)");
+                    } else if (event.key === "F5") {
+                      event.preventDefault(); // não deixa o browser recarregar
+                      // só faz sentido se o usuário estiver no passo 3
+                      if (activeStep === 2) {
+                        finalizarSubmit(); // dispara validação + onSubmit
+                        // se preferir usar o mesmo onClick do botão, dê um ref nele
+                        // finalizarBtnRef.current?.click();
+                      } else {
+                        // leva o usuário para o passo 3 primeiro, se ainda não chegou lá
+                        setActiveStep(2);
+                        toast.info(
+                          "Revise e pressione F5 novamente para finalizar"
+                        );
+                      }
+                    }
+                  };
+
+                  window.addEventListener("keydown", handleKeyDown);
+                  return () => {
+                    window.removeEventListener("keydown", handleKeyDown);
+                  };
+                }, [
+                  pedidoQuitado,
+                  faltaPagar,
+                  setFieldValue,
+                  setActiveStep,
+                  activeStep,
+                  submitForm,
+                ]);
+
                 return (
-                  <Form>
+                  <Form
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault(); // impede o submit
+                      }
+                    }}
+                  >
                     <Stepper activeStep={activeStep} orientation="vertical">
                       {/* Step 1: Pagamentos à Vista */}
                       <Step>
@@ -1242,17 +1412,24 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                   valorRestante,
                                                   valorRestante
                                                 );
-                                                push({
-                                                  categoria_pagamento:
-                                                    "Dinheiro",
-                                                  forma_pagamento: "Espécie",
-                                                  valor_pago: valorRestante,
-                                                  troco: troco,
-                                                  observacao: "",
-                                                });
+                                                setFieldValue(
+                                                  "pagamentos_vista",
+                                                  [
+                                                    {
+                                                      categoria_pagamento:
+                                                        "Dinheiro",
+                                                      forma_pagamento:
+                                                        "Espécie",
+                                                      valor_pago: valorRestante,
+                                                      troco: troco,
+                                                      observacao: "",
+                                                    },
+                                                  ]
+                                                );
+                                                setActiveStep(2); // Avança para Confirmação
                                               }}
                                             >
-                                              Total em Dinheiro (
+                                              Total em Dinheiro (F1) (
                                               {formatCurrency(faltaPagar)})
                                             </Button>
                                             <Button
@@ -1263,19 +1440,26 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                 <CreditCard size={16} />
                                               }
                                               onClick={() => {
-                                                push({
-                                                  categoria_pagamento: "Cartão",
-                                                  forma_pagamento: "Débito",
-                                                  valor_pago: Math.max(
-                                                    0,
-                                                    faltaPagar
-                                                  ),
-                                                  troco: 0,
-                                                  observacao: "",
-                                                });
+                                                setFieldValue(
+                                                  "pagamentos_vista",
+                                                  [
+                                                    {
+                                                      categoria_pagamento:
+                                                        "Cartão",
+                                                      forma_pagamento: "Débito",
+                                                      valor_pago: Math.max(
+                                                        0,
+                                                        faltaPagar
+                                                      ),
+                                                      troco: 0,
+                                                      observacao: "",
+                                                    },
+                                                  ]
+                                                );
+                                                setActiveStep(2); // Avança para Confirmação
                                               }}
                                             >
-                                              Total em Cartão (
+                                              Total em Cartão (F2) (
                                               {formatCurrency(faltaPagar)})
                                             </Button>
                                             <Button
@@ -1284,23 +1468,29 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               color="primary"
                                               startIcon={<Receipt size={16} />}
                                               onClick={() => {
-                                                push({
-                                                  categoria_pagamento: "Pix",
-                                                  forma_pagamento: "Pix",
-                                                  valor_pago: Math.max(
-                                                    0,
-                                                    faltaPagar
-                                                  ),
-                                                  troco: 0,
-                                                  observacao: "",
-                                                });
+                                                setFieldValue(
+                                                  "pagamentos_vista",
+                                                  [
+                                                    {
+                                                      categoria_pagamento:
+                                                        "Pix",
+                                                      forma_pagamento: "Pix",
+                                                      valor_pago: Math.max(
+                                                        0,
+                                                        faltaPagar
+                                                      ),
+                                                      troco: 0,
+                                                      observacao: "",
+                                                    },
+                                                  ]
+                                                );
+                                                setActiveStep(2); // Avança para Confirmação
                                               }}
                                             >
-                                              Total em Pix (
+                                              Total em Pix (F3) (
                                               {formatCurrency(faltaPagar)})
                                             </Button>
                                           </Box>
-
                                           {/* Seção para seleção de notas */}
                                           <Divider className="my-3" />
                                           <Typography
@@ -2048,11 +2238,11 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                     <span>
                                       {pag.forma_pagamento} (
                                       {pag.categoria_pagamento})
-                                      {pag.troco && pag.troco > 0 && (
+                                      {pag.troco && pag.troco > 0 ? (
                                         <span className="text-sm text-gray-500 ml-1">
                                           - Troco: {formatCurrency(pag.troco)}
                                         </span>
-                                      )}
+                                      ) : null}
                                     </span>
                                     <span className="font-semibold">
                                       {formatCurrency(
@@ -2219,99 +2409,11 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                               disabled={loading || isSubmitting}
                               startIcon={<Receipt />}
                               size="large"
-                              onClick={async () => {
-                                console.log("🔘 Botão Finalizar clicado!");
-
-                                // Verificar se há pelo menos um pagamento ou parcela
-                                if (
-                                  values.pagamentos_vista.length === 0 &&
-                                  values.parcelas_prazo.length === 0
-                                ) {
-                                  toast.error(
-                                    "Adicione pelo menos um pagamento ou parcela"
-                                  );
-                                  return;
-                                }
-
-                                // Validação básica - deixamos o backend fazer as validações complexas
-                                let hasError = false;
-
-                                // Verificar pagamentos à vista
-                                for (const [
-                                  index,
-                                  pag,
-                                ] of values.pagamentos_vista.entries()) {
-                                  if (!pag.forma_pagamento.trim()) {
-                                    toast.error(
-                                      `Pagamento ${
-                                        index + 1
-                                      }: Forma de pagamento é obrigatória`
-                                    );
-                                    hasError = true;
-                                    break;
-                                  }
-                                  if (pag.valor_pago <= 0) {
-                                    toast.error(
-                                      `Pagamento ${
-                                        index + 1
-                                      }: Valor deve ser maior que zero`
-                                    );
-                                    hasError = true;
-                                    break;
-                                  }
-                                }
-
-                                // Verificar parcelas
-                                if (!hasError) {
-                                  for (const [
-                                    index,
-                                    parc,
-                                  ] of values.parcelas_prazo.entries()) {
-                                    if (parc.parcela <= 0) {
-                                      toast.error(
-                                        `Parcela ${
-                                          index + 1
-                                        }: Número da parcela deve ser maior que zero`
-                                      );
-                                      hasError = true;
-                                      break;
-                                    }
-                                    if (parc.valor_devido <= 0) {
-                                      toast.error(
-                                        `Parcela ${
-                                          index + 1
-                                        }: Valor deve ser maior que zero`
-                                      );
-                                      hasError = true;
-                                      break;
-                                    }
-                                    if (!parc.vencimento) {
-                                      toast.error(
-                                        `Parcela ${
-                                          index + 1
-                                        }: Data de vencimento é obrigatória`
-                                      );
-                                      hasError = true;
-                                      break;
-                                    }
-                                  }
-                                }
-
-                                if (hasError) return;
-
-                                console.log(
-                                  "✅ Validação básica passou, enviando..."
-                                );
-                                try {
-                                  await handleSubmit(values);
-                                } catch (error) {
-                                  console.error("❌ Erro ao submeter:", error);
-                                }
-                              }}
+                              onClick={finalizarSubmit}
                             >
                               {loading || isSubmitting
                                 ? "Processando..."
-                                : "Finalizar Pagamentos"}
+                                : "Finalizar Pagamentos (F5)"}
                             </Button>
                           </Box>
                         </StepContent>

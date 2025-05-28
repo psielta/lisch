@@ -87,6 +87,7 @@ import {
   clearPedidoState,
   selectPedidoState,
 } from "@/rxjs/pedido/pedido.slice";
+import { Badge } from "@/components/catalyst-ui-kit/badge";
 // Validation Schema
 
 interface PedidoFormValues {
@@ -114,6 +115,8 @@ interface PedidoFormValues {
   lng?: string;
   troco_para?: string;
   itens: PedidoItemDTO[];
+  finalizado?: boolean;
+  quitado?: boolean;
 }
 
 interface ItemModalData {
@@ -284,6 +287,8 @@ function Vendas({
     troco_para: pedido?.troco_para || "0.00",
     desconto: pedido?.desconto || "0.00",
     acrescimo: pedido?.acrescimo || "0.00",
+    finalizado: pedido?.finalizado || false,
+    quitado: pedido?.quitado || false,
     itens:
       pedido?.itens?.map((item) => ({
         id_categoria: item.id_categoria,
@@ -522,7 +527,7 @@ function Vendas({
             <>
               <Form className="flex h-screen overflow-hidden">
                 {/* Left Sidebar - Resumo do Pedido */}
-                <aside className="hidden lg:flex w-96 flex-col border-r border-border bg-secondary overflow-y-auto">
+                <aside className="hidden lg:flex w-80 flex-col border-r border-border bg-secondary overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
@@ -797,6 +802,11 @@ function Vendas({
                                             onClick={() =>
                                               handleEditItem(item, index)
                                             }
+                                            disabled={
+                                              formik.values.finalizado ===
+                                                true ||
+                                              formik.values.quitado === true
+                                            }
                                           >
                                             <Edit fontSize="small" />
                                           </IconButton>
@@ -812,6 +822,11 @@ function Vendas({
                                                 newItens
                                               );
                                             }}
+                                            disabled={
+                                              formik.values.finalizado ===
+                                                true ||
+                                              formik.values.quitado === true
+                                            }
                                           >
                                             <Delete fontSize="small" />
                                           </IconButton>
@@ -922,6 +937,17 @@ function Vendas({
                       <CardContent sx={{ padding: 3 }}>
                         <Grid container spacing={3}>
                           {/* Cliente */}
+                          {(formik.values.finalizado === true ||
+                            formik.values.quitado === true) && (
+                            <Grid size={12}>
+                              <div className="flex items-center justify-between gap-2">
+                                <Badge color="green">Pedido finalizado</Badge>
+                                <Badge color="orange">
+                                  Não pode ser alterado
+                                </Badge>
+                              </div>
+                            </Grid>
+                          )}
                           <Grid size={12}>
                             <Box
                               sx={{
@@ -999,6 +1025,10 @@ function Vendas({
                                       }
                                     />
                                   )}
+                                  disabled={
+                                    formik.values.finalizado === true ||
+                                    formik.values.quitado === true
+                                  }
                                 />
                               </Box>
 
@@ -1014,6 +1044,10 @@ function Vendas({
                                       backgroundColor: "primary.dark",
                                     },
                                   }}
+                                  disabled={
+                                    formik.values.finalizado === true ||
+                                    formik.values.quitado === true
+                                  }
                                 >
                                   <PersonAdd fontSize="small" />
                                 </IconButton>
@@ -1022,7 +1056,11 @@ function Vendas({
                                   size="small"
                                   onClick={handleAbrirDialogEditarCliente}
                                   title="Editar Cliente"
-                                  disabled={!formik.values.id_cliente}
+                                  disabled={
+                                    !formik.values.id_cliente ||
+                                    formik.values.finalizado === true ||
+                                    formik.values.quitado === true
+                                  }
                                   sx={{
                                     backgroundColor: "secondary.main",
                                     color: "white",
@@ -1049,6 +1087,10 @@ function Vendas({
                               label="Código do Pedido"
                               name="codigo_pedido"
                               value={formik.values.codigo_pedido}
+                              disabled={
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                               onChange={formik.handleChange}
                               error={
                                 formik.touched.codigo_pedido &&
@@ -1079,6 +1121,10 @@ function Vendas({
                                   }
                                 }}
                                 label="Tipo de Entrega"
+                                disabled={
+                                  formik.values.finalizado === true ||
+                                  formik.values.quitado === true
+                                }
                               >
                                 <MenuItem value="Balcão">Balcão</MenuItem>
                                 <MenuItem value="Delivery">Delivery</MenuItem>
@@ -1101,6 +1147,10 @@ function Vendas({
                                   }
                                 }}
                                 label="Categoria de Pagamento"
+                                disabled={
+                                  formik.values.finalizado === true ||
+                                  formik.values.quitado === true
+                                }
                               >
                                 <MenuItem value="Cartão">Cartão</MenuItem>
                                 <MenuItem value="Dinheiro">Dinheiro</MenuItem>
@@ -1119,6 +1169,10 @@ function Vendas({
                               name="forma_pagamento"
                               value={formik.values.forma_pagamento}
                               onChange={formik.handleChange}
+                              disabled={
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                             />
                           </Grid>
 
@@ -1133,7 +1187,9 @@ function Vendas({
                                 type="number"
                                 disabled={
                                   formik.values.categoria_pagamento !==
-                                  "Dinheiro"
+                                    "Dinheiro" ||
+                                  formik.values.finalizado === true ||
+                                  formik.values.quitado === true
                                 }
                                 value={formik.values.troco_para}
                                 onChange={formik.handleChange}
@@ -1196,7 +1252,9 @@ function Vendas({
                                 ),
                               }}
                               disabled={
-                                formik.values.tipo_entrega !== "Delivery"
+                                formik.values.tipo_entrega !== "Delivery" ||
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
                               }
                             />
                           </Grid>
@@ -1210,6 +1268,11 @@ function Vendas({
                               name="nome_taxa_entrega"
                               value={formik.values.nome_taxa_entrega}
                               onChange={formik.handleChange}
+                              disabled={
+                                formik.values.tipo_entrega !== "Delivery" ||
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                             />
                           </Grid>
 
@@ -1223,6 +1286,10 @@ function Vendas({
                               type="number"
                               value={formik.values.desconto}
                               onChange={formik.handleChange}
+                              disabled={
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                             />
                           </Grid>
 
@@ -1236,6 +1303,10 @@ function Vendas({
                               type="number"
                               value={formik.values.acrescimo}
                               onChange={formik.handleChange}
+                              disabled={
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                             />
                           </Grid>
 
@@ -1250,6 +1321,10 @@ function Vendas({
                               rows={3}
                               value={formik.values.observacao}
                               onChange={formik.handleChange}
+                              disabled={
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
                             />
                           </Grid>
                         </Grid>
@@ -1276,7 +1351,9 @@ function Vendas({
                             size="large"
                             disabled={
                               !formik.isValid ||
-                              formik.values.itens.length === 0
+                              formik.values.itens.length === 0 ||
+                              formik.values.finalizado === true ||
+                              formik.values.quitado === true
                             }
                           >
                             {pedido ? "Atualizar Pedido" : "Criar Pedido"}
@@ -1288,7 +1365,7 @@ function Vendas({
                 </div>
 
                 {/* Right Sidebar - Produtos */}
-                <aside className="hidden lg:flex w-96 flex-col border-l border-border bg-card overflow-y-auto">
+                <aside className="hidden lg:flex w-80 flex-col border-l border-border bg-card overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
@@ -1305,6 +1382,10 @@ function Vendas({
                               <ListItem key={produto.id} disablePadding>
                                 <ListItemButton
                                   onClick={() => handleAddItem(produto)}
+                                  disabled={
+                                    formik.values.finalizado === true ||
+                                    formik.values.quitado === true
+                                  }
                                   sx={{
                                     "&:hover": {
                                       backgroundColor: "rgba(0, 0, 0, 0.04)",
@@ -1371,7 +1452,11 @@ function Vendas({
                           placeholder="Buscar produtos..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full py-2 pl-8 pr-3 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={
+                            formik.values.finalizado === true ||
+                            formik.values.quitado === true
+                          }
+                          className="w-full py-2 pl-8 pr-3 disabled:opacity-50 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                         <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                       </div>

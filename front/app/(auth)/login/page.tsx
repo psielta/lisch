@@ -64,7 +64,7 @@ export default function LoginPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 md:p-8">
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col items-center text-center gap-2">
-                    <Image
+                    {/* <Image
                       src={DarkLogo}
                       alt="Logo"
                       width={240}
@@ -77,7 +77,7 @@ export default function LoginPage() {
                       width={240}
                       height={240}
                       className="block dark:hidden"
-                    />
+                    /> */}
                     <div>
                       <h1 className="text-2xl font-bold">Bem-vindo de volta</h1>
                       <p className="text-muted-foreground text-balance">

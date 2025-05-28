@@ -338,7 +338,7 @@ export default function AppSidebarMui() {
         })}
       >
         {/* LOGO ------------------------------------------------------------- */}
-        <div className={`flex items-center justify-center h-[7rem]`}>
+        {/* <div className={`flex items-center justify-center h-[7rem]`}>
           {!collapsed ? (
             <>
               <Image
@@ -375,7 +375,7 @@ export default function AppSidebarMui() {
             </div>
           )}
         </div>
-        <Divider />
+        <Divider /> */}
 
         {/* HOME ------------------------------------------------------------- */}
         <List sx={{ py: 0 }}>

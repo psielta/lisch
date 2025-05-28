@@ -10,7 +10,7 @@ export default function Loader() {
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="rounded-full h-64 w-64 border-black dark:border-white">
         <>
-          <Image
+          {/* <Image
             src={DarkLogo}
             alt="Logo"
             width={300}
@@ -23,7 +23,7 @@ export default function Loader() {
             width={300}
             height={300}
             className="block dark:hidden"
-          />
+          /> */}
           {/* <CircularProgress /> */}
         </>
       </div>

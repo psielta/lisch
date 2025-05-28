@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
@@ -28,10 +28,12 @@ import {
   Tooltip,
   Typography,
   useTheme,
+  Autocomplete,
 } from "@mui/material";
 import {
   AccessTime,
   Add,
+  CheckCircle,
   Edit,
   Email,
   FilterList,
@@ -46,13 +48,19 @@ import {
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import { PedidoListResponse, PedidoResponse } from "@/rxjs/pedido/pedido.model";
+import {
+  PedidoClienteDTO,
+  PedidoListResponse,
+  PedidoResponse,
+} from "@/rxjs/pedido/pedido.model";
 import { useRouter } from "next/navigation";
 import FinalizarPedido from "./finalizar-pedido";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import debounce from "lodash.debounce";
+import { PaginatedResponse } from "@/rxjs/clientes/cliente.model";
 
 // Interface para os filtros
 interface FiltroPedidos {
@@ -94,8 +102,8 @@ const filtroSchema = Yup.object({
     .min(Yup.ref("data_inicio"), "Data final deve ser posterior à data inicial")
     .optional(),
   codigo_pedido: Yup.string().optional(),
-  finalizado: Yup.boolean().optional(),
-  quitado: Yup.boolean().optional(),
+  finalizado: Yup.string().optional(),
+  quitado: Yup.string().optional(),
   limit: Yup.number()
     .integer("Limite deve ser um número inteiro")
     .positive("Limite deve ser positivo")
@@ -129,6 +137,25 @@ export default function GerenciarVendas({
   const [openFiltroDialog, setOpenFiltroDialog] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
+  const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>([]);
+  const [inputValue, setInputValue] = useState("");
+
+  // Função para buscar clientes com debounce
+  const fetchClientes = useMemo(
+    () =>
+      debounce(async (query: string) => {
+        try {
+          const response = await api.get<PaginatedResponse<PedidoClienteDTO>>(
+            `/clientes/smartsearch?search=${query}&page_size=250`
+          );
+          setClienteOptions(response.data.items);
+        } catch (error) {
+          console.error("Erro ao buscar clientes:", error);
+          toast.error("Erro ao carregar clientes");
+        }
+      }, 300),
+    []
+  );
 
   // Função para buscar pedidos com filtros
   const fetchPedidos = async (filtros: FiltroPedidos) => {
@@ -173,9 +200,11 @@ export default function GerenciarVendas({
   const limparFiltros = async () => {
     try {
       const response = await api.get<PedidoListResponse>(
-        "/pedidos?limit=20&finalizado=false"
+        "/pedidos?limit=1000&finalizado=false"
       );
       setPedidos(response?.data?.pedidos || []);
+      setClienteOptions([]);
+      setInputValue("");
       toast.success("Filtros limpos!");
     } catch (error) {
       console.error("Erro ao limpar filtros:", error);
@@ -272,7 +301,11 @@ export default function GerenciarVendas({
               </div>
               <Tooltip title="Filtrar pedidos">
                 <IconButton
-                  onClick={() => setOpenFiltroDialog(true)}
+                  onClick={() => {
+                    setOpenFiltroDialog(true);
+                    setInputValue("");
+                    setClienteOptions([]);
+                  }}
                   color="primary"
                 >
                   <FilterList />
@@ -341,16 +374,47 @@ export default function GerenciarVendas({
                         >
                           {getStatusIcon(pedido.tipo_entrega)}
                           <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="subtitle2"
+                            <Box
                               sx={{
-                                fontWeight: 600,
-                                fontSize: "14px",
-                                color: "inherit",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
                               }}
                             >
-                              #{pedido.codigo_pedido}
-                            </Typography>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "14px",
+                                  color: "inherit",
+                                }}
+                              >
+                                #{pedido.codigo_pedido}
+                              </Typography>
+                              {pedido.quitado && (
+                                <Box
+                                  sx={{
+                                    backgroundColor: theme.palette.success.main,
+                                    color: theme.palette.success.contrastText,
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    fontSize: "10px",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.25,
+                                    }}
+                                  >
+                                    <CheckCircle sx={{ fontSize: 12 }} />
+                                    <span>PAGO</span>
+                                  </Box>
+                                </Box>
+                              )}
+                            </Box>
                             <Typography
                               variant="caption"
                               sx={{
@@ -922,7 +986,7 @@ export default function GerenciarVendas({
             codigo_pedido: "",
             finalizado: "",
             quitado: "",
-            limit: 20,
+            limit: 250,
             offset: 0,
           }}
           validationSchema={filtroSchema}
@@ -971,15 +1035,54 @@ export default function GerenciarVendas({
                     />
                   </Grid>
                   <Grid size={12}>
-                    <TextField
-                      fullWidth
+                    <Autocomplete
                       size="small"
-                      name="id_cliente"
-                      label="ID do Cliente (UUID)"
-                      value={values.id_cliente}
-                      onChange={handleChange}
-                      error={touched.id_cliente && !!errors.id_cliente}
-                      helperText={touched.id_cliente && errors.id_cliente}
+                      options={clienteOptions}
+                      value={
+                        clienteOptions.find(
+                          (c) => c.id === values.id_cliente
+                        ) ?? null
+                      }
+                      filterOptions={(options) => options}
+                      inputValue={inputValue}
+                      getOptionKey={(option) => option.id}
+                      onInputChange={(_, newInput, reason) => {
+                        if (reason === "input") {
+                          setInputValue(newInput);
+                          if (newInput.length >= 3) fetchClientes(newInput);
+                        }
+                      }}
+                      onChange={(_, option) => {
+                        setFieldValue("id_cliente", option?.id ?? "");
+                        setInputValue(option ? option.nome_razao_social : "");
+                      }}
+                      getOptionLabel={(opt) => {
+                        const telefone =
+                          opt.telefone?.match(/\d+/g)?.join("") || "";
+                        const celular =
+                          opt.celular?.match(/\d+/g)?.join("") || "";
+                        return `${opt.nome_razao_social} - ${telefone} - ${celular}`;
+                      }}
+                      isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                      loading={
+                        inputValue.length >= 3 && clienteOptions.length === 0
+                      }
+                      onBlur={() => {
+                        const selecionado = clienteOptions.find(
+                          (c) => c.id === values.id_cliente
+                        );
+                        setInputValue(
+                          selecionado ? selecionado.nome_razao_social : ""
+                        );
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Cliente"
+                          error={touched.id_cliente && !!errors.id_cliente}
+                          helperText={touched.id_cliente && errors.id_cliente}
+                        />
+                      )}
                     />
                   </Grid>
                   <Grid size={6}>
@@ -1077,8 +1180,8 @@ export default function GerenciarVendas({
                       type="number"
                       value={values.limit}
                       onChange={handleChange}
-                      error={!!errors.limit}
-                      helperText={errors.limit}
+                      error={touched.limit && !!errors.limit}
+                      helperText={touched.limit && errors.limit}
                     />
                   </Grid>
                   <Grid size={6}>
@@ -1090,8 +1193,8 @@ export default function GerenciarVendas({
                       type="number"
                       value={values.offset}
                       onChange={handleChange}
-                      error={!!errors.offset}
-                      helperText={errors.offset}
+                      error={touched.offset && !!errors.offset}
+                      helperText={touched.offset && errors.offset}
                     />
                   </Grid>
                 </Grid>

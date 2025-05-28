@@ -272,6 +272,29 @@ func (api *Api) handleContasReceber_Post(w http.ResponseWriter, r *http.Request)
 	jsonutils.EncodeJson(w, r, http.StatusCreated, conta)
 }
 
+func (api *Api) handleContasReceber_Delete(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	tenantID := api.getTenantIDFromContext(r)
+	if _, err := uuid.Parse(id); err != nil || tenantID == uuid.Nil {
+		api.jsonError(w, r, http.StatusBadRequest, "invalid id or tenant")
+		return
+	}
+
+	conta, err := m.ContasRecebers(qm.Where("id = ?", id)).One(r.Context(), api.SQLBoilerDB.GetDB())
+	if err != nil {
+		api.jsonError(w, r, http.StatusNotFound, "conta not found")
+		return
+	}
+
+	//deletar conta explicitamente sem soft-delete
+	if _, err := conta.Delete(r.Context(), api.SQLBoilerDB.GetDB()); err != nil {
+		api.Logger.Error("conta delete", zap.Error(err))
+		api.jsonError(w, r, http.StatusInternalServerError, "internal error")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (api *Api) handleContasReceber_List(w http.ResponseWriter, r *http.Request) {
 	tenantID := api.getTenantIDFromContext(r)
 	if tenantID == uuid.Nil {

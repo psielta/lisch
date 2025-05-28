@@ -92,6 +92,7 @@ func (api *Api) BindRoutes() {
 				r.Get("/", api.handleContasReceber_List)
 				r.Post("/", api.handleContasReceber_Post)
 				r.Post("/bulk", api.handleContasReceber_BulkPost) // novo
+				r.Delete("/{id}", api.handleContasReceber_Delete)
 			})
 
 			r.Route("/pedidos", func(r chi.Router) {

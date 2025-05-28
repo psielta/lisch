@@ -1,58 +1,114 @@
 "use client";
-import React from "react";
-import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
-import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
-import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import { PedidoResponse } from "@/rxjs/pedido/pedido.model";
-import api from "@/lib/api";
+import React, { useState, useMemo } from "react";
 import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Fab,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
-  useTheme,
-  Typography,
-  Chip,
-  Divider,
-  Box,
-  Card,
-  CardContent,
-  Avatar,
-  Tooltip,
   Menu,
   MenuItem,
-  ListItemIcon,
-  Fab,
-  Button,
+  Select,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import {
+  AccessTime,
+  Add,
+  Edit,
+  Email,
+  FilterList,
+  LocalShipping,
+  LocationOn,
   Person,
   Phone,
-  Email,
-  LocationOn,
-  AccessTime,
   Receipt,
-  LocalShipping,
   Restaurant,
   Storefront,
-  Edit,
-  Add,
 } from "@mui/icons-material";
-import { useState, useMemo } from "react";
-import {
-  PagamentoContasService,
-  PedidoPagamentoCreateDTO,
-  PedidoPagamentoResponseDTO,
-  PedidoPagamentoBulkDTO,
-  ContasReceberCreateDTO,
-  ContasReceberResponseDTO,
-  ContasReceberBulkDTO,
-} from "@/proxies/pagamentos";
+import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
+import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
+import { ProdutoResponse } from "@/rxjs/produto/produto.model";
+import { PedidoListResponse, PedidoResponse } from "@/rxjs/pedido/pedido.model";
 import { useRouter } from "next/navigation";
 import FinalizarPedido from "./finalizar-pedido";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
+import { toast } from "sonner";
+import api from "@/lib/api";
+
+// Interface para os filtros
+interface FiltroPedidos {
+  id_cliente?: string;
+  status?: string;
+  tipo_entrega?: string;
+  data_inicio?: string;
+  data_fim?: string;
+  codigo_pedido?: string;
+  finalizado?: boolean;
+  quitado?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+// Schema de validação para os filtros
+const filtroSchema = Yup.object({
+  id_cliente: Yup.string()
+    .uuid("ID do cliente deve ser um UUID válido")
+    .optional(),
+  status: Yup.number()
+    .integer("Status deve ser um número inteiro")
+    .positive("Status deve ser positivo")
+    .optional(),
+  tipo_entrega: Yup.string()
+    .oneOf(["Delivery", "Retirada"], "Tipo de entrega inválido")
+    .optional(),
+  data_inicio: Yup.date()
+    .transform((value, originalValue) =>
+      originalValue ? new Date(originalValue) : null
+    )
+    .nullable()
+    .optional(),
+  data_fim: Yup.date()
+    .transform((value, originalValue) =>
+      originalValue ? new Date(originalValue) : null
+    )
+    .nullable()
+    .min(Yup.ref("data_inicio"), "Data final deve ser posterior à data inicial")
+    .optional(),
+  codigo_pedido: Yup.string().optional(),
+  finalizado: Yup.boolean().optional(),
+  quitado: Yup.boolean().optional(),
+  limit: Yup.number()
+    .integer("Limite deve ser um número inteiro")
+    .positive("Limite deve ser positivo")
+    .max(1000, "Limite máximo é 1000")
+    .default(20),
+  offset: Yup.number()
+    .integer("Offset deve ser um número inteiro")
+    .min(0, "Offset não pode ser negativo")
+    .default(0),
+});
 
 export default function GerenciarVendas({
-  pedidos,
+  pedidos: initialPedidos,
   produtos,
   categorias,
   adicionais,
@@ -65,18 +121,73 @@ export default function GerenciarVendas({
   idPedidoSelecionado: string | null;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const [selectedPedidoId, setSelectedPedidoId] = useState<string | null>(
     idPedidoSelecionado
   );
-  const router = useRouter();
+  const [pedidos, setPedidos] = useState<PedidoResponse[]>(initialPedidos);
+  const [openFiltroDialog, setOpenFiltroDialog] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
 
-  // *** Menu
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  // Função para buscar pedidos com filtros
+  const fetchPedidos = async (filtros: FiltroPedidos) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filtros.id_cliente)
+        queryParams.append("id_cliente", filtros.id_cliente);
+      if (filtros.status) queryParams.append("status", filtros.status);
+      if (filtros.tipo_entrega)
+        queryParams.append("tipo_entrega", filtros.tipo_entrega);
+      if (filtros.data_inicio)
+        queryParams.append(
+          "data_inicio",
+          new Date(filtros.data_inicio).toISOString().split("T")[0]
+        );
+      if (filtros.data_fim)
+        queryParams.append(
+          "data_fim",
+          new Date(filtros.data_fim).toISOString().split("T")[0]
+        );
+      if (filtros.codigo_pedido)
+        queryParams.append("codigo_pedido", filtros.codigo_pedido);
+      if (filtros.finalizado !== undefined)
+        queryParams.append("finalizado", filtros.finalizado.toString());
+      if (filtros.quitado !== undefined)
+        queryParams.append("quitado", filtros.quitado.toString());
+      queryParams.append("limit", (filtros.limit || 20).toString());
+      queryParams.append("offset", (filtros.offset || 0).toString());
+
+      const response = await api.get<PedidoListResponse>(
+        `/pedidos?${queryParams.toString()}`
+      );
+      setPedidos(response?.data?.pedidos || []);
+      toast.success("Pedidos filtrados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+      toast.error("Erro ao aplicar filtros");
+    }
+  };
+
+  // Função para limpar filtros
+  const limparFiltros = async () => {
+    try {
+      const response = await api.get<PedidoListResponse>(
+        "/pedidos?limit=20&finalizado=false"
+      );
+      setPedidos(response?.data?.pedidos || []);
+      toast.success("Filtros limpos!");
+    } catch (error) {
+      console.error("Erro ao limpar filtros:", error);
+      toast.error("Erro ao limpar filtros");
+    }
+  };
+
+  // Handlers do menu
+  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
+  const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
@@ -84,7 +195,7 @@ export default function GerenciarVendas({
     return pedidos.find((p) => p.id === selectedPedidoId);
   }, [pedidos, selectedPedidoId]);
 
-  // Helper functions para buscar dados relacionados
+  // Helper functions
   const getProdutoById = (id: string) => {
     return produtos.find((p) => p.id === id);
   };
@@ -147,18 +258,26 @@ export default function GerenciarVendas({
 
   return (
     <div className="flex min-h-screen h-screen w-full">
-      {/* 3 column wrapper */}
       <div className="w-full h-full grow lg:flex">
-        {/* Left sidebar & main wrapper */}
         <div className="flex-1 h-full xl:flex">
           <div className="h-full flex flex-col border-b border-border px-4 py-6 sm:px-6 lg:pl-8 xl:w-64 xl:shrink-0 xl:border-r xl:border-b-0 xl:pl-6 bg-card">
-            <div className="border-b border-border pb-4 mb-4">
-              <h2 className="text-lg font-semibold text-start text-foreground">
-                Pedidos em aberto
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {pedidos.length} pedidos
-              </p>
+            <div className="border-b border-border pb-4 mb-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold text-start text-foreground">
+                  Pedidos em aberto
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {pedidos.length} pedidos
+                </p>
+              </div>
+              <Tooltip title="Filtrar pedidos">
+                <IconButton
+                  onClick={() => setOpenFiltroDialog(true)}
+                  color="primary"
+                >
+                  <FilterList />
+                </IconButton>
+              </Tooltip>
             </div>
 
             <List sx={{ padding: 0, flex: 1, overflowY: "auto" }}>
@@ -270,8 +389,8 @@ export default function GerenciarVendas({
 
             <Menu
               anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
+              open={openMenu}
+              onClose={handleMenuClose}
               MenuListProps={{
                 "aria-labelledby": "basic-menu",
               }}
@@ -286,7 +405,7 @@ export default function GerenciarVendas({
             >
               <MenuItem
                 onClick={() => {
-                  handleClose();
+                  handleMenuClose();
                   router.push(`/vendas/${selectedPedidoId}`);
                 }}
               >
@@ -326,7 +445,6 @@ export default function GerenciarVendas({
           </div>
 
           <div className="h-full px-4 py-6 sm:px-6 lg:pl-8 xl:flex-1 xl:pl-6 bg-card">
-            {/* Main area - pode ser usado para outras funcionalidades futuras */}
             <main className="h-full">
               {selectedPedido ? (
                 <FinalizarPedido
@@ -345,10 +463,8 @@ export default function GerenciarVendas({
         </div>
 
         <div className="h-full shrink-0 border-t border-border px-4 py-6 sm:px-6 lg:w-96 lg:border-t-0 lg:border-l lg:pr-8 xl:pr-6 bg-card overflow-y-auto">
-          {/* Right column area - Detalhes do pedido */}
           {selectedPedido ? (
             <div className="space-y-6">
-              {/* Header do pedido */}
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
                 <div className="flex items-center justify-between mb-2">
                   <Typography
@@ -387,7 +503,6 @@ export default function GerenciarVendas({
                   <span>{formatDateTime(selectedPedido.data_pedido)}</span>
                 </div>
               </div>
-              {/* Resumo Financeiro */}
               <Card
                 elevation={0}
                 sx={{
@@ -400,7 +515,6 @@ export default function GerenciarVendas({
                   <Typography variant="h6" className="font-semibold mb-3">
                     Resumo Financeiro
                   </Typography>
-
                   <div className="space-y-1">
                     {selectedPedido.categoria_pagamento && (
                       <div className="flex justify-between">
@@ -429,7 +543,6 @@ export default function GerenciarVendas({
                         {formatCurrency(selectedPedido.valor_total)}
                       </Typography>
                     </div>
-
                     {selectedPedido.desconto !== "0.00" && (
                       <div className="flex justify-between text-red-600">
                         <Typography variant="body2">Desconto</Typography>
@@ -438,7 +551,6 @@ export default function GerenciarVendas({
                         </Typography>
                       </div>
                     )}
-
                     {selectedPedido.acrescimo !== "0.00" && (
                       <div className="flex justify-between text-green-600">
                         <Typography variant="body2">Acréscimo</Typography>
@@ -447,7 +559,6 @@ export default function GerenciarVendas({
                         </Typography>
                       </div>
                     )}
-
                     {selectedPedido.taxa_entrega !== "0.00" && (
                       <div className="flex justify-between text-green-600">
                         <Typography variant="body2">
@@ -512,8 +623,6 @@ export default function GerenciarVendas({
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Informações Adicionais */}
               {(selectedPedido.observacao || selectedPedido.prazo) && (
                 <Card
                   elevation={0}
@@ -561,7 +670,6 @@ export default function GerenciarVendas({
                   </CardContent>
                 </Card>
               )}
-              {/* Informações do Cliente */}
               <Card
                 elevation={0}
                 sx={{
@@ -632,8 +740,6 @@ export default function GerenciarVendas({
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Itens do Pedido */}
               <Card
                 elevation={0}
                 sx={{
@@ -722,8 +828,6 @@ export default function GerenciarVendas({
                               </Typography>
                             </div>
                           </div>
-
-                          {/* Adicionais */}
                           {item.adicionais && item.adicionais.length > 0 && (
                             <div className="ml-4 mt-2 space-y-1">
                               <Typography
@@ -786,7 +890,6 @@ export default function GerenciarVendas({
         </div>
       </div>
 
-      {/* Floating Action Button */}
       <Fab
         color="primary"
         aria-label="Adicionar novo pedido"
@@ -800,6 +903,223 @@ export default function GerenciarVendas({
       >
         <Add />
       </Fab>
+
+      {/* Diálogo de Filtros */}
+      <Dialog
+        open={openFiltroDialog}
+        onClose={() => setOpenFiltroDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Filtrar Pedidos</DialogTitle>
+        <Formik
+          initialValues={{
+            id_cliente: "",
+            status: "",
+            tipo_entrega: "",
+            data_inicio: "",
+            data_fim: "",
+            codigo_pedido: "",
+            finalizado: "",
+            quitado: "",
+            limit: 20,
+            offset: 0,
+          }}
+          validationSchema={filtroSchema}
+          onSubmit={async (values) => {
+            const filtros: FiltroPedidos = {
+              id_cliente: values.id_cliente || undefined,
+              status: values.status || undefined,
+              tipo_entrega: values.tipo_entrega || undefined,
+              data_inicio: values.data_inicio || undefined,
+              data_fim: values.data_fim || undefined,
+              codigo_pedido: values.codigo_pedido || undefined,
+              finalizado:
+                values.finalizado === ""
+                  ? undefined
+                  : values.finalizado === "true",
+              quitado:
+                values.quitado === "" ? undefined : values.quitado === "true",
+              limit: values.limit,
+              offset: values.offset,
+            };
+            await fetchPedidos(filtros);
+            setOpenFiltroDialog(false);
+          }}
+        >
+          {({
+            values,
+            handleChange,
+            setFieldValue,
+            errors,
+            touched,
+            isSubmitting,
+          }) => (
+            <Form>
+              <DialogContent>
+                <Grid container spacing={2}>
+                  <Grid size={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="codigo_pedido"
+                      label="Código do Pedido"
+                      value={values.codigo_pedido}
+                      onChange={handleChange}
+                      error={touched.codigo_pedido && !!errors.codigo_pedido}
+                      helperText={touched.codigo_pedido && errors.codigo_pedido}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="id_cliente"
+                      label="ID do Cliente (UUID)"
+                      value={values.id_cliente}
+                      onChange={handleChange}
+                      error={touched.id_cliente && !!errors.id_cliente}
+                      helperText={touched.id_cliente && errors.id_cliente}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="status"
+                      label="Status (ID)"
+                      type="number"
+                      value={values.status}
+                      onChange={handleChange}
+                      error={touched.status && !!errors.status}
+                      helperText={touched.status && errors.status}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Tipo de Entrega</InputLabel>
+                      <Select
+                        name="tipo_entrega"
+                        value={values.tipo_entrega}
+                        onChange={handleChange}
+                        label="Tipo de Entrega"
+                      >
+                        <MenuItem value="">Nenhum</MenuItem>
+                        <MenuItem value="Delivery">Delivery</MenuItem>
+                        <MenuItem value="Retirada">Retirada</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="data_inicio"
+                      label="Data Início"
+                      type="date"
+                      value={values.data_inicio}
+                      onChange={handleChange}
+                      error={touched.data_inicio && !!errors.data_inicio}
+                      helperText={touched.data_inicio && errors.data_inicio}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="data_fim"
+                      label="Data Fim"
+                      type="date"
+                      value={values.data_fim}
+                      onChange={handleChange}
+                      error={touched.data_fim && !!errors.data_fim}
+                      helperText={touched.data_fim && errors.data_fim}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Finalizado</InputLabel>
+                      <Select
+                        name="finalizado"
+                        value={values.finalizado}
+                        onChange={handleChange}
+                        label="Finalizado"
+                      >
+                        <MenuItem value="">Nenhum</MenuItem>
+                        <MenuItem value="true">Sim</MenuItem>
+                        <MenuItem value="false">Não</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Quitado</InputLabel>
+                      <Select
+                        name="quitado"
+                        value={values.quitado}
+                        onChange={handleChange}
+                        label="Quitado"
+                      >
+                        <MenuItem value="">Nenhum</MenuItem>
+                        <MenuItem value="true">Sim</MenuItem>
+                        <MenuItem value="false">Não</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="limit"
+                      label="Limite"
+                      type="number"
+                      value={values.limit}
+                      onChange={handleChange}
+                      error={!!errors.limit}
+                      helperText={errors.limit}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="offset"
+                      label="Offset"
+                      type="number"
+                      value={values.offset}
+                      onChange={handleChange}
+                      error={!!errors.offset}
+                      helperText={errors.offset}
+                    />
+                  </Grid>
+                </Grid>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    limparFiltros();
+                    setOpenFiltroDialog(false);
+                  }}
+                >
+                  Limpar Filtros
+                </Button>
+                <Button onClick={() => setOpenFiltroDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Aplicando..." : "Aplicar Filtros"}
+                </Button>
+              </DialogActions>
+            </Form>
+          )}
+        </Formik>
+      </Dialog>
     </div>
   );
 }

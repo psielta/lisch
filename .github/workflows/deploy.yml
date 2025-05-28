@@ -1,0 +1,56 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Configurar ambiente
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            # Verificar se os comandos estão disponíveis
+            which npm
+            which pm2
+            
+            # para processos
+            pm2 stop lischfrontservice || true
+            sudo systemctl stop lisch.service
+            sudo systemctl stop nginx
+
+            # atualiza código
+            cd /var/www/lisch
+            git pull
+
+            # build/migration Go
+            cd /var/www/lisch/GoCore
+            export PATH=$PATH:$(go env GOPATH)/bin
+            go run ./cmd/terndotenv
+            rm -rf cmd/api/myapp bin/myapp
+            cd cmd/api
+            env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o myapp
+            sudo cp myapp /var/www/lisch/GoCore/bin/
+
+            # build Next.js
+            cd /var/www/lisch/front
+            npm i
+            npm run build
+
+            # reinicia serviços
+            pm2 start lischfrontservice || true
+            sudo systemctl start lisch.service
+            sudo systemctl start nginx

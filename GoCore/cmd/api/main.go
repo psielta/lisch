@@ -67,7 +67,7 @@ func main() {
 
 	isProduction := os.Getenv("GOBID_PRODUCTION")
 	if isProduction == "true" {
-		s.Cookie.Domain = ".psielt.com"
+		s.Cookie.Domain = ".psielt.com.br"
 	}
 
 	jwtSecret := os.Getenv("GOBID_JWT_SECRET")

@@ -146,6 +146,14 @@ export class PagamentoContasService {
     }
   }
 
+  public async deleteContaReceber(id: string): Promise<void> {
+    try {
+      await this.api.delete(`/contas-receber/${id}`);
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
   // POST /contas-receber
   public async createContaReceber(
     data: ContasReceberCreateDTO

@@ -59,6 +59,7 @@ import { PedidoResponse } from "@/rxjs/pedido/pedido.model";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import { Add, Email, ExpandMore, Payment, Print } from "@mui/icons-material";
+import { finalizarPedidoSchema } from "./validation";
 
 interface Props {
   pedido: PedidoResponse;
@@ -266,29 +267,39 @@ function BaixarParcelaDialog({
   const valorDevido = parseFloat(parcela.valor_devido || "0");
   const valorJaPago = parseFloat(parcela.valor_pago || "0");
   const valorRestante = valorDevido - valorJaPago;
-
+  const toNumber = (v: any) => Number(String(v).replace(",", "."));
   // Schema de validação atualizado
   const baixarSchema = Yup.object({
     valor_recebido: Yup.number()
-      .min(0.01, "Valor deve ser maior que zero")
-      .when("categoria_pagamento", {
-        is: (val: string) => val !== "Dinheiro",
-        then: (schema) =>
-          schema.max(valorRestante, "Valor não pode ser maior que o restante"),
-        otherwise: (schema) => schema.max(10000, "Valor muito alto, verifique"),
-      })
-      .required("Valor obrigatório"),
-    categoria_pagamento: Yup.string()
+      .transform(toNumber)
+      .moreThan(0, "Valor > 0")
+      .max(valorRestante * 2, "Muito alto") // limite arbitrário
+      .test(
+        "saldo-parcela",
+        "Valor excede o restante da parcela",
+        function (v) {
+          const trocoDigitado = this.parent.troco ?? 0; // ← pega do próprio form
+          return (v ?? 0) - trocoDigitado <= valorRestante + 1e-6;
+        }
+      )
+
+      .required(),
+    categoria_pagamento: Yup.mixed()
       .oneOf(["Cartão", "Dinheiro", "Pix"])
-      .required("Categoria obrigatória"),
-    forma_pagamento: Yup.string().required("Forma obrigatória"),
+      .required(),
+    forma_pagamento: Yup.string().trim().required(),
     troco: Yup.number()
-      .min(0, "Troco não pode ser negativo")
+      .transform(toNumber)
+      .min(0)
       .when("categoria_pagamento", {
         is: "Dinheiro",
-        then: (schema) => schema.required("Troco deve ser calculado"),
-        otherwise: (schema) => schema.default(0),
+        then: (s) =>
+          s
+            .max(Yup.ref("valor_recebido"), "Troco > valor recebido?")
+            .default(0),
+        otherwise: (s) => s.oneOf([0]).default(0),
       }),
+    observacao: Yup.string().max(255),
   });
 
   const formatCurrency = (value: number) => {
@@ -758,6 +769,11 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
     return Math.max(0, valorPago - valorDue);
   };
 
+  // dentro do componente FinalizarPedido
+
+  /* ── calcula esquema de validação já com o context do Yup ── */
+  const schema = finalizarPedidoSchema;
+
   // Submissão do formulário principal
   const handleSubmit = async (values: FormValues) => {
     console.log("🚀 handleSubmit chamado com valores:", values);
@@ -1155,7 +1171,13 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
 
             <Formik
               initialValues={initialValues}
-              validationSchema={validationSchema}
+              validationSchema={schema}
+              validationContext={{
+                totalPedido,
+                jaPago: valorPago,
+                emParcelas: valorParcelas,
+                somaNovoVista: 0,
+              }}
               onSubmit={(values, actions) => {
                 console.log("🎯 Formik onSubmit disparado!");
                 console.log("📋 Values recebidos:", values);

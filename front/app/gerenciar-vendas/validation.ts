@@ -124,25 +124,6 @@ export const finalizarPedidoSchema = Yup.object({
   pagamentos_vista: Yup.array()
     .of(pagamentoVistaSchema)
     .test(
-      "pagamentos-duplicados",
-      "Não é possível ter pagamentos duplicados (mesma categoria + forma)",
-      (arr = []) => {
-        if (arr.length <= 1) return true;
-
-        const combinacoes = new Set();
-        for (const p of arr) {
-          const chave = `${p.categoria_pagamento}|${p.forma_pagamento}`
-            .toLowerCase()
-            .trim();
-          if (combinacoes.has(chave)) {
-            return false;
-          }
-          combinacoes.add(chave);
-        }
-        return true;
-      }
-    )
-    .test(
       "valores-positivos",
       "Todos os pagamentos devem ter valor líquido positivo",
       (arr = []) => {

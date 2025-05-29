@@ -527,7 +527,7 @@ function Vendas({
             <>
               <Form className="flex h-screen overflow-hidden">
                 {/* Left Sidebar - Resumo do Pedido */}
-                <aside className="hidden lg:flex w-80 flex-col border-r border-border bg-secondary overflow-y-auto">
+                <aside className="hidden lg:flex w-80 flex-col border-r border-border overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
@@ -897,9 +897,9 @@ function Vendas({
                           </Card>
                         </div>
                       ) : (
-                        <div className="h-full min-h-[80vh] flex items-center justify-center">
+                        <div className="h-full min-h-[80vh] flex items-center justify-center animate-bounce duration-1500 ">
                           <div className="text-center">
-                            <Receipt
+                            <Restaurant
                               sx={{
                                 fontSize: 48,
                                 color: "text.secondary",

@@ -1727,10 +1727,36 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                   value={
                                                     pagamento.categoria_pagamento
                                                   }
-                                                  onChange={(e) => {}}
                                                   label="Categoria *"
+                                                  onChange={(e) => {
+                                                    const cat = e.target
+                                                      .value as
+                                                      | "Cartão"
+                                                      | "Dinheiro"
+                                                      | "Pix";
+
+                                                    // 1) grava a categoria no Formik
+                                                    setFieldValue(
+                                                      `pagamentos_vista.${index}.categoria_pagamento`,
+                                                      cat
+                                                    );
+
+                                                    // 2) (opcional) define uma forma padrão coerente
+                                                    const formas = {
+                                                      Cartão: "Débito",
+                                                      Dinheiro: "Espécie",
+                                                      Pix: "Pix",
+                                                    };
+                                                    setFieldValue(
+                                                      `pagamentos_vista.${index}.forma_pagamento`,
+                                                      formas[cat]
+                                                    );
+                                                  }}
                                                   error={
-                                                    !!(formaTouch || formaError)
+                                                    !!getIn(
+                                                      errors,
+                                                      `pagamentos_vista.${index}.categoria_pagamento`
+                                                    )
                                                   }
                                                 >
                                                   <MenuItem value="Cartão">

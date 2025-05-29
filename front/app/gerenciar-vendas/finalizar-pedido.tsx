@@ -1002,51 +1002,6 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
     return null;
   }, []);
 
-  // Handlers para atalhos de teclado
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (pedidoQuitado || loading) return;
-
-      const valorRestante = Math.max(0, faltaPagar);
-
-      if (event.key === "F1") {
-        event.preventDefault();
-        if (valorRestante <= 0) {
-          toast.warning("Não há valor restante para pagar");
-          return;
-        }
-        toast.info("Use os botões de pagamento rápido no formulário");
-      } else if (event.key === "F2") {
-        event.preventDefault();
-        if (valorRestante <= 0) {
-          toast.warning("Não há valor restante para pagar");
-          return;
-        }
-        toast.info("Use os botões de pagamento rápido no formulário");
-      } else if (event.key === "F3") {
-        event.preventDefault();
-        if (valorRestante <= 0) {
-          toast.warning("Não há valor restante para pagar");
-          return;
-        }
-        toast.info("Use os botões de pagamento rápido no formulário");
-      } else if (event.key === "F5") {
-        event.preventDefault();
-        if (activeStep !== 2) {
-          setActiveStep(2);
-          toast.info("Revise os dados e pressione F5 novamente para finalizar");
-        } else {
-          toast.info("Use o botão Finalizar para processar os pagamentos");
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [pedidoQuitado, loading, faltaPagar, activeStep]);
-
   const initialValues: FormValues = {
     pagamentos_vista: [],
     parcelas_prazo: [],
@@ -1170,7 +1125,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                         <div>
                           <Typography variant="subtitle1">
                             {p.forma_pagamento}
-                            {p.id_conta_receber && (
+                            {p.id_conta_receber ? (
                               <Chip
                                 size="small"
                                 label="Recebimento de parcela"
@@ -1178,7 +1133,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                 color="success"
                                 className="ml-2"
                               />
-                            )}
+                            ) : null}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {new Date(p.created_at).toLocaleString("pt-BR")}
@@ -1188,14 +1143,14 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                           <Typography variant="h6" className="font-semibold">
                             {formatarMoeda(parseFloat(p.valor_pago))}
                           </Typography>
-                          {p.troco && parseFloat(p.troco) > 0 && (
+                          {p.troco && parseFloat(p.troco) > 0 ? (
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
                               Troco: {formatarMoeda(parseFloat(p.troco))}
                             </Typography>
-                          )}
+                          ) : null}
                         </div>
                       </Box>
                     }
@@ -1465,8 +1420,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                   valorRestante,
                                                   valorRestante
                                                 ),
-                                                observacao:
-                                                  "Pagamento total via F1",
+                                                observacao: "Pagamento total",
                                               };
 
                                               if (
@@ -1481,7 +1435,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               }
                                             }}
                                           >
-                                            Total em Dinheiro (F1) (
+                                            Total em Dinheiro (
                                             {formatarMoeda(faltaPagar)})
                                           </Button>
                                           <Button
@@ -1507,8 +1461,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                 forma_pagamento: "Débito",
                                                 valor_pago: valorRestante,
                                                 troco: 0,
-                                                observacao:
-                                                  "Pagamento total via F2",
+                                                observacao: "Pagamento total",
                                               };
 
                                               if (
@@ -1523,7 +1476,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               }
                                             }}
                                           >
-                                            Total em Cartão (F2) (
+                                            Total em Cartão (
                                             {formatarMoeda(faltaPagar)})
                                           </Button>
                                           <Button
@@ -1549,8 +1502,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                 forma_pagamento: "Pix",
                                                 valor_pago: valorRestante,
                                                 troco: 0,
-                                                observacao:
-                                                  "Pagamento total via F3",
+                                                observacao: "Pagamento total",
                                               };
 
                                               if (
@@ -1565,7 +1517,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               }
                                             }}
                                           >
-                                            Total em Pix (F3) (
+                                            Total em Pix (
                                             {formatarMoeda(faltaPagar)})
                                           </Button>
                                         </Box>
@@ -2425,11 +2377,11 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                       <span>
                                         {pag.forma_pagamento} (
                                         {pag.categoria_pagamento})
-                                        {pag.troco && pag.troco > 0 && (
+                                        {pag.troco && pag.troco > 0 ? (
                                           <span className="text-sm text-gray-500 ml-1">
                                             - Troco: {formatarMoeda(pag.troco)}
                                           </span>
-                                        )}
+                                        ) : null}
                                       </span>
                                       <span className="font-semibold">
                                         {formatarMoeda(valorLiquido)}
@@ -2643,7 +2595,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                             >
                               {loading || isSubmitting
                                 ? "Processando..."
-                                : "Finalizar Pagamentos (F5)"}
+                                : "Finalizar Pagamentos"}
                             </Button>
                           </Box>
                         </StepContent>

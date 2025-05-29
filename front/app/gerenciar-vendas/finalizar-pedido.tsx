@@ -802,22 +802,6 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
             );
           }
         }
-
-        // Verifica duplicatas
-        const combinacoes = new Set();
-        for (let i = 0; i < values.pagamentos_vista.length; i++) {
-          const p = values.pagamentos_vista[i];
-          const chave = `${p.categoria_pagamento}|${p.forma_pagamento}`
-            .toLowerCase()
-            .trim();
-          if (combinacoes.has(chave)) {
-            errosGerais.push(
-              `Pagamento duplicado: ${p.categoria_pagamento} - ${p.forma_pagamento}`
-            );
-            break;
-          }
-          combinacoes.add(chave);
-        }
       }
 
       // Valida parcelas individuais
@@ -1373,21 +1357,6 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                   const erros = validarPagamentoIndividual(pagamento);
                   if (erros.length > 0) {
                     mostrarErrosValidacao(erros);
-                    return false;
-                  }
-
-                  // Verifica duplicatas
-                  const jaExiste = values.pagamentos_vista.some(
-                    (p) =>
-                      p.categoria_pagamento === pagamento.categoria_pagamento &&
-                      p.forma_pagamento.toLowerCase().trim() ===
-                        pagamento.forma_pagamento.toLowerCase().trim()
-                  );
-
-                  if (jaExiste) {
-                    toast.error(
-                      "Já existe um pagamento com esta categoria e forma"
-                    );
                     return false;
                   }
 

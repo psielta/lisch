@@ -902,13 +902,13 @@ function Vendas({
                             <Restaurant
                               sx={{
                                 fontSize: 48,
-                                color: "text.secondary",
                                 mb: 2,
                               }}
+                              color="primary"
                             />
                             <Typography
                               variant="h6"
-                              color="text.secondary"
+                              color="text.primary"
                               className="mb-2"
                             >
                               Adicione produtos para começar uma venda

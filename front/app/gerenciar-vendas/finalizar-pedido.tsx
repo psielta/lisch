@@ -2311,6 +2311,12 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                 {/* Botão para adicionar parcela manual */}
                                 <Button
                                   startIcon={<Add />}
+                                  disabled={
+                                    restanteAntesDoIndex(
+                                      values.pagamentos_vista.length,
+                                      values
+                                    ) <= 0
+                                  }
                                   onClick={() => {
                                     const proximaParcela =
                                       Math.max(
@@ -2439,7 +2445,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                           </Typography>
                                         </Box>
                                       ) : null}
-                                      <Box className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded">
+                                      <Box className="flex justify-between items-center px-2 py-1 rounded">
                                         <Typography
                                           variant="body2"
                                           className="font-medium"

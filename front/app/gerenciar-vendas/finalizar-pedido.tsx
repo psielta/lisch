@@ -541,6 +541,18 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
     }
   };
 
+  // calcula quanto falta antes de 'index' considerar o pagamento atual
+  const restanteAntesDoIndex = (index: number, values: FormValues): number => {
+    const liquidoOutros = values.pagamentos_vista
+      .filter((_, i) => i !== index) // ignora o current card
+      .reduce(
+        (s, p) => s + calcularValorLiquido(p.valor_pago, p.troco || 0),
+        0
+      );
+
+    return Math.max(0, totalPedido - valorPago - liquidoOutros);
+  };
+
   // Função para verificar se uma conta pode ser excluída
   const podeExcluirConta = (conta: any) => {
     const valorPago = parseFloat(conta.valor_pago || "0");
@@ -1846,22 +1858,27 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                     parseFloat(
                                                       e.target.value
                                                     ) || 0;
+
                                                   setFieldValue(
                                                     `pagamentos_vista.${index}.valor_pago`,
                                                     valor
                                                   );
 
-                                                  // Recalcula troco automaticamente para dinheiro
+                                                  // ♦ usa o helper em vez de faltaPagar
+                                                  const restanteAtual =
+                                                    restanteAntesDoIndex(
+                                                      index,
+                                                      values
+                                                    );
+
                                                   if (
                                                     pagamento.categoria_pagamento ===
                                                     "Dinheiro"
                                                   ) {
-                                                    const valorRestanteAtual =
-                                                      Math.max(0, faltaPagar);
                                                     const novoTroco =
                                                       calcularTrocoSeguro(
                                                         valor,
-                                                        valorRestanteAtual
+                                                        restanteAtual
                                                       );
                                                     setFieldValue(
                                                       `pagamentos_vista.${index}.troco`,
@@ -2398,20 +2415,44 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                   return (
                                     <Box
                                       key={index}
-                                      className="flex justify-between items-center py-1"
+                                      className="flex flex-col gap-1 py-2"
                                     >
-                                      <span>
-                                        {pag.forma_pagamento} (
-                                        {pag.categoria_pagamento})
-                                        {pag.troco && pag.troco > 0 ? (
-                                          <span className="text-sm text-gray-500 ml-1">
-                                            - Troco: {formatarMoeda(pag.troco)}
-                                          </span>
-                                        ) : null}
-                                      </span>
-                                      <span className="font-semibold">
-                                        {formatarMoeda(valorLiquido)}
-                                      </span>
+                                      <Box className="flex justify-between items-center">
+                                        <Typography>
+                                          {pag.forma_pagamento} (
+                                          {pag.categoria_pagamento})
+                                        </Typography>
+                                        <Typography className="font-semibold">
+                                          {formatarMoeda(pag.valor_pago)}
+                                        </Typography>
+                                      </Box>
+                                      {pag.troco && pag.troco > 0 ? (
+                                        <Box className="flex justify-between items-center text-gray-600">
+                                          <Typography variant="body2">
+                                            Troco
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            className="font-medium text-red-500"
+                                          >
+                                            - {formatarMoeda(pag.troco)}
+                                          </Typography>
+                                        </Box>
+                                      ) : null}
+                                      <Box className="flex justify-between items-center bg-gray-50 px-2 py-1 rounded">
+                                        <Typography
+                                          variant="body2"
+                                          className="font-medium"
+                                        >
+                                          Valor Final
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          className="font-semibold text-green-600"
+                                        >
+                                          {formatarMoeda(valorLiquido)}
+                                        </Typography>
+                                      </Box>
                                     </Box>
                                   );
                                 })}

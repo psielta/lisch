@@ -2,7 +2,7 @@
 import { Print } from "@mui/icons-material";
 import { useAuth, User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import DialogCliente from "@/components/dialogs/DialogCliente"; // Ajuste o caminho conforme necessário
+import DialogCliente from "@/components/dialogs/DialogCliente";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
@@ -40,6 +40,7 @@ import {
   InputAdornment,
   Paper,
   Grid,
+  CircularProgress,
 } from "@mui/material";
 
 import { ItemModal as NewItemModal } from "../vendas/ItemModal";
@@ -88,7 +89,8 @@ import {
   selectPedidoState,
 } from "@/rxjs/pedido/pedido.slice";
 import { Badge } from "@/components/catalyst-ui-kit/badge";
-// Validation Schema
+
+// ... (mantenha todas as interfaces e schemas existentes)
 
 interface PedidoFormValues {
   id?: string;
@@ -237,9 +239,16 @@ function Vendas({
       })
     ),
   });
+
   const { tenant } = useAuth();
   console.log(produtos);
   const router = useRouter();
+
+  // Estados de loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrintLoading, setIsPrintLoading] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [shouldPrint, setShouldPrint] = useState(false);
@@ -369,7 +378,6 @@ function Vendas({
   const handleEditItem = async (item: PedidoItemDTO, index: number) => {
     let produto = produtos.find((p) => p.id === item.id_produto);
 
-    // ↓ tenta buscar no servidor se não estiver no array local
     if (!produto) {
       try {
         const resp = await api.get<ProdutoResponse>(
@@ -380,7 +388,7 @@ function Vendas({
         toast.error(
           "Não foi possível carregar os dados do produto. Verifique se o produto está cadastrado ou se foi deletado."
         );
-        return; // não abre o modal
+        return;
       }
     }
 
@@ -391,14 +399,12 @@ function Vendas({
   const calculateItemTotal = (values: PedidoFormValues) => {
     return (
       values.itens.reduce((total, item) => {
-        // Soma total dos adicionais
         const adicionaisTotal = (item.adicionais || []).reduce(
           (addTotal, adicional) =>
             addTotal + parseFloat(adicional.valor) * adicional.quantidade,
           0
         );
 
-        // Soma valor unitário + total adicionais e multiplica pela quantidade
         const itemTotal =
           (parseFloat(item.valor_unitario) + adicionaisTotal) * item.quantidade;
 
@@ -409,16 +415,15 @@ function Vendas({
       parseFloat(values.acrescimo || "0")
     );
   };
+
   const calculateItemSubTotal = (values: PedidoFormValues) => {
     return values.itens.reduce((total, item) => {
-      // Soma total dos adicionais
       const adicionaisTotal = (item.adicionais || []).reduce(
         (addTotal, adicional) =>
           addTotal + parseFloat(adicional.valor) * adicional.quantidade,
         0
       );
 
-      // Soma valor unitário + total adicionais e multiplica pela quantidade
       const itemTotal =
         (parseFloat(item.valor_unitario) + adicionaisTotal) * item.quantidade;
 
@@ -430,10 +435,14 @@ function Vendas({
   const postOrPutPedidoState = useSelector(
     (state: RootState) => state.pedido.postOrPutPedidoActionState
   );
-  // Limpar o store
+
+  // Detectar quando está em loading do Redux
+  const isReduxLoading = postOrPutPedidoState === "pending";
+
   useEffect(() => {
     dispatch(clearPedidoState());
   }, [dispatch]);
+
   const clienteInicial =
     pedido?.cliente?.nome_razao_social ??
     defaultCliente?.nome_razao_social ??
@@ -450,29 +459,68 @@ function Vendas({
     []
   );
 
+  // Função para imprimir pedido com loading
+  const handlePrintPedido = async (pedidoId: string) => {
+    if (!pedidoId) {
+      toast.error("Pedido não encontrado");
+      return;
+    }
+
+    try {
+      setIsPrintLoading(true);
+      const response = await api.get(`/pedidos/relatorio/${pedidoId}`, {
+        responseType: "blob",
+      });
+
+      const pdfBlob = new Blob([response.data], {
+        type: "application/pdf",
+      });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      const printWindow = window.open(pdfUrl);
+      printWindow?.print();
+
+      printWindow?.addEventListener("afterprint", () => {
+        URL.revokeObjectURL(pdfUrl);
+        printWindow.close();
+      });
+    } catch (error) {
+      console.error("Erro ao gerar comprovante:", error);
+      toast.error("Erro ao gerar comprovante para impressão");
+    } finally {
+      setIsPrintLoading(false);
+    }
+  };
+
   return (
     <>
       <Formik
         initialValues={initialValues}
         validationSchema={pedidoValidationSchema}
-        onSubmit={(values) => {
-          if (values.id) {
-            dispatch(
-              updatePedidoAction.request({
-                id: values.id,
-                data: {
-                  ...values,
-                  troco_para: (values.troco_para ?? "0.00").toString(),
-                  desconto: (values.desconto ?? "0.00").toString(),
-                  acrescimo: (values.acrescimo ?? "0.00").toString(),
-                } as UpdatePedidoRequest,
-              })
-            );
-          } else {
-            dispatch(createPedidoAction.request(values));
+        onSubmit={async (values) => {
+          try {
+            setIsSubmitting(true);
+
+            if (values.id) {
+              dispatch(
+                updatePedidoAction.request({
+                  id: values.id,
+                  data: {
+                    ...values,
+                    troco_para: (values.troco_para ?? "0.00").toString(),
+                    desconto: (values.desconto ?? "0.00").toString(),
+                    acrescimo: (values.acrescimo ?? "0.00").toString(),
+                  } as UpdatePedidoRequest,
+                })
+              );
+            } else {
+              dispatch(createPedidoAction.request(values));
+            }
+          } catch (error) {
+            setIsSubmitting(false);
+            toast.error("Erro ao processar pedido");
           }
         }}
-        // enableReinitialize
       >
         {(formik: FormikProps<PedidoFormValues>) => {
           const handleAbrirDialogNovoCliente = () => {
@@ -493,65 +541,28 @@ function Vendas({
           };
 
           const handleClienteSalvo = (clienteSalvo: any) => {
-            // Atualizar as opções de cliente
             const clienteExiste = clienteOptions.find(
               (c) => c.id === clienteSalvo.id
             );
 
             if (clienteExiste) {
-              // Se o cliente já existe, atualizar na lista
               setClienteOptions((prev) =>
                 prev.map((c) => (c.id === clienteSalvo.id ? clienteSalvo : c))
               );
             } else {
-              // Se é um cliente novo, adicionar à lista
               setClienteOptions((prev) => [...prev, clienteSalvo]);
             }
 
-            // Selecionar o cliente salvo no formulário
             formik.setFieldValue("id_cliente", clienteSalvo.id);
             setInputValue(clienteSalvo.nome_razao_social);
 
             toast.success("Cliente salvo e selecionado com sucesso!");
           };
 
-          const handlePrintPedido = async (pedidoId: string) => {
-            if (!pedidoId) {
-              toast.error("Pedido não encontrado");
-              return;
-            }
-
-            try {
-              const response = await api.get(`/pedidos/relatorio/${pedidoId}`, {
-                responseType: "blob",
-              });
-
-              // Criar URL do blob PDF
-              const pdfBlob = new Blob([response.data], {
-                type: "application/pdf",
-              });
-              const pdfUrl = URL.createObjectURL(pdfBlob);
-
-              // Abrir em nova aba para impressão
-              const printWindow = window.open(pdfUrl);
-              printWindow?.print();
-
-              // Limpar URL do blob após impressão
-              printWindow?.addEventListener("afterprint", () => {
-                URL.revokeObjectURL(pdfUrl);
-                printWindow.close();
-              });
-            } catch (error) {
-              console.error("Erro ao gerar comprovante:", error);
-              toast.error("Erro ao gerar comprovante para impressão");
-            }
-          };
-
           const pedidoStateFromRedux = useSelector(selectPedidoState);
 
           useEffect(() => {
             if (postOrPutPedidoState === "completed") {
-              // Pegar o ID do pedido - se for edição usa o ID atual, se for criação pega do Redux
               let pedidoId = formik.values.id;
               if (
                 !pedidoId &&
@@ -561,27 +572,39 @@ function Vendas({
                 pedidoId = pedidos[pedidos.length - 1].id;
               }
 
-              // limpar store
               dispatch(clearPedidoState());
 
               if (shouldPrint && pedidoId) {
-                // Imprimir antes de navegar
                 handlePrintPedido(pedidoId).finally(() => {
+                  setIsNavigating(true);
                   router.push("/gerenciar-vendas");
                   toast.success(
                     "Pedido salvo com sucesso e enviado para impressão"
                   );
                   setShouldPrint(false);
+                  setIsSubmitting(false);
                 });
               } else {
+                setIsNavigating(true);
                 router.push("/gerenciar-vendas");
                 toast.success("Pedido salvo com sucesso");
+                setIsSubmitting(false);
               }
             } else if (postOrPutPedidoState === "error") {
               setShouldPrint(false);
+              setIsSubmitting(false);
               toast.error("Erro ao salvar pedido");
             }
           }, [postOrPutPedidoState, router, shouldPrint, formik.values.id]);
+
+          // Verificar se qualquer operação está em andamento
+          const isAnyLoading =
+            isSubmitting || isReduxLoading || isPrintLoading || isNavigating;
+          const isFormDisabled =
+            isAnyLoading ||
+            formik.values.finalizado === true ||
+            formik.values.quitado === true;
+
           return (
             <>
               <Form className="flex h-screen overflow-hidden">
@@ -861,11 +884,7 @@ function Vendas({
                                             onClick={() =>
                                               handleEditItem(item, index)
                                             }
-                                            disabled={
-                                              formik.values.finalizado ===
-                                                true ||
-                                              formik.values.quitado === true
-                                            }
+                                            disabled={isFormDisabled}
                                           >
                                             <Edit fontSize="small" />
                                           </IconButton>
@@ -881,11 +900,7 @@ function Vendas({
                                                 newItens
                                               );
                                             }}
-                                            disabled={
-                                              formik.values.finalizado ===
-                                                true ||
-                                              formik.values.quitado === true
-                                            }
+                                            disabled={isFormDisabled}
                                           >
                                             <Delete fontSize="small" />
                                           </IconButton>
@@ -1007,6 +1022,26 @@ function Vendas({
                               </div>
                             </Grid>
                           )}
+
+                          {/* Loading indicator quando há operações em andamento */}
+                          {isAnyLoading && (
+                            <Grid size={12}>
+                              <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-md">
+                                <CircularProgress size={20} />
+                                <Typography variant="body2" color="primary">
+                                  {isPrintLoading && "Gerando comprovante..."}
+                                  {isSubmitting &&
+                                    !isPrintLoading &&
+                                    "Salvando pedido..."}
+                                  {isReduxLoading &&
+                                    !isSubmitting &&
+                                    "Processando..."}
+                                  {isNavigating && "Redirecionando..."}
+                                </Typography>
+                              </div>
+                            </Grid>
+                          )}
+
                           <Grid size={12}>
                             <Box
                               sx={{
@@ -1084,10 +1119,7 @@ function Vendas({
                                       }
                                     />
                                   )}
-                                  disabled={
-                                    formik.values.finalizado === true ||
-                                    formik.values.quitado === true
-                                  }
+                                  disabled={isFormDisabled}
                                 />
                               </Box>
 
@@ -1103,10 +1135,7 @@ function Vendas({
                                       backgroundColor: "primary.dark",
                                     },
                                   }}
-                                  disabled={
-                                    formik.values.finalizado === true ||
-                                    formik.values.quitado === true
-                                  }
+                                  disabled={isFormDisabled}
                                 >
                                   <PersonAdd fontSize="small" />
                                 </IconButton>
@@ -1116,9 +1145,7 @@ function Vendas({
                                   onClick={handleAbrirDialogEditarCliente}
                                   title="Editar Cliente"
                                   disabled={
-                                    !formik.values.id_cliente ||
-                                    formik.values.finalizado === true ||
-                                    formik.values.quitado === true
+                                    !formik.values.id_cliente || isFormDisabled
                                   }
                                   sx={{
                                     backgroundColor: "secondary.main",
@@ -1146,10 +1173,7 @@ function Vendas({
                               label="Código do Pedido"
                               name="codigo_pedido"
                               value={formik.values.codigo_pedido}
-                              disabled={
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
-                              }
+                              disabled={isFormDisabled}
                               onChange={formik.handleChange}
                               error={
                                 formik.touched.codigo_pedido &&
@@ -1180,10 +1204,7 @@ function Vendas({
                                   }
                                 }}
                                 label="Tipo de Entrega"
-                                disabled={
-                                  formik.values.finalizado === true ||
-                                  formik.values.quitado === true
-                                }
+                                disabled={isFormDisabled}
                               >
                                 <MenuItem value="Balcão">Balcão</MenuItem>
                                 <MenuItem value="Delivery">Delivery</MenuItem>
@@ -1206,10 +1227,7 @@ function Vendas({
                                   }
                                 }}
                                 label="Categoria de Pagamento"
-                                disabled={
-                                  formik.values.finalizado === true ||
-                                  formik.values.quitado === true
-                                }
+                                disabled={isFormDisabled}
                               >
                                 <MenuItem value="Cartão">Cartão</MenuItem>
                                 <MenuItem value="Dinheiro">Dinheiro</MenuItem>
@@ -1228,10 +1246,7 @@ function Vendas({
                               name="forma_pagamento"
                               value={formik.values.forma_pagamento}
                               onChange={formik.handleChange}
-                              disabled={
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
-                              }
+                              disabled={isFormDisabled}
                             />
                           </Grid>
 
@@ -1246,9 +1261,7 @@ function Vendas({
                                 type="number"
                                 disabled={
                                   formik.values.categoria_pagamento !==
-                                    "Dinheiro" ||
-                                  formik.values.finalizado === true ||
-                                  formik.values.quitado === true
+                                    "Dinheiro" || isFormDisabled
                                 }
                                 value={formik.values.troco_para}
                                 onChange={formik.handleChange}
@@ -1312,8 +1325,7 @@ function Vendas({
                               }}
                               disabled={
                                 formik.values.tipo_entrega !== "Delivery" ||
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
+                                isFormDisabled
                               }
                             />
                           </Grid>
@@ -1329,8 +1341,7 @@ function Vendas({
                               onChange={formik.handleChange}
                               disabled={
                                 formik.values.tipo_entrega !== "Delivery" ||
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
+                                isFormDisabled
                               }
                             />
                           </Grid>
@@ -1345,10 +1356,7 @@ function Vendas({
                               type="number"
                               value={formik.values.desconto}
                               onChange={formik.handleChange}
-                              disabled={
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
-                              }
+                              disabled={isFormDisabled}
                             />
                           </Grid>
 
@@ -1362,10 +1370,7 @@ function Vendas({
                               type="number"
                               value={formik.values.acrescimo}
                               onChange={formik.handleChange}
-                              disabled={
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
-                              }
+                              disabled={isFormDisabled}
                             />
                           </Grid>
 
@@ -1380,10 +1385,7 @@ function Vendas({
                               rows={3}
                               value={formik.values.observacao}
                               onChange={formik.handleChange}
-                              disabled={
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
-                              }
+                              disabled={isFormDisabled}
                             />
                           </Grid>
                         </Grid>
@@ -1402,12 +1404,21 @@ function Vendas({
                               <Button
                                 variant="outlined"
                                 size="large"
-                                startIcon={<Print />}
+                                startIcon={
+                                  isPrintLoading ? (
+                                    <CircularProgress size={16} />
+                                  ) : (
+                                    <Print />
+                                  )
+                                }
                                 onClick={() =>
                                   handlePrintPedido(formik.values.id || "")
                                 }
+                                disabled={isPrintLoading || isAnyLoading}
                               >
-                                Reimprimir
+                                {isPrintLoading
+                                  ? "Imprimindo..."
+                                  : "Reimprimir"}
                               </Button>
                             )}
                           </Box>
@@ -1416,6 +1427,7 @@ function Vendas({
                               variant="outlined"
                               size="large"
                               onClick={() => router.push("/gerenciar-vendas")}
+                              disabled={isAnyLoading}
                             >
                               Voltar
                             </Button>
@@ -1426,12 +1438,20 @@ function Vendas({
                               disabled={
                                 !formik.isValid ||
                                 formik.values.itens.length === 0 ||
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
+                                isAnyLoading
                               }
                               onClick={() => setShouldPrint(false)}
+                              startIcon={
+                                isSubmitting && !shouldPrint ? (
+                                  <CircularProgress size={16} />
+                                ) : null
+                              }
                             >
-                              {pedido ? "Atualizar Pedido" : "Criar Pedido"}
+                              {isSubmitting && !shouldPrint
+                                ? "Salvando..."
+                                : pedido
+                                ? "Atualizar Pedido"
+                                : "Criar Pedido"}
                             </Button>
                             <Button
                               variant="contained"
@@ -1440,16 +1460,23 @@ function Vendas({
                               disabled={
                                 !formik.isValid ||
                                 formik.values.itens.length === 0 ||
-                                formik.values.finalizado === true ||
-                                formik.values.quitado === true
+                                isAnyLoading
                               }
-                              startIcon={<Print />}
+                              startIcon={
+                                isSubmitting && shouldPrint ? (
+                                  <CircularProgress size={16} />
+                                ) : (
+                                  <Print />
+                                )
+                              }
                               onClick={() => {
                                 setShouldPrint(true);
                                 formik.handleSubmit();
                               }}
                             >
-                              {pedido
+                              {isSubmitting && shouldPrint
+                                ? "Salvando..."
+                                : pedido
                                 ? "Atualizar Pedido e Imprimir"
                                 : "Criar Pedido e Imprimir"}
                             </Button>
@@ -1478,10 +1505,7 @@ function Vendas({
                               <ListItem key={produto.id} disablePadding>
                                 <ListItemButton
                                   onClick={() => handleAddItem(produto)}
-                                  disabled={
-                                    formik.values.finalizado === true ||
-                                    formik.values.quitado === true
-                                  }
+                                  disabled={isFormDisabled}
                                   sx={{
                                     "&:hover": {
                                       backgroundColor: "rgba(0, 0, 0, 0.04)",
@@ -1548,10 +1572,7 @@ function Vendas({
                           placeholder="Buscar produtos..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          disabled={
-                            formik.values.finalizado === true ||
-                            formik.values.quitado === true
-                          }
+                          disabled={isFormDisabled}
                           className="w-full py-2 pl-8 pr-3 disabled:opacity-50 text-sm rounded-md bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                         <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />

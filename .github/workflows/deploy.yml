@@ -35,6 +35,14 @@ jobs:
             # atualiza código
             cd /var/www/lisch
             git pull
+            
+            # Build + Publish da WebAPI .NET 8
+            cd NetFastReport
+            dotnet restore
+            dotnet publish -c Release -o /var/www/lischdotnet
+
+            # Reinicia o serviço systemd
+            sudo systemctl restart lischdotnet.service
 
             # build/migration Go
             cd /var/www/lisch/GoCore

@@ -29,6 +29,11 @@ export interface Tenant {
   status: string | null;
   created_at: string | null;
   id_cliente_padrao: string | null;
+  photo: string | null;
+  telefone: string | null;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
 }
 
 interface LoginInput {

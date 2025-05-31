@@ -24,7 +24,6 @@ export default function Loader() {
             height={300}
             className="block dark:hidden"
           />
-          {/* <CircularProgress /> */}
         </>
       </div>
     </div>

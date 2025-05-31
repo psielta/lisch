@@ -9,7 +9,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder
-           .WithOrigins("http://localhost:3080")
+           .WithOrigins("http://localhost:3081")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());

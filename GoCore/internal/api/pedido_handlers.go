@@ -83,7 +83,7 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 	// Filtros de data
 	if dataInicio != "" {
 		if data, err := time.Parse("2006-01-02", dataInicio); err == nil {
-			queryMods = append(queryMods, qm.Where("pedidos.data_pedido >= ?", data))
+			queryMods = append(queryMods, qm.Where("pedidos.created_at >= ?", data))
 		}
 	}
 
@@ -91,7 +91,7 @@ func (api *Api) handlePedidos_List(w http.ResponseWriter, r *http.Request) {
 		if data, err := time.Parse("2006-01-02", dataFim); err == nil {
 			// Adicionar um dia para incluir todo o dia final
 			dataFimFinal := data.AddDate(0, 0, 1)
-			queryMods = append(queryMods, qm.Where("pedidos.data_pedido < ?", dataFimFinal))
+			queryMods = append(queryMods, qm.Where("pedidos.created_at < ?", dataFimFinal))
 		}
 	}
 

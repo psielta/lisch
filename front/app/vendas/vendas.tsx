@@ -1,5 +1,5 @@
 "use client";
-
+import { Print } from "@mui/icons-material";
 import { useAuth, User } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import DialogCliente from "@/components/dialogs/DialogCliente"; // Ajuste o caminho conforme necessário
@@ -242,6 +242,7 @@ function Vendas({
   const router = useRouter();
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [shouldPrint, setShouldPrint] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
     defaultCliente && pedido?.cliente
@@ -513,16 +514,65 @@ function Vendas({
 
             toast.success("Cliente salvo e selecionado com sucesso!");
           };
+
+          const handlePrintPedido = async (pedidoId: string) => {
+            if (!pedidoId) {
+              toast.error("Pedido não encontrado");
+              return;
+            }
+
+            try {
+              const response = await api.get(`/pedidos/relatorio/${pedidoId}`, {
+                responseType: "blob",
+              });
+
+              // Criar URL do blob PDF
+              const pdfBlob = new Blob([response.data], {
+                type: "application/pdf",
+              });
+              const pdfUrl = URL.createObjectURL(pdfBlob);
+
+              // Abrir em nova aba para impressão
+              const printWindow = window.open(pdfUrl);
+              printWindow?.print();
+
+              // Limpar URL do blob após impressão
+              printWindow?.addEventListener("afterprint", () => {
+                URL.revokeObjectURL(pdfUrl);
+                printWindow.close();
+              });
+            } catch (error) {
+              console.error("Erro ao gerar comprovante:", error);
+              toast.error("Erro ao gerar comprovante para impressão");
+            }
+          };
+
           useEffect(() => {
             if (postOrPutPedidoState === "completed") {
-              //limpar store
+              // Pegar o ID do pedido - se for edição usa o ID atual, se for criação pega do Redux
+              const pedidoId = formik.values.id;
+
+              // limpar store
               dispatch(clearPedidoState());
-              router.push("/gerenciar-vendas");
-              toast.success("Pedido salvo com sucesso");
+
+              if (shouldPrint && pedidoId) {
+                // Imprimir antes de navegar
+                handlePrintPedido(pedidoId).finally(() => {
+                  router.push("/gerenciar-vendas");
+                  toast.success(
+                    "Pedido salvo com sucesso e enviado para impressão"
+                  );
+                  setShouldPrint(false);
+                });
+              } else {
+                router.push("/gerenciar-vendas");
+                toast.success("Pedido salvo com sucesso");
+              }
             } else if (postOrPutPedidoState === "error") {
+              setShouldPrint(false);
               toast.error("Erro ao salvar pedido");
             }
-          }, [postOrPutPedidoState, router]);
+          }, [postOrPutPedidoState, router, shouldPrint, formik.values.id]);
           return (
             <>
               <Form className="flex h-screen overflow-hidden">
@@ -1334,30 +1384,67 @@ function Vendas({
                           sx={{
                             mt: 4,
                             display: "flex",
-                            justifyContent: "flex-end",
+                            justifyContent: "space-between",
                             gap: 2,
                           }}
                         >
-                          <Button
-                            variant="outlined"
-                            size="large"
-                            onClick={() => router.push("/gerenciar-vendas")}
-                          >
-                            Voltar
-                          </Button>
-                          <Button
-                            type="submit"
-                            variant="contained"
-                            size="large"
-                            disabled={
-                              !formik.isValid ||
-                              formik.values.itens.length === 0 ||
-                              formik.values.finalizado === true ||
-                              formik.values.quitado === true
-                            }
-                          >
-                            {pedido ? "Atualizar Pedido" : "Criar Pedido"}
-                          </Button>
+                          <Box>
+                            {formik.values.id && (
+                              <Button
+                                variant="outlined"
+                                size="large"
+                                startIcon={<Print />}
+                                onClick={() =>
+                                  handlePrintPedido(formik.values.id || "")
+                                }
+                              >
+                                Reimprimir
+                              </Button>
+                            )}
+                          </Box>
+                          <Box sx={{ display: "flex", gap: 2 }}>
+                            <Button
+                              variant="outlined"
+                              size="large"
+                              onClick={() => router.push("/gerenciar-vendas")}
+                            >
+                              Voltar
+                            </Button>
+                            <Button
+                              type="submit"
+                              variant="contained"
+                              size="large"
+                              disabled={
+                                !formik.isValid ||
+                                formik.values.itens.length === 0 ||
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
+                              onClick={() => setShouldPrint(false)}
+                            >
+                              {pedido ? "Atualizar Pedido" : "Criar Pedido"}
+                            </Button>
+                            <Button
+                              variant="contained"
+                              size="large"
+                              color="secondary"
+                              disabled={
+                                !formik.isValid ||
+                                formik.values.itens.length === 0 ||
+                                formik.values.finalizado === true ||
+                                formik.values.quitado === true
+                              }
+                              startIcon={<Print />}
+                              onClick={() => {
+                                setShouldPrint(true);
+                                formik.handleSubmit();
+                              }}
+                            >
+                              {pedido
+                                ? "Atualizar Pedido e Imprimir"
+                                : "Criar Pedido e Imprimir"}
+                            </Button>
+                          </Box>
                         </Box>
                       </CardContent>
                     </Card>

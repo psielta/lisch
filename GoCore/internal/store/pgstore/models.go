@@ -432,6 +432,11 @@ type Tenant struct {
 	Status          string      `json:"status"`
 	CreatedAt       time.Time   `json:"created_at"`
 	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
+	Photo           []byte      `json:"photo"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Endereco        pgtype.Text `json:"endereco"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
 }
 
 type User struct {

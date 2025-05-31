@@ -2700,8 +2700,34 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
               <Button
                 variant="outlined"
                 startIcon={<Print />}
-                onClick={() => {
-                  toast.info("Funcionalidade de impressão em desenvolvimento");
+                onClick={async () => {
+                  try {
+                    const response = await api.get(
+                      `/pedidos/relatorio/${pedido.id}`,
+                      {
+                        responseType: "blob",
+                      }
+                    );
+
+                    // Criar URL do blob PDF
+                    const pdfBlob = new Blob([response.data], {
+                      type: "application/pdf",
+                    });
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    // Abrir em nova aba para impressão
+                    const printWindow = window.open(pdfUrl);
+                    printWindow?.print();
+
+                    // Limpar URL do blob após impressão
+                    printWindow?.addEventListener("afterprint", () => {
+                      URL.revokeObjectURL(pdfUrl);
+                      printWindow.close();
+                    });
+                  } catch (error) {
+                    console.error("Erro ao gerar comprovante:", error);
+                    toast.error("Erro ao gerar comprovante para impressão");
+                  }
                 }}
               >
                 Imprimir Comprovante

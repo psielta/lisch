@@ -116,6 +116,9 @@ func (api *Api) BindRoutes() {
 
 					// Busca por código
 					r.Get("/codigo/{codigo}", api.handlePedidos_GetByCodigoPedido) // GET /api/v1/pedidos/codigo/{codigo}
+
+					// Rota para relatórios
+					r.Get("/relatorio/{id}", api.handleGetReportPedido) // GET /api/v1/pedidos/relatorio/{id}
 				})
 			})
 

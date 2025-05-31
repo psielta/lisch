@@ -137,19 +137,29 @@ var PedidoPagamentoWhere = struct {
 
 // PedidoPagamentoRels is where relationship names are stored.
 var PedidoPagamentoRels = struct {
-	IDPedidoPedido string
+	IDContaReceberContasReceber string
+	IDPedidoPedido              string
 }{
-	IDPedidoPedido: "IDPedidoPedido",
+	IDContaReceberContasReceber: "IDContaReceberContasReceber",
+	IDPedidoPedido:              "IDPedidoPedido",
 }
 
 // pedidoPagamentoR is where relationships are stored.
 type pedidoPagamentoR struct {
-	IDPedidoPedido *Pedido `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDContaReceberContasReceber *ContasReceber `boil:"IDContaReceberContasReceber" json:"IDContaReceberContasReceber" toml:"IDContaReceberContasReceber" yaml:"IDContaReceberContasReceber"`
+	IDPedidoPedido              *Pedido        `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
 }
 
 // NewStruct creates a new relationship struct
 func (*pedidoPagamentoR) NewStruct() *pedidoPagamentoR {
 	return &pedidoPagamentoR{}
+}
+
+func (r *pedidoPagamentoR) GetIDContaReceberContasReceber() *ContasReceber {
+	if r == nil {
+		return nil
+	}
+	return r.IDContaReceberContasReceber
 }
 
 func (r *pedidoPagamentoR) GetIDPedidoPedido() *Pedido {
@@ -475,6 +485,17 @@ func (q pedidoPagamentoQuery) Exists(ctx context.Context, exec boil.ContextExecu
 	return count > 0, nil
 }
 
+// IDContaReceberContasReceber pointed to by the foreign key.
+func (o *PedidoPagamento) IDContaReceberContasReceber(mods ...qm.QueryMod) contasReceberQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.IDContaReceber),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return ContasRecebers(queryMods...)
+}
+
 // IDPedidoPedido pointed to by the foreign key.
 func (o *PedidoPagamento) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 	queryMods := []qm.QueryMod{
@@ -484,6 +505,130 @@ func (o *PedidoPagamento) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Pedidos(queryMods...)
+}
+
+// LoadIDContaReceberContasReceber allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (pedidoPagamentoL) LoadIDContaReceberContasReceber(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoPagamento interface{}, mods queries.Applicator) error {
+	var slice []*PedidoPagamento
+	var object *PedidoPagamento
+
+	if singular {
+		var ok bool
+		object, ok = maybePedidoPagamento.(*PedidoPagamento)
+		if !ok {
+			object = new(PedidoPagamento)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoPagamento)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoPagamento))
+			}
+		}
+	} else {
+		s, ok := maybePedidoPagamento.(*[]*PedidoPagamento)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoPagamento)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoPagamento))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &pedidoPagamentoR{}
+		}
+		if !queries.IsNil(object.IDContaReceber) {
+			args[object.IDContaReceber] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &pedidoPagamentoR{}
+			}
+
+			if !queries.IsNil(obj.IDContaReceber) {
+				args[obj.IDContaReceber] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`contas_receber`),
+		qm.WhereIn(`contas_receber.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load ContasReceber")
+	}
+
+	var resultSlice []*ContasReceber
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice ContasReceber")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for contas_receber")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for contas_receber")
+	}
+
+	if len(contasReceberAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.IDContaReceberContasReceber = foreign
+		if foreign.R == nil {
+			foreign.R = &contasReceberR{}
+		}
+		foreign.R.IDContaReceberPedidoPagamentos = append(foreign.R.IDContaReceberPedidoPagamentos, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.IDContaReceber, foreign.ID) {
+				local.R.IDContaReceberContasReceber = foreign
+				if foreign.R == nil {
+					foreign.R = &contasReceberR{}
+				}
+				foreign.R.IDContaReceberPedidoPagamentos = append(foreign.R.IDContaReceberPedidoPagamentos, local)
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadIDPedidoPedido allows an eager lookup of values, cached into the
@@ -603,6 +748,86 @@ func (pedidoPagamentoL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextEx
 		}
 	}
 
+	return nil
+}
+
+// SetIDContaReceberContasReceber of the pedidoPagamento to the related item.
+// Sets o.R.IDContaReceberContasReceber to related.
+// Adds o to related.R.IDContaReceberPedidoPagamentos.
+func (o *PedidoPagamento) SetIDContaReceberContasReceber(ctx context.Context, exec boil.ContextExecutor, insert bool, related *ContasReceber) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"pedido_pagamentos\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"id_conta_receber"}),
+		strmangle.WhereClause("\"", "\"", 2, pedidoPagamentoPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.IDContaReceber, related.ID)
+	if o.R == nil {
+		o.R = &pedidoPagamentoR{
+			IDContaReceberContasReceber: related,
+		}
+	} else {
+		o.R.IDContaReceberContasReceber = related
+	}
+
+	if related.R == nil {
+		related.R = &contasReceberR{
+			IDContaReceberPedidoPagamentos: PedidoPagamentoSlice{o},
+		}
+	} else {
+		related.R.IDContaReceberPedidoPagamentos = append(related.R.IDContaReceberPedidoPagamentos, o)
+	}
+
+	return nil
+}
+
+// RemoveIDContaReceberContasReceber relationship.
+// Sets o.R.IDContaReceberContasReceber to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *PedidoPagamento) RemoveIDContaReceberContasReceber(ctx context.Context, exec boil.ContextExecutor, related *ContasReceber) error {
+	var err error
+
+	queries.SetScanner(&o.IDContaReceber, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("id_conta_receber")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.IDContaReceberContasReceber = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.IDContaReceberPedidoPagamentos {
+		if queries.Equal(o.IDContaReceber, ri.IDContaReceber) {
+			continue
+		}
+
+		ln := len(related.R.IDContaReceberPedidoPagamentos)
+		if ln > 1 && i < ln-1 {
+			related.R.IDContaReceberPedidoPagamentos[i] = related.R.IDContaReceberPedidoPagamentos[ln-1]
+		}
+		related.R.IDContaReceberPedidoPagamentos = related.R.IDContaReceberPedidoPagamentos[:ln-1]
+		break
+	}
 	return nil
 }
 

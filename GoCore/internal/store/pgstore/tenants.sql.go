@@ -60,9 +60,9 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const createTenant = `-- name: CreateTenant :one
 
 
-INSERT INTO tenants (name, plan, status, id_cliente_padrao)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, plan, status, created_at, id_cliente_padrao
+INSERT INTO tenants (name, plan, status, id_cliente_padrao, photo, telefone, endereco, bairro, cidade)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
 `
 
 type CreateTenantParams struct {
@@ -70,6 +70,11 @@ type CreateTenantParams struct {
 	Plan            string      `json:"plan"`
 	Status          string      `json:"status"`
 	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
+	Photo           []byte      `json:"photo"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Endereco        pgtype.Text `json:"endereco"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
 }
 
 // SQLC Queries for Multi-Tenant SaaS
@@ -82,6 +87,11 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		arg.Plan,
 		arg.Status,
 		arg.IDClientePadrao,
+		arg.Photo,
+		arg.Telefone,
+		arg.Endereco,
+		arg.Bairro,
+		arg.Cidade,
 	)
 	var i Tenant
 	err := row.Scan(
@@ -91,6 +101,11 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.Status,
 		&i.CreatedAt,
 		&i.IDClientePadrao,
+		&i.Photo,
+		&i.Telefone,
+		&i.Endereco,
+		&i.Bairro,
+		&i.Cidade,
 	)
 	return i, err
 }
@@ -211,7 +226,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (Product, er
 }
 
 const getTenant = `-- name: GetTenant :one
-SELECT id, name, plan, status, created_at, id_cliente_padrao
+SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
 FROM tenants
 WHERE id = $1
 `
@@ -226,6 +241,11 @@ func (q *Queries) GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error) {
 		&i.Status,
 		&i.CreatedAt,
 		&i.IDClientePadrao,
+		&i.Photo,
+		&i.Telefone,
+		&i.Endereco,
+		&i.Bairro,
+		&i.Cidade,
 	)
 	return i, err
 }
@@ -345,7 +365,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 }
 
 const listTenants = `-- name: ListTenants :many
-SELECT id, name, plan, status, created_at, id_cliente_padrao
+SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
 FROM tenants
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -372,6 +392,11 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 			&i.Status,
 			&i.CreatedAt,
 			&i.IDClientePadrao,
+			&i.Photo,
+			&i.Telefone,
+			&i.Endereco,
+			&i.Bairro,
+			&i.Cidade,
 		); err != nil {
 			return nil, err
 		}
@@ -488,9 +513,9 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
-SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5
+SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5, photo = $6, telefone = $7, endereco = $8, bairro = $9, cidade = $10
 WHERE id = $1
-RETURNING id, name, plan, status, created_at, id_cliente_padrao
+RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
 `
 
 type UpdateTenantParams struct {
@@ -499,6 +524,11 @@ type UpdateTenantParams struct {
 	Plan            string      `json:"plan"`
 	Status          string      `json:"status"`
 	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
+	Photo           []byte      `json:"photo"`
+	Telefone        pgtype.Text `json:"telefone"`
+	Endereco        pgtype.Text `json:"endereco"`
+	Bairro          pgtype.Text `json:"bairro"`
+	Cidade          pgtype.Text `json:"cidade"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
@@ -508,6 +538,11 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		arg.Plan,
 		arg.Status,
 		arg.IDClientePadrao,
+		arg.Photo,
+		arg.Telefone,
+		arg.Endereco,
+		arg.Bairro,
+		arg.Cidade,
 	)
 	var i Tenant
 	err := row.Scan(
@@ -517,6 +552,11 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.Status,
 		&i.CreatedAt,
 		&i.IDClientePadrao,
+		&i.Photo,
+		&i.Telefone,
+		&i.Endereco,
+		&i.Bairro,
+		&i.Cidade,
 	)
 	return i, err
 }

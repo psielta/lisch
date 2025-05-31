@@ -159,14 +159,17 @@ var ContasReceberWhere = struct {
 
 // ContasReceberRels is where relationship names are stored.
 var ContasReceberRels = struct {
-	IDPedidoPedido string
+	IDPedidoPedido                 string
+	IDContaReceberPedidoPagamentos string
 }{
-	IDPedidoPedido: "IDPedidoPedido",
+	IDPedidoPedido:                 "IDPedidoPedido",
+	IDContaReceberPedidoPagamentos: "IDContaReceberPedidoPagamentos",
 }
 
 // contasReceberR is where relationships are stored.
 type contasReceberR struct {
-	IDPedidoPedido *Pedido `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDPedidoPedido                 *Pedido              `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDContaReceberPedidoPagamentos PedidoPagamentoSlice `boil:"IDContaReceberPedidoPagamentos" json:"IDContaReceberPedidoPagamentos" toml:"IDContaReceberPedidoPagamentos" yaml:"IDContaReceberPedidoPagamentos"`
 }
 
 // NewStruct creates a new relationship struct
@@ -179,6 +182,13 @@ func (r *contasReceberR) GetIDPedidoPedido() *Pedido {
 		return nil
 	}
 	return r.IDPedidoPedido
+}
+
+func (r *contasReceberR) GetIDContaReceberPedidoPagamentos() PedidoPagamentoSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDContaReceberPedidoPagamentos
 }
 
 // contasReceberL is where Load methods for each relationship are stored.
@@ -508,6 +518,20 @@ func (o *ContasReceber) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 	return Pedidos(queryMods...)
 }
 
+// IDContaReceberPedidoPagamentos retrieves all the pedido_pagamento's PedidoPagamentos with an executor via id_conta_receber column.
+func (o *ContasReceber) IDContaReceberPedidoPagamentos(mods ...qm.QueryMod) pedidoPagamentoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"pedido_pagamentos\".\"id_conta_receber\"=?", o.ID),
+	)
+
+	return PedidoPagamentos(queryMods...)
+}
+
 // LoadIDPedidoPedido allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (contasReceberL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExecutor, singular bool, maybeContasReceber interface{}, mods queries.Applicator) error {
@@ -628,6 +652,119 @@ func (contasReceberL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextExec
 	return nil
 }
 
+// LoadIDContaReceberPedidoPagamentos allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (contasReceberL) LoadIDContaReceberPedidoPagamentos(ctx context.Context, e boil.ContextExecutor, singular bool, maybeContasReceber interface{}, mods queries.Applicator) error {
+	var slice []*ContasReceber
+	var object *ContasReceber
+
+	if singular {
+		var ok bool
+		object, ok = maybeContasReceber.(*ContasReceber)
+		if !ok {
+			object = new(ContasReceber)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeContasReceber)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeContasReceber))
+			}
+		}
+	} else {
+		s, ok := maybeContasReceber.(*[]*ContasReceber)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeContasReceber)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeContasReceber))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &contasReceberR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &contasReceberR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`pedido_pagamentos`),
+		qm.WhereIn(`pedido_pagamentos.id_conta_receber in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load pedido_pagamentos")
+	}
+
+	var resultSlice []*PedidoPagamento
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice pedido_pagamentos")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on pedido_pagamentos")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for pedido_pagamentos")
+	}
+
+	if len(pedidoPagamentoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDContaReceberPedidoPagamentos = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &pedidoPagamentoR{}
+			}
+			foreign.R.IDContaReceberContasReceber = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.IDContaReceber) {
+				local.R.IDContaReceberPedidoPagamentos = append(local.R.IDContaReceberPedidoPagamentos, foreign)
+				if foreign.R == nil {
+					foreign.R = &pedidoPagamentoR{}
+				}
+				foreign.R.IDContaReceberContasReceber = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetIDPedidoPedido of the contasReceber to the related item.
 // Sets o.R.IDPedidoPedido to related.
 // Adds o to related.R.IDPedidoContasRecebers.
@@ -670,6 +807,133 @@ func (o *ContasReceber) SetIDPedidoPedido(ctx context.Context, exec boil.Context
 		}
 	} else {
 		related.R.IDPedidoContasRecebers = append(related.R.IDPedidoContasRecebers, o)
+	}
+
+	return nil
+}
+
+// AddIDContaReceberPedidoPagamentos adds the given related objects to the existing relationships
+// of the contas_receber, optionally inserting them as new records.
+// Appends related to o.R.IDContaReceberPedidoPagamentos.
+// Sets related.R.IDContaReceberContasReceber appropriately.
+func (o *ContasReceber) AddIDContaReceberPedidoPagamentos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoPagamento) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.IDContaReceber, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"pedido_pagamentos\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_conta_receber"}),
+				strmangle.WhereClause("\"", "\"", 2, pedidoPagamentoPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.IDContaReceber, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &contasReceberR{
+			IDContaReceberPedidoPagamentos: related,
+		}
+	} else {
+		o.R.IDContaReceberPedidoPagamentos = append(o.R.IDContaReceberPedidoPagamentos, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &pedidoPagamentoR{
+				IDContaReceberContasReceber: o,
+			}
+		} else {
+			rel.R.IDContaReceberContasReceber = o
+		}
+	}
+	return nil
+}
+
+// SetIDContaReceberPedidoPagamentos removes all previously related items of the
+// contas_receber replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.IDContaReceberContasReceber's IDContaReceberPedidoPagamentos accordingly.
+// Replaces o.R.IDContaReceberPedidoPagamentos with related.
+// Sets related.R.IDContaReceberContasReceber's IDContaReceberPedidoPagamentos accordingly.
+func (o *ContasReceber) SetIDContaReceberPedidoPagamentos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PedidoPagamento) error {
+	query := "update \"pedido_pagamentos\" set \"id_conta_receber\" = null where \"id_conta_receber\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.IDContaReceberPedidoPagamentos {
+			queries.SetScanner(&rel.IDContaReceber, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.IDContaReceberContasReceber = nil
+		}
+		o.R.IDContaReceberPedidoPagamentos = nil
+	}
+
+	return o.AddIDContaReceberPedidoPagamentos(ctx, exec, insert, related...)
+}
+
+// RemoveIDContaReceberPedidoPagamentos relationships from objects passed in.
+// Removes related items from R.IDContaReceberPedidoPagamentos (uses pointer comparison, removal does not keep order)
+// Sets related.R.IDContaReceberContasReceber.
+func (o *ContasReceber) RemoveIDContaReceberPedidoPagamentos(ctx context.Context, exec boil.ContextExecutor, related ...*PedidoPagamento) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.IDContaReceber, nil)
+		if rel.R != nil {
+			rel.R.IDContaReceberContasReceber = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("id_conta_receber")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.IDContaReceberPedidoPagamentos {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.IDContaReceberPedidoPagamentos)
+			if ln > 1 && i < ln-1 {
+				o.R.IDContaReceberPedidoPagamentos[i] = o.R.IDContaReceberPedidoPagamentos[ln-1]
+			}
+			o.R.IDContaReceberPedidoPagamentos = o.R.IDContaReceberPedidoPagamentos[:ln-1]
+			break
+		}
 	}
 
 	return nil

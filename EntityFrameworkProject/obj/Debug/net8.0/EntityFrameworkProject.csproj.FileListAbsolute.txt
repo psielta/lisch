@@ -27,3 +27,4 @@ D:\lisch\EntityFrameworkProject\obj\Debug\net8.0\refint\EntityFrameworkProject.d
 D:\lisch\EntityFrameworkProject\obj\Debug\net8.0\EntityFrameworkProject.pdb
 D:\lisch\EntityFrameworkProject\obj\Debug\net8.0\EntityFrameworkProject.genruntimeconfig.cache
 D:\lisch\EntityFrameworkProject\obj\Debug\net8.0\ref\EntityFrameworkProject.dll
+D:\lisch\EntityFrameworkProject\obj\Debug\net8.0\EntityFrameworkProject.sourcelink.json

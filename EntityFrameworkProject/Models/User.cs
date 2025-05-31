@@ -44,6 +44,18 @@ public partial class User
     [Column("permission_users")]
     public int PermissionUsers { get; set; }
 
+    [Column("permission_categoria")]
+    public int? PermissionCategoria { get; set; }
+
+    [Column("permission_produto")]
+    public int? PermissionProduto { get; set; }
+
+    [Column("permission_adicional")]
+    public int? PermissionAdicional { get; set; }
+
+    [Column("permission_cliente")]
+    public int? PermissionCliente { get; set; }
+
     [InverseProperty("Seller")]
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 

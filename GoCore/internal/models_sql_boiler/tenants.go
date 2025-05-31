@@ -30,6 +30,11 @@ type Tenant struct {
 	Status          string      `boil:"status" json:"status" toml:"status" yaml:"status"`
 	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	IDClientePadrao null.String `boil:"id_cliente_padrao" json:"id_cliente_padrao,omitempty" toml:"id_cliente_padrao" yaml:"id_cliente_padrao,omitempty"`
+	Photo           null.Bytes  `boil:"photo" json:"photo,omitempty" toml:"photo" yaml:"photo,omitempty"`
+	Telefone        null.String `boil:"telefone" json:"telefone,omitempty" toml:"telefone" yaml:"telefone,omitempty"`
+	Endereco        null.String `boil:"endereco" json:"endereco,omitempty" toml:"endereco" yaml:"endereco,omitempty"`
+	Bairro          null.String `boil:"bairro" json:"bairro,omitempty" toml:"bairro" yaml:"bairro,omitempty"`
+	Cidade          null.String `boil:"cidade" json:"cidade,omitempty" toml:"cidade" yaml:"cidade,omitempty"`
 
 	R *tenantR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L tenantL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +47,11 @@ var TenantColumns = struct {
 	Status          string
 	CreatedAt       string
 	IDClientePadrao string
+	Photo           string
+	Telefone        string
+	Endereco        string
+	Bairro          string
+	Cidade          string
 }{
 	ID:              "id",
 	Name:            "name",
@@ -49,6 +59,11 @@ var TenantColumns = struct {
 	Status:          "status",
 	CreatedAt:       "created_at",
 	IDClientePadrao: "id_cliente_padrao",
+	Photo:           "photo",
+	Telefone:        "telefone",
+	Endereco:        "endereco",
+	Bairro:          "bairro",
+	Cidade:          "cidade",
 }
 
 var TenantTableColumns = struct {
@@ -58,6 +73,11 @@ var TenantTableColumns = struct {
 	Status          string
 	CreatedAt       string
 	IDClientePadrao string
+	Photo           string
+	Telefone        string
+	Endereco        string
+	Bairro          string
+	Cidade          string
 }{
 	ID:              "tenants.id",
 	Name:            "tenants.name",
@@ -65,9 +85,38 @@ var TenantTableColumns = struct {
 	Status:          "tenants.status",
 	CreatedAt:       "tenants.created_at",
 	IDClientePadrao: "tenants.id_cliente_padrao",
+	Photo:           "tenants.photo",
+	Telefone:        "tenants.telefone",
+	Endereco:        "tenants.endereco",
+	Bairro:          "tenants.bairro",
+	Cidade:          "tenants.cidade",
 }
 
 // Generated where
+
+type whereHelpernull_Bytes struct{ field string }
+
+func (w whereHelpernull_Bytes) EQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Bytes) NEQ(x null.Bytes) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Bytes) LT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Bytes) LTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Bytes) GT(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Bytes) GTE(x null.Bytes) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Bytes) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var TenantWhere = struct {
 	ID              whereHelperstring
@@ -76,6 +125,11 @@ var TenantWhere = struct {
 	Status          whereHelperstring
 	CreatedAt       whereHelpertime_Time
 	IDClientePadrao whereHelpernull_String
+	Photo           whereHelpernull_Bytes
+	Telefone        whereHelpernull_String
+	Endereco        whereHelpernull_String
+	Bairro          whereHelpernull_String
+	Cidade          whereHelpernull_String
 }{
 	ID:              whereHelperstring{field: "\"tenants\".\"id\""},
 	Name:            whereHelperstring{field: "\"tenants\".\"name\""},
@@ -83,6 +137,11 @@ var TenantWhere = struct {
 	Status:          whereHelperstring{field: "\"tenants\".\"status\""},
 	CreatedAt:       whereHelpertime_Time{field: "\"tenants\".\"created_at\""},
 	IDClientePadrao: whereHelpernull_String{field: "\"tenants\".\"id_cliente_padrao\""},
+	Photo:           whereHelpernull_Bytes{field: "\"tenants\".\"photo\""},
+	Telefone:        whereHelpernull_String{field: "\"tenants\".\"telefone\""},
+	Endereco:        whereHelpernull_String{field: "\"tenants\".\"endereco\""},
+	Bairro:          whereHelpernull_String{field: "\"tenants\".\"bairro\""},
+	Cidade:          whereHelpernull_String{field: "\"tenants\".\"cidade\""},
 }
 
 // TenantRels is where relationship names are stored.
@@ -163,9 +222,9 @@ func (r *tenantR) GetUsers() UserSlice {
 type tenantL struct{}
 
 var (
-	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at", "id_cliente_padrao"}
+	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade"}
 	tenantColumnsWithoutDefault = []string{"name", "plan", "status"}
-	tenantColumnsWithDefault    = []string{"id", "created_at", "id_cliente_padrao"}
+	tenantColumnsWithDefault    = []string{"id", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade"}
 	tenantPrimaryKeyColumns     = []string{"id"}
 	tenantGeneratedColumns      = []string{}
 )

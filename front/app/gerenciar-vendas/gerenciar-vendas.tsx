@@ -29,6 +29,7 @@ import {
   Typography,
   useTheme,
   Autocomplete,
+  ListItemSecondaryAction,
 } from "@mui/material";
 import {
   AccessTime,
@@ -41,6 +42,7 @@ import {
   LocationOn,
   Person,
   Phone,
+  Print,
   Receipt,
   Restaurant,
   Storefront,
@@ -477,6 +479,43 @@ export default function GerenciarVendas({
                   <Edit fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Editar</ListItemText>
+              </MenuItem>
+              <MenuItem
+                onClick={async () => {
+                  handleMenuClose();
+                  try {
+                    const response = await api.get(
+                      `/pedidos/relatorio/${selectedPedidoId}`,
+                      {
+                        responseType: "blob",
+                      }
+                    );
+
+                    // Criar URL do blob PDF
+                    const pdfBlob = new Blob([response.data], {
+                      type: "application/pdf",
+                    });
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    // Abrir em nova aba para impressão
+                    const printWindow = window.open(pdfUrl);
+                    printWindow?.print();
+
+                    // Limpar URL do blob após impressão
+                    printWindow?.addEventListener("afterprint", () => {
+                      URL.revokeObjectURL(pdfUrl);
+                      printWindow.close();
+                    });
+                  } catch (error) {
+                    console.error("Erro ao gerar comprovante:", error);
+                    toast.error("Erro ao gerar comprovante para impressão");
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <Print fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Imprimir</ListItemText>
               </MenuItem>
             </Menu>
 

@@ -52,7 +52,7 @@ public class IniFile
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             // Se estiver em Linux, usa o caminho do Linux
-            iniFilePath = @"/var/www/trx/GoCore/bin/GlobalPostGre.ini";
+            iniFilePath = @"/var/www/lisch/GoCore/bin/GlobalPostGre.ini";
         }
         else
         {

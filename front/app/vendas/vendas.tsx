@@ -547,10 +547,19 @@ function Vendas({
             }
           };
 
+          const pedidoStateFromRedux = useSelector(selectPedidoState);
+
           useEffect(() => {
             if (postOrPutPedidoState === "completed") {
               // Pegar o ID do pedido - se for edição usa o ID atual, se for criação pega do Redux
-              const pedidoId = formik.values.id;
+              let pedidoId = formik.values.id;
+              if (
+                !pedidoId &&
+                pedidoStateFromRedux.pedidos.pedidos.length > 0
+              ) {
+                const pedidos = pedidoStateFromRedux.pedidos.pedidos;
+                pedidoId = pedidos[pedidos.length - 1].id;
+              }
 
               // limpar store
               dispatch(clearPedidoState());

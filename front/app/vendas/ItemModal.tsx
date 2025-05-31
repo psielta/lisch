@@ -1,4 +1,4 @@
-// ItemModal.tsx  –  versão "bonita" ------------------------------------------------
+// ItemModal.tsx – versão completa com suporte a tipo "M" ------------------------------------------------
 import {
   Dialog,
   DialogTitle,
@@ -14,9 +14,11 @@ import {
   Typography,
   Divider,
   Box,
+  FormGroup,
 } from "@mui/material";
 import { X, Plus, Minus } from "lucide-react";
 import { Field, Formik, Form, ErrorMessage } from "formik";
+import * as Yup from "yup";
 
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import {
@@ -24,7 +26,6 @@ import {
   PedidoItemDTO,
 } from "@/rxjs/pedido/pedido.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
-import { buildItemSchema } from "./vendas";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 
 interface Props {
@@ -34,6 +35,70 @@ interface Props {
   adicionais: CategoriaAdicionalResponse[];
   categorias: ICoreCategoria[];
   onSave: (item: PedidoItemDTO) => void;
+}
+
+// Schema melhorado com validação para tipo "M"
+export function buildItemSchemaWithMultiple(
+  adicionais: CategoriaAdicionalResponse[]
+) {
+  const shape: any = {
+    id_categoria_opcao: Yup.string().required("Selecione o preço"),
+    quantidade: Yup.number().min(1),
+    observacao: Yup.string(),
+  };
+
+  adicionais.forEach((add) => {
+    if (add.selecao === "U") {
+      shape[`u_${add.id}`] = Yup.string()
+        .oneOf(add.opcoes!.map((o) => o.id))
+        .required(`Escolha uma opção em ${add.nome}`);
+    }
+
+    if (add.selecao === "M") {
+      // Para tipo múltiplo, validamos um array de IDs selecionados
+      shape[`m_${add.id}`] = Yup.array()
+        .of(Yup.string())
+        .test("min-max", "Fora do intervalo", function (value) {
+          const selectedCount = (value || []).length;
+          if (selectedCount < (add.minimo || 0))
+            return this.createError({
+              message: `Mínimo ${add.minimo} opções em ${add.nome}`,
+            });
+          if (add.limite && selectedCount > add.limite)
+            return this.createError({
+              message: `Máximo ${add.limite} opções em ${add.nome}`,
+            });
+          return true;
+        });
+    }
+
+    if (add.selecao === "Q") {
+      const opShape: any = {};
+      add.opcoes!.forEach((o) => (opShape[o.id] = Yup.number().min(0)));
+
+      shape[`q_${add.id}`] = Yup.object(opShape).test(
+        "min-max",
+        "Fora do intervalo",
+        function (value) {
+          const total = Object.values(value || {}).reduce(
+            (s, n: any) => s + (n as number),
+            0
+          );
+          if (total < (add.minimo || 0))
+            return this.createError({
+              message: `Mínimo ${add.minimo} em ${add.nome}`,
+            });
+          if (add.limite && total > add.limite)
+            return this.createError({
+              message: `Máximo ${add.limite} em ${add.nome}`,
+            });
+          return true;
+        }
+      );
+    }
+  });
+
+  return Yup.object(shape);
 }
 
 export function ItemModal({
@@ -51,13 +116,14 @@ export function ItemModal({
   const relevantes = adicionais.filter(
     (a) => a.id_categoria === produto.id_categoria
   );
-  const schema = buildItemSchema(relevantes);
+  const schema = buildItemSchemaWithMultiple(relevantes);
 
   const initial: any = {
     id_categoria_opcao: modalData.item?.id_categoria_opcao ?? "",
     quantidade: modalData.item?.quantidade ?? 1,
     observacao: modalData.item?.observacao ?? "",
   };
+
   relevantes.forEach((a) => {
     if (a.selecao === "U") {
       const sel = modalData.item?.adicionais?.find((ad) =>
@@ -65,6 +131,18 @@ export function ItemModal({
       );
       initial[`u_${a.id}`] = sel?.id_adicional_opcao ?? "";
     }
+
+    if (a.selecao === "M") {
+      // Para tipo múltiplo, coletamos todos os IDs selecionados
+      const selectedIds =
+        modalData.item?.adicionais
+          ?.filter((ad) =>
+            a.opcoes?.some((o) => o.id === ad.id_adicional_opcao)
+          )
+          ?.map((ad) => ad.id_adicional_opcao) ?? [];
+      initial[`m_${a.id}`] = selectedIds;
+    }
+
     if (a.selecao === "Q") {
       const obj: any = {};
       a.opcoes!.forEach((o) => {
@@ -77,12 +155,15 @@ export function ItemModal({
     }
   });
 
-  /* ---------------- helpers p/ Q ---------------- */
+  /* ---------------- helpers p/ Q e M ---------------- */
   const sumQ = (vals: any, a: CategoriaAdicionalResponse) =>
     Object.values(vals[`q_${a.id}`] || {}).reduce(
       (s: number, n: any) => s + (n as number),
       0
     );
+
+  const countM = (vals: any, a: CategoriaAdicionalResponse) =>
+    (vals[`m_${a.id}`] || []).length;
 
   /* ---------------- calcula total ---------------- */
   const calculateModalTotal = (values: any) => {
@@ -105,6 +186,17 @@ export function ItemModal({
           total += parseFloat(opcao.valor);
         }
       }
+
+      if (a.selecao === "M") {
+        const selectedIds = values[`m_${a.id}`] || [];
+        selectedIds.forEach((id: string) => {
+          const opcao = a.opcoes!.find((o) => o.id === id);
+          if (opcao) {
+            total += parseFloat(opcao.valor);
+          }
+        });
+      }
+
       if (a.selecao === "Q") {
         Object.entries(values[`q_${a.id}`] || {}).forEach(([id, qt]: any) => {
           if (qt > 0) {
@@ -143,6 +235,19 @@ export function ItemModal({
                 });
               }
             }
+
+            if (a.selecao === "M") {
+              const selectedIds = vals[`m_${a.id}`] || [];
+              selectedIds.forEach((id: string) => {
+                const opc = a.opcoes!.find((o) => o.id === id)!;
+                adArr.push({
+                  id_adicional_opcao: id,
+                  valor: opc.valor,
+                  quantidade: 1,
+                });
+              });
+            }
+
             if (a.selecao === "Q") {
               Object.entries(vals[`q_${a.id}`]).forEach(([id, qt]: any) => {
                 if (qt > 0) {
@@ -288,6 +393,85 @@ export function ItemModal({
                   );
                 }
 
+                if (a.selecao === "M") {
+                  const selectedIds = values[`m_${a.id}`] || [];
+                  const selectedCount = selectedIds.length;
+                  const hasLimit = a.limite && a.limite > 0;
+                  const isRequired = a.minimo && a.minimo > 0;
+
+                  return (
+                    <div key={a.id} className="space-y-2">
+                      <Typography variant="subtitle1">
+                        {a.nome}
+                        {isRequired ? (
+                          <span className="text-red-500 ml-1">
+                            * (MIN {a.minimo})
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 ml-1">Opcional</span>
+                        )}
+                        {hasLimit && (
+                          <span className="text-gray-500 ml-1">
+                            (MÁX {a.limite})
+                          </span>
+                        )}
+                      </Typography>
+
+                      <FormGroup>
+                        {a.opcoes!.map((o) => {
+                          const isChecked = selectedIds.includes(o.id);
+                          const canSelect =
+                            !hasLimit || selectedCount < a.limite! || isChecked;
+
+                          return (
+                            <FormControlLabel
+                              key={o.id}
+                              control={
+                                <Checkbox
+                                  checked={isChecked}
+                                  disabled={!canSelect}
+                                  onChange={(e) => {
+                                    const currentIds =
+                                      values[`m_${a.id}`] || [];
+                                    let newIds;
+
+                                    if (e.target.checked) {
+                                      newIds = [...currentIds, o.id];
+                                    } else {
+                                      newIds = currentIds.filter(
+                                        (id: string) => id !== o.id
+                                      );
+                                    }
+
+                                    setFieldValue(`m_${a.id}`, newIds);
+                                  }}
+                                />
+                              }
+                              sx={{ mb: 0.5 }}
+                              label={
+                                <div className="flex justify-between w-full">
+                                  <span>{o.nome}</span>
+                                  <span className="text-sm ml-3 flex items-center font-medium text-slate-600 dark:text-slate-300">
+                                    {Number(o.valor).toLocaleString("pt-BR", {
+                                      style: "currency",
+                                      currency: "BRL",
+                                    })}
+                                  </span>
+                                </div>
+                              }
+                            />
+                          );
+                        })}
+                      </FormGroup>
+                      {errors[`m_${a.id}`] && (
+                        <Typography variant="caption" color="error">
+                          {errors[`m_${a.id}`] as string}
+                        </Typography>
+                      )}
+                    </div>
+                  );
+                }
+
                 if (a.selecao === "Q") {
                   const total = sumQ(values, a);
                   return (
@@ -375,7 +559,6 @@ export function ItemModal({
                   );
                 }
 
-                /* --------- tipo "M" (checkbox) – fica igual ao seu ---------- */
                 return null;
               })}
 

@@ -20,15 +20,16 @@ import (
 )
 
 type Api struct {
-	Router          *chi.Mux
-	Logger          *zap.Logger
-	UserService     services.UserService
-	ClienteService  services.ClienteService
-	Sessions        *scs.SessionManager
-	JWTSecret       []byte
-	tenantCache     sync.Map
-	userCache       sync.Map // <-- novo
-	cacheExpiration time.Duration
+	Router           *chi.Mux
+	Logger           *zap.Logger
+	UserService      services.UserService
+	ClienteService   services.ClienteService
+	DashboardService services.DashboardService
+	Sessions         *scs.SessionManager
+	JWTSecret        []byte
+	tenantCache      sync.Map
+	userCache        sync.Map // <-- novo
+	cacheExpiration  time.Duration
 	// S3Service               services.S3Service
 	// ProdutoImagemService    services.ProdutoImagemService
 	Validate    *validator.Validate
@@ -50,21 +51,23 @@ func NewApi(router *chi.Mux,
 	logger *zap.Logger,
 	userService services.UserService,
 	clienteService services.ClienteService,
+	dashboardService services.DashboardService,
 	sessions *scs.SessionManager, jwtSecret []byte,
 	validate *validator.Validate,
 	pool *pgxpool.Pool,
 	sqlBoilerDB *database.SQLBoilerDB) *Api {
 	return &Api{
-		Router:          router,
-		Logger:          logger,
-		UserService:     userService,
-		ClienteService:  clienteService,
-		Sessions:        sessions,
-		JWTSecret:       jwtSecret,
-		cacheExpiration: 15 * time.Minute, // Cache expira em 15 minutos
-		Validate:        validate,
-		DBPool:          pool,
-		SQLBoilerDB:     sqlBoilerDB,
+		Router:           router,
+		Logger:           logger,
+		UserService:      userService,
+		ClienteService:   clienteService,
+		DashboardService: dashboardService,
+		Sessions:         sessions,
+		JWTSecret:        jwtSecret,
+		cacheExpiration:  15 * time.Minute, // Cache expira em 15 minutos
+		Validate:         validate,
+		DBPool:           pool,
+		SQLBoilerDB:      sqlBoilerDB,
 	}
 }
 

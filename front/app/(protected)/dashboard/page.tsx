@@ -3,118 +3,167 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
-import {
-  Box,
-  Stack,
-  Divider,
-  Paper,
-  Typography,
-  Container,
-} from "@mui/material";
+import { Box, Stack, Paper, Typography, Container, Grid } from "@mui/material";
 import { LocationOn, Phone, CalendarToday } from "@mui/icons-material";
+import SalesCard from "./SalesCard";
 
 export default function Dashboard() {
   const { user, tenant } = useAuth();
-  if (!user) redirect("/login");
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString("pt-BR");
+    } catch {
+      return "N/A";
+    }
+  };
 
   return (
     <Suspense fallback={<p>Carregando…</p>}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 2 }}>
+        {/* Header Compacto */}
         <Paper
           elevation={2}
           sx={{
-            p: { xs: 2, sm: 4, md: 6 },
+            p: 2,
             borderRadius: 2,
+            mb: 3,
           }}
         >
-          <Stack spacing={4}>
-            {/* Header com Logo */}
-            <Box sx={{ textAlign: "center", mb: 4 }}>
-              {tenant?.photo && (
-                <Box
-                  sx={{
-                    mb: 3,
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
+          <Grid container spacing={2} alignItems="center">
+            {/* Logo e Nome */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {tenant?.photo && (
                   <img
                     src={`data:image/jpeg;base64,${tenant.photo}`}
                     alt={tenant?.name || "Logo da empresa"}
                     style={{
-                      maxWidth: "250px",
-                      height: "auto",
+                      width: "60px",
+                      height: "60px",
                       borderRadius: "8px",
+                      objectFit: "cover",
                     }}
                   />
-                </Box>
-              )}
-              <Typography
-                variant="h3"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1,
-                }}
-              >
-                {tenant?.name || "Nome da Empresa"}
-              </Typography>
-              {/* {tenant?.plan && (
-                <Typography
-                  variant="h6"
-                  color="text.secondary"
-                  sx={{
-                    fontWeight: 500,
-                  }}
-                >
-                  Plano: {tenant.plan}
-                </Typography>
-              )} */}
-            </Box>
-
-            <Divider />
-
-            {/* Informações de Contato */}
-            <Box>
-              <Typography
-                variant="h5"
-                sx={{
-                  mb: 3,
-                  fontWeight: 600,
-                }}
-              >
-                Informações de Contato
-              </Typography>
-
-              <Stack spacing={2}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Phone sx={{ mr: 2, color: "primary.main" }} />
-                  <Typography>
-                    {tenant?.telefone || "Telefone não cadastrado"}
+                )}
+                <Box>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {tenant?.name || "Nome da Empresa"}
                   </Typography>
                 </Box>
+              </Box>
+            </Grid>
 
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <LocationOn sx={{ mr: 2, color: "primary.main" }} />
-                  <Typography>
-                    {tenant?.endereco && `${tenant.endereco}, `}
-                    {tenant?.bairro && `${tenant.bairro}, `}
-                    {tenant?.cidade || "Endereço não cadastrado"}
-                  </Typography>
-                </Box>
+            {/* Informações de Contato Compactas */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Grid container spacing={1}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Phone sx={{ fontSize: 18, color: "primary.main" }} />
+                    <Typography variant="body2" noWrap>
+                      {tenant?.telefone || "Não cadastrado"}
+                    </Typography>
+                  </Box>
+                </Grid>
 
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CalendarToday sx={{ mr: 2, color: "primary.main" }} />
-                  <Typography>
-                    Cliente desde:{" "}
-                    {tenant?.created_at
-                      ? new Date(tenant.created_at).toLocaleDateString()
-                      : "Data não disponível"}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
-          </Stack>
+                <Grid size={{ xs: 12, sm: 5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LocationOn sx={{ fontSize: 18, color: "primary.main" }} />
+                    <Typography variant="body2" noWrap>
+                      {tenant?.cidade || "Endereço não cadastrado"}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CalendarToday
+                      sx={{ fontSize: 18, color: "primary.main" }}
+                    />
+                    <Typography variant="body2" noWrap>
+                      {formatDate(tenant?.created_at || "")}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
         </Paper>
+
+        {/* Área de Gráficos e Cards */}
+        <Grid container spacing={3}>
+          {/* Card de Vendas */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <SalesCard />
+          </Grid>
+
+          {/* Outros Cards - Você pode adicionar mais cards aqui */}
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                Próximo Card
+              </Typography>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                Próximo Card
+              </Typography>
+            </Paper>
+          </Grid>
+
+          {/* Área para Gráficos Maiores */}
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                minHeight: "400px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                Área para Gráficos
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
       </Container>
     </Suspense>
   );

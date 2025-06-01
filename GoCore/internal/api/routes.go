@@ -43,6 +43,11 @@ func (api *Api) BindRoutes() {
 				})
 			})
 
+			r.Route("/dashboard", func(r chi.Router) {
+				r.Get("/get-total-bruto-and-total-pago", api.handleDashboard_GetTotalBrutoAndTotalPago)
+				r.Get("/get-total-bruto-and-total-pago-detailed", api.handleDashboard_GetTotalBrutoAndTotalPagoDetailed)
+			})
+
 			r.Route("/categorias", func(r chi.Router) {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)

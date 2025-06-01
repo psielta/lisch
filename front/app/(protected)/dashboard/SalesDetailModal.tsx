@@ -22,10 +22,11 @@ import {
   GridValueFormatter,
   GridValueGetter,
 } from "@mui/x-data-grid";
-import { Close } from "@mui/icons-material";
+import { Close, Edit } from "@mui/icons-material";
 import { SalesDataDetailed, FilterPeriod, FilterOption } from "@/types/sales";
 import { getTotalBrutoAndTotalPagoDetailed } from "@/proxies/dashboard/get-total-bruto-and-total-pago-detailed";
 import { Badge } from "@/components/catalyst-ui-kit/badge";
+import { useRouter } from "next/navigation";
 
 const filterOptions: FilterOption[] = [
   { value: "today", label: "Hoje" },
@@ -113,6 +114,7 @@ export default function SalesDetailModal({
   initialPeriod,
   periodLabel,
 }: SalesDetailModalProps) {
+  const router = useRouter();
   const [period, setPeriod] = useState<FilterPeriod>(initialPeriod);
   const [detailedData, setDetailedData] = useState<SalesDataDetailed[]>([]);
   const [filteredData, setFilteredData] = useState<SalesDataDetailed[]>([]);
@@ -151,6 +153,24 @@ export default function SalesDetailModal({
 
   // Colunas da DataGrid
   const columns: GridColDef[] = [
+    {
+      field: "id",
+      headerName: "Ações",
+      width: 70,
+      renderCell: (params) => {
+        return (
+          <IconButton
+            onClick={() => {
+              router.push(`/gerenciar-vendas/${params.value}`);
+            }}
+            title="Editar"
+            size="small"
+          >
+            <Edit />
+          </IconButton>
+        );
+      },
+    },
     {
       field: "codigo_pedido",
       headerName: "Código",
@@ -335,12 +355,12 @@ export default function SalesDetailModal({
           height: {
             xs: "100vh",
             md: "100vh",
-            xl: "80vh",
+            xl: "85vh",
           },
           minWidth: {
             xs: "100%",
             md: "100%",
-            xl: "80vw",
+            xl: "85vw",
           },
         },
       }}

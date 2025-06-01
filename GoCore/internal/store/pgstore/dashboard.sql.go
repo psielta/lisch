@@ -13,6 +13,113 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getAniversariantes = `-- name: GetAniversariantes :many
+WITH ref AS (
+  SELECT
+      CURRENT_DATE                           AS hoje,
+      EXTRACT(DOY FROM CURRENT_DATE)::int    AS doy_hoje,
+      366                                    AS ano_len  -- 2025 é bissexto
+)
+SELECT
+    c.id,
+    c.nome_razao_social     AS cliente,
+    c.data_nascimento,
+    -- próximo aniversário no ano corrente (para ordenação)
+    make_date(EXTRACT(year FROM ref.hoje)::int,
+              EXTRACT(month FROM c.data_nascimento)::int,
+              LEAST(EXTRACT(day   FROM c.data_nascimento)::int, 28)  -- evita 29/02 em ano não-bissexto
+             )                   AS proximo_aniversario
+FROM public.clientes c, ref
+WHERE c.data_nascimento IS NOT NULL
+  /* Diferença absoluta entre os 'dia-do-ano' (com volta de 31/12 → 01/01) */
+  AND LEAST(
+        abs(EXTRACT(DOY FROM c.data_nascimento)::int - ref.doy_hoje),
+        ref.ano_len - abs(EXTRACT(DOY FROM c.data_nascimento)::int - ref.doy_hoje)
+      ) <= 7
+  AND c.tenant_id = $1
+ORDER BY proximo_aniversario
+`
+
+type GetAniversariantesRow struct {
+	ID                 uuid.UUID   `json:"id"`
+	Cliente            string      `json:"cliente"`
+	DataNascimento     pgtype.Date `json:"data_nascimento"`
+	ProximoAniversario pgtype.Date `json:"proximo_aniversario"`
+}
+
+// Clientes cujo aniversário cai até 7 dias antes/depois de hoje
+func (q *Queries) GetAniversariantes(ctx context.Context, tenantID uuid.UUID) ([]GetAniversariantesRow, error) {
+	rows, err := q.db.Query(ctx, getAniversariantes, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAniversariantesRow
+	for rows.Next() {
+		var i GetAniversariantesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Cliente,
+			&i.DataNascimento,
+			&i.ProximoAniversario,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getClientesMaisFaturados30Dias = `-- name: GetClientesMaisFaturados30Dias :many
+SELECT
+    c.id                               AS id_cliente,
+    c.nome_razao_social                AS cliente,
+    SUM(   p.valor_total              
+         + COALESCE(p.taxa_entrega,0) 
+         + COALESCE(p.acrescimo,0)    
+         - COALESCE(p.desconto,0)     
+       )::numeric(12,2)                         AS valor_liquido
+FROM  public.pedidos   p              
+JOIN  public.clientes  c ON c.id = p.id_cliente   
+WHERE p.deleted_at IS NULL                        
+  AND (p.data_pedido AT TIME ZONE 'America/Sao_Paulo') 
+        >= CURRENT_DATE - INTERVAL '29 days'           
+  AND p.tenant_id = $1
+GROUP BY c.id, c.nome_razao_social
+ORDER BY valor_liquido DESC
+LIMIT 100
+`
+
+type GetClientesMaisFaturados30DiasRow struct {
+	IDCliente    uuid.UUID      `json:"id_cliente"`
+	Cliente      string         `json:"cliente"`
+	ValorLiquido pgtype.Numeric `json:"valor_liquido"`
+}
+
+// Clientes mais faturados nos últimos 30 dias
+func (q *Queries) GetClientesMaisFaturados30Dias(ctx context.Context, tenantID uuid.UUID) ([]GetClientesMaisFaturados30DiasRow, error) {
+	rows, err := q.db.Query(ctx, getClientesMaisFaturados30Dias, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetClientesMaisFaturados30DiasRow
+	for rows.Next() {
+		var i GetClientesMaisFaturados30DiasRow
+		if err := rows.Scan(&i.IDCliente, &i.Cliente, &i.ValorLiquido); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPagamentosDetalhadosUlt3Meses = `-- name: GetPagamentosDetalhadosUlt3Meses :many
 /*
   Lista cada pagamento individual dos últimos 3 meses.
@@ -134,10 +241,149 @@ func (q *Queries) GetPagamentosPorDiaECategoria(ctx context.Context, tenantID uu
 	return items, nil
 }
 
+const getTicketMedio30Dias = `-- name: GetTicketMedio30Dias :many
+WITH pedidos_30d AS (
+    SELECT
+        id,
+        (valor_total
+      + COALESCE(taxa_entrega, 0)
+      + COALESCE(acrescimo,    0)
+      - COALESCE(desconto,     0))::numeric(12,2)     AS valor_liquido
+    FROM  public.pedidos
+    WHERE deleted_at IS NULL
+      AND (data_pedido AT TIME ZONE 'America/Sao_Paulo')::date
+            >= CURRENT_DATE - INTERVAL '29 days'
+  AND tenant_id = $1
+)
+
+SELECT
+    ROUND(AVG(valor_liquido), 2) AS ticket_medio_30d,
+    COUNT(*)                     AS qtde_pedidos_30d
+FROM pedidos_30d
+`
+
+type GetTicketMedio30DiasRow struct {
+	TicketMedio30d pgtype.Numeric `json:"ticket_medio_30d"`
+	QtdePedidos30d int64          `json:"qtde_pedidos_30d"`
+}
+
+// Ticket médio da loja – últimos 30 dias
+func (q *Queries) GetTicketMedio30Dias(ctx context.Context, tenantID uuid.UUID) ([]GetTicketMedio30DiasRow, error) {
+	rows, err := q.db.Query(ctx, getTicketMedio30Dias, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTicketMedio30DiasRow
+	for rows.Next() {
+		var i GetTicketMedio30DiasRow
+		if err := rows.Scan(&i.TicketMedio30d, &i.QtdePedidos30d); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTop100ProdutosMaisVendidos30Dias = `-- name: GetTop100ProdutosMaisVendidos30Dias :many
+WITH add_por_unidade AS (
+    SELECT id_pedido_item,
+           SUM(valor * quantidade) AS add_unidade
+    FROM   public.pedido_item_adicionais          -- lista de adicionais do item :contentReference[oaicite:0]{index=0}
+    WHERE  deleted_at IS NULL
+    GROUP  BY id_pedido_item
+),
+
+itens AS (
+    /* produto da coluna id_produto */
+    SELECT  pi.id,
+            pi.id_pedido,
+            pi.id_produto                          AS id_produto,
+            pi.valor_unitario,
+            pi.quantidade
+    FROM    public.pedido_itens pi                 -- itens do pedido :contentReference[oaicite:1]{index=1}
+    WHERE   pi.deleted_at IS NULL
+
+    UNION ALL
+
+    /* quando o item tem um segundo produto (ex.: pizza meio-a-meio) */
+    SELECT  pi.id,
+            pi.id_pedido,
+            pi.id_produto_2                        AS id_produto,
+            pi.valor_unitario,                     -- mesmo preço unitário
+            pi.quantidade
+    FROM    public.pedido_itens pi
+    WHERE   pi.deleted_at IS NULL
+      AND   pi.id_produto_2 IS NOT NULL
+)
+
+SELECT
+    pr.id                           AS id_produto,
+    pr.nome                         AS produto,
+    SUM( (it.valor_unitario
+          + COALESCE(a.add_unidade,0))            -- preço unitário + adicionais
+         * it.quantidade )::numeric(12,2)        AS valor_liquido,
+    SUM(it.quantidade)::numeric(12,2)               AS unidades
+FROM        itens it
+LEFT  JOIN  add_por_unidade a ON a.id_pedido_item = it.id
+JOIN        public.pedidos   p ON p.id = it.id_pedido
+                               AND p.deleted_at IS NULL
+JOIN        public.produtos  pr ON pr.id = it.id_produto          -- catálogo de produtos :contentReference[oaicite:2]{index=2}
+WHERE (p.data_pedido AT TIME ZONE 'America/Sao_Paulo')::date
+        >= CURRENT_DATE - INTERVAL '29 days'       -- 30 dias corridos
+  AND p.tenant_id = $1
+GROUP BY pr.id, pr.nome
+ORDER BY valor_liquido DESC
+LIMIT 100
+`
+
+type GetTop100ProdutosMaisVendidos30DiasRow struct {
+	IDProduto    uuid.UUID      `json:"id_produto"`
+	Produto      string         `json:"produto"`
+	ValorLiquido pgtype.Numeric `json:"valor_liquido"`
+	Unidades     pgtype.Numeric `json:"unidades"`
+}
+
+// Top 100 produtos mais vendidos (últimos 30 dias)
+// ---------- Adicionais “por unidade” do item ----------
+// ---------- Itens, considerando ½-½ (id_produto_2) ----------
+// ---------- Top 100 ----------
+func (q *Queries) GetTop100ProdutosMaisVendidos30Dias(ctx context.Context, tenantID uuid.UUID) ([]GetTop100ProdutosMaisVendidos30DiasRow, error) {
+	rows, err := q.db.Query(ctx, getTop100ProdutosMaisVendidos30Dias, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTop100ProdutosMaisVendidos30DiasRow
+	for rows.Next() {
+		var i GetTop100ProdutosMaisVendidos30DiasRow
+		if err := rows.Scan(
+			&i.IDProduto,
+			&i.Produto,
+			&i.ValorLiquido,
+			&i.Unidades,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTotalBrutoAndTotalPago = `-- name: GetTotalBrutoAndTotalPago :many
 SELECT
     (data_pedido AT TIME ZONE 'America/Sao_Paulo')::date          AS dia,
     SUM(valor_total + COALESCE(taxa_entrega, 0) - COALESCE(desconto, 0) + COALESCE(acrescimo, 0))::numeric(12,2)        AS total_bruto,
+    SUM(COALESCE(desconto, 0))::numeric(12,2) as total_desconto,
+    SUM(COALESCE(acrescimo, 0))::numeric(12,2) as total_acrescimo,
+    SUM(COALESCE(taxa_entrega, 0))::numeric(12,2) as total_taxa_entrega,
+    SUM(COALESCE(valor_total, 0))::numeric(12,2) AS total_valor_total,
     SUM(COALESCE(valor_pago, 0))::numeric(12,2)                                               AS total_pago
 FROM  public.pedidos
 WHERE deleted_at IS NULL
@@ -149,9 +395,13 @@ ORDER BY dia
 `
 
 type GetTotalBrutoAndTotalPagoRow struct {
-	Dia        pgtype.Date    `json:"dia"`
-	TotalBruto pgtype.Numeric `json:"total_bruto"`
-	TotalPago  pgtype.Numeric `json:"total_pago"`
+	Dia              pgtype.Date    `json:"dia"`
+	TotalBruto       pgtype.Numeric `json:"total_bruto"`
+	TotalDesconto    pgtype.Numeric `json:"total_desconto"`
+	TotalAcrescimo   pgtype.Numeric `json:"total_acrescimo"`
+	TotalTaxaEntrega pgtype.Numeric `json:"total_taxa_entrega"`
+	TotalValorTotal  pgtype.Numeric `json:"total_valor_total"`
+	TotalPago        pgtype.Numeric `json:"total_pago"`
 }
 
 func (q *Queries) GetTotalBrutoAndTotalPago(ctx context.Context, tenantID uuid.UUID) ([]GetTotalBrutoAndTotalPagoRow, error) {
@@ -163,7 +413,15 @@ func (q *Queries) GetTotalBrutoAndTotalPago(ctx context.Context, tenantID uuid.U
 	var items []GetTotalBrutoAndTotalPagoRow
 	for rows.Next() {
 		var i GetTotalBrutoAndTotalPagoRow
-		if err := rows.Scan(&i.Dia, &i.TotalBruto, &i.TotalPago); err != nil {
+		if err := rows.Scan(
+			&i.Dia,
+			&i.TotalBruto,
+			&i.TotalDesconto,
+			&i.TotalAcrescimo,
+			&i.TotalTaxaEntrega,
+			&i.TotalValorTotal,
+			&i.TotalPago,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

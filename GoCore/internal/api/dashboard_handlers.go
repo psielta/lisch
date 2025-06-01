@@ -95,3 +95,91 @@ func (api *Api) handleDashboard_GetPagamentosResumoUlt3Meses(w http.ResponseWrit
 
 	jsonutils.EncodeJson(w, r, http.StatusOK, payments)
 }
+
+func (api *Api) handleDashboard_GetClientesMaisFaturados30Dias(w http.ResponseWriter, r *http.Request) {
+	// Obter tenant_id do contexto da sessão
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	clientes, err := api.DashboardService.GetClientesMaisFaturados30Dias(r.Context(), tenantID)
+	if err != nil {
+		api.Logger.Error("erro ao buscar clientes mais faturados", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, clientes)
+}
+
+func (api *Api) handleDashboard_GetAniversariantes(w http.ResponseWriter, r *http.Request) {
+	// Obter tenant_id do contexto da sessão
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	aniversariantes, err := api.DashboardService.GetAniversariantes(r.Context(), tenantID)
+	if err != nil {
+		api.Logger.Error("erro ao buscar aniversariantes", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, aniversariantes)
+}
+
+func (api *Api) handleDashboard_GetProdutosMaisVendidos30Dias(w http.ResponseWriter, r *http.Request) {
+	// Obter tenant_id do contexto da sessão
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	produtos, err := api.DashboardService.GetTop100ProdutosMaisVendidos30Dias(r.Context(), tenantID)
+	if err != nil {
+		api.Logger.Error("erro ao buscar produtos mais vendidos", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, produtos)
+}
+
+func (api *Api) handleDashboard_GetTicketMedio30Dias(w http.ResponseWriter, r *http.Request) {
+	// Obter tenant_id do contexto da sessão
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	ticketMedio, err := api.DashboardService.GetTicketMedio30Dias(r.Context(), tenantID)
+	if err != nil {
+		api.Logger.Error("erro ao buscar ticket médio", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, ticketMedio)
+}

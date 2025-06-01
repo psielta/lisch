@@ -3,6 +3,10 @@ export interface SalesDataSummary {
   dia: string;
   total_bruto: string | number;
   total_pago: string | number;
+  total_desconto: string | number;
+  total_acrescimo: string | number;
+  total_taxa_entrega: string | number;
+  total_valor_total: string | number;
 }
 
 export interface SalesDataDetailed {
@@ -51,4 +55,8 @@ export interface FilterOption {
 export interface SalesTotals {
   totalBruto: number;
   totalPago: number;
+  totalDesconto: number;
+  totalAcrescimo: number;
+  totalTaxaEntrega: number;
+  totalValorTotal: number;
 }

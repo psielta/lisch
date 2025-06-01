@@ -48,6 +48,10 @@ func (api *Api) BindRoutes() {
 				r.Get("/get-total-bruto-and-total-pago-detailed", api.handleDashboard_GetTotalBrutoAndTotalPagoDetailed)
 				r.Get("/get-pagamentos-por-dia-e-categoria", api.handleDashboard_GetPagamentosPorDiaECategoria)
 				r.Get("/get-pagamentos-resumo-ult-3-meses", api.handleDashboard_GetPagamentosResumoUlt3Meses)
+				r.Get("/get-clientes-mais-faturados-30-dias", api.handleDashboard_GetClientesMaisFaturados30Dias)
+				r.Get("/get-aniversariantes", api.handleDashboard_GetAniversariantes)
+				r.Get("/get-produtos-mais-vendidos-30-dias", api.handleDashboard_GetProdutosMaisVendidos30Dias)
+				r.Get("/get-ticket-medio-30-dias", api.handleDashboard_GetTicketMedio30Dias)
 			})
 
 			r.Route("/categorias", func(r chi.Router) {

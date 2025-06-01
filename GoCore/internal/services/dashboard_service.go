@@ -77,3 +77,67 @@ func (ds *DashboardService) GetPagamentosDetalhadosUlt3Meses(
 	}
 	return dto.PaymentDetalhadoRowsToDTO(rows), nil
 }
+
+// -----------------------------------------------------------------------------
+// Clientes mais faturados – últimos 30 dias
+// -----------------------------------------------------------------------------
+
+// GetClientesMaisFaturados30Dias retorna os 100 clientes que mais faturaram nos últimos 30 dias
+func (ds *DashboardService) GetClientesMaisFaturados30Dias(
+	ctx context.Context, tenantID uuid.UUID,
+) ([]dto.DashboardClienteMaisFaturadoRow, error) {
+
+	rows, err := ds.queries.GetClientesMaisFaturados30Dias(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.ClienteMaisFaturadoRowsToDTO(rows), nil
+}
+
+// -----------------------------------------------------------------------------
+// Aniversariantes da semana
+// -----------------------------------------------------------------------------
+
+// GetAniversariantes retorna os clientes que fazem aniversário em +/- 7 dias
+func (ds *DashboardService) GetAniversariantes(
+	ctx context.Context, tenantID uuid.UUID,
+) ([]dto.DashboardAniversarianteRow, error) {
+
+	rows, err := ds.queries.GetAniversariantes(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.AniversarianteRowsToDTO(rows), nil
+}
+
+// -----------------------------------------------------------------------------
+// Produtos mais vendidos – últimos 30 dias
+// -----------------------------------------------------------------------------
+
+// GetTop100ProdutosMaisVendidos30Dias retorna os 100 produtos mais vendidos nos últimos 30 dias
+func (ds *DashboardService) GetTop100ProdutosMaisVendidos30Dias(
+	ctx context.Context, tenantID uuid.UUID,
+) ([]dto.DashboardProdutoMaisVendidoRow, error) {
+
+	rows, err := ds.queries.GetTop100ProdutosMaisVendidos30Dias(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.ProdutoMaisVendidoRowsToDTO(rows), nil
+}
+
+// -----------------------------------------------------------------------------
+// Ticket médio – últimos 30 dias
+// -----------------------------------------------------------------------------
+
+// GetTicketMedio30Dias retorna o ticket médio dos últimos 30 dias
+func (ds *DashboardService) GetTicketMedio30Dias(
+	ctx context.Context, tenantID uuid.UUID,
+) ([]dto.DashboardTicketMedioRow, error) {
+
+	rows, err := ds.queries.GetTicketMedio30Dias(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.TicketMedioRowsToDTO(rows), nil
+}

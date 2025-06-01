@@ -431,8 +431,23 @@ export default function SalesDetailModal({
             <Typography variant="subtitle2" color="text.secondary">
               Subtotal
             </Typography>
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "text.primary" }}
+            >
               {formatCurrency(totals.valorTotal)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Desconto
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "error.main" }}
+            >
+              {formatCurrency(totals.desconto)}
             </Typography>
           </Box>
 
@@ -440,7 +455,10 @@ export default function SalesDetailModal({
             <Typography variant="subtitle2" color="text.secondary">
               Acréscimo
             </Typography>
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "info.main" }}
+            >
               {formatCurrency(totals.acrescimo)}
             </Typography>
           </Box>
@@ -449,17 +467,11 @@ export default function SalesDetailModal({
             <Typography variant="subtitle2" color="text.secondary">
               Taxa Entrega
             </Typography>
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "warning.main" }}
+            >
               {formatCurrency(totals.taxaEntrega)}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              Desconto
-            </Typography>
-            <Typography variant="h6">
-              {formatCurrency(totals.desconto)}
             </Typography>
           </Box>
 
@@ -467,7 +479,10 @@ export default function SalesDetailModal({
             <Typography variant="subtitle2" color="text.secondary">
               Valor Bruto Total
             </Typography>
-            <Typography variant="h6" color="success.main">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "primary.main" }}
+            >
               {formatCurrency(totals.valorBruto)}
             </Typography>
           </Box>
@@ -476,7 +491,10 @@ export default function SalesDetailModal({
             <Typography variant="subtitle2" color="text.secondary">
               Valor Pago Total
             </Typography>
-            <Typography variant="h6" color="primary.main">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "success.main" }}
+            >
               {formatCurrency(totals.valorPago)}
             </Typography>
           </Box>

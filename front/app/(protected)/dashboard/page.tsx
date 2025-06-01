@@ -6,6 +6,8 @@ import { useAuth } from "@/context/auth-context";
 import { Box, Stack, Paper, Typography, Container, Grid } from "@mui/material";
 import { LocationOn, Phone, CalendarToday } from "@mui/icons-material";
 import SalesCard from "./SalesCard";
+import ClientsCard from "./ClientsCard";
+import ProductsCard from "./ProductsCard";
 import { PaymentsChart } from "./PaymentsChart";
 
 export default function Dashboard() {
@@ -109,41 +111,14 @@ export default function Dashboard() {
             <SalesCard />
           </Grid>
 
-          {/* Outros Cards - Você pode adicionar mais cards aqui */}
+          {/* Card de Clientes */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                Próximo Card
-              </Typography>
-            </Paper>
+            <ClientsCard />
           </Grid>
 
+          {/* Card de Produtos */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                Próximo Card
-              </Typography>
-            </Paper>
+            <ProductsCard />
           </Grid>
 
           {/* Gráfico de Pagamentos */}

@@ -23,9 +23,13 @@ func numericToFloat64(n pgtype.Numeric) float64 {
 
 // DashboardTotalRow representa uma linha de totais do dashboard
 type DashboardTotalRow struct {
-	Dia        time.Time `json:"dia"`
-	TotalBruto float64   `json:"total_bruto"`
-	TotalPago  float64   `json:"total_pago"`
+	Dia              time.Time `json:"dia"`
+	TotalBruto       float64   `json:"total_bruto"`
+	TotalPago        float64   `json:"total_pago"`
+	TotalDesconto    float64   `json:"total_desconto"`
+	TotalAcrescimo   float64   `json:"total_acrescimo"`
+	TotalTaxaEntrega float64   `json:"total_taxa_entrega"`
+	TotalValorTotal  float64   `json:"total_valor_total"`
 }
 
 // DashboardDetailedRow representa uma linha detalhada do dashboard
@@ -72,9 +76,13 @@ type DashboardDetailedRow struct {
 // TotalRowToDTO converte uma linha de totais do sqlc para o DTO
 func TotalRowToDTO(row pgstore.GetTotalBrutoAndTotalPagoRow) DashboardTotalRow {
 	return DashboardTotalRow{
-		Dia:        row.Dia.Time,
-		TotalBruto: numericToFloat64(row.TotalBruto),
-		TotalPago:  numericToFloat64(row.TotalPago),
+		Dia:              row.Dia.Time,
+		TotalBruto:       numericToFloat64(row.TotalBruto),
+		TotalPago:        numericToFloat64(row.TotalPago),
+		TotalDesconto:    numericToFloat64(row.TotalDesconto),
+		TotalAcrescimo:   numericToFloat64(row.TotalAcrescimo),
+		TotalTaxaEntrega: numericToFloat64(row.TotalTaxaEntrega),
+		TotalValorTotal:  numericToFloat64(row.TotalValorTotal),
 	}
 }
 
@@ -275,6 +283,115 @@ func PaymentDetalhadoRowsToDTO(rows []pgstore.GetPagamentosDetalhadosUlt3MesesRo
 	dtos := make([]DashboardPaymentDetalhadoRow, len(rows))
 	for i, row := range rows {
 		dtos[i] = PaymentDetalhadoRowToDTO(row)
+	}
+	return dtos
+}
+
+// DashboardClienteMaisFaturadoRow representa um cliente mais faturado nos últimos 30 dias
+type DashboardClienteMaisFaturadoRow struct {
+	IDCliente    string  `json:"id_cliente"`
+	Cliente      string  `json:"cliente"`
+	ValorLiquido float64 `json:"valor_liquido"`
+}
+
+// DashboardAniversarianteRow representa um cliente aniversariante
+type DashboardAniversarianteRow struct {
+	ID                 string    `json:"id"`
+	Cliente            string    `json:"cliente"`
+	DataNascimento     time.Time `json:"data_nascimento"`
+	ProximoAniversario time.Time `json:"proximo_aniversario"`
+}
+
+// DashboardProdutoMaisVendidoRow representa um produto mais vendido nos últimos 30 dias
+type DashboardProdutoMaisVendidoRow struct {
+	IDProduto    string  `json:"id_produto"`
+	Produto      string  `json:"produto"`
+	ValorLiquido float64 `json:"valor_liquido"`
+	Unidades     float64 `json:"unidades"`
+}
+
+// DashboardTicketMedioRow representa o ticket médio dos últimos 30 dias
+type DashboardTicketMedioRow struct {
+	TicketMedio30d float64 `json:"ticket_medio_30d"`
+	QtdePedidos30d int64   `json:"qtde_pedidos_30d"`
+}
+
+// ClienteMaisFaturadoRowToDTO converte uma linha do sqlc para o DTO
+func ClienteMaisFaturadoRowToDTO(row pgstore.GetClientesMaisFaturados30DiasRow) DashboardClienteMaisFaturadoRow {
+	return DashboardClienteMaisFaturadoRow{
+		IDCliente:    row.IDCliente.String(),
+		Cliente:      row.Cliente,
+		ValorLiquido: numericToFloat64(row.ValorLiquido),
+	}
+}
+
+// AniversarianteRowToDTO converte uma linha do sqlc para o DTO
+func AniversarianteRowToDTO(row pgstore.GetAniversariantesRow) DashboardAniversarianteRow {
+	dto := DashboardAniversarianteRow{
+		ID:      row.ID.String(),
+		Cliente: row.Cliente,
+	}
+
+	if row.DataNascimento.Valid {
+		dto.DataNascimento = row.DataNascimento.Time
+	}
+	if row.ProximoAniversario.Valid {
+		dto.ProximoAniversario = row.ProximoAniversario.Time
+	}
+
+	return dto
+}
+
+// ProdutoMaisVendidoRowToDTO converte uma linha do sqlc para o DTO
+func ProdutoMaisVendidoRowToDTO(row pgstore.GetTop100ProdutosMaisVendidos30DiasRow) DashboardProdutoMaisVendidoRow {
+	return DashboardProdutoMaisVendidoRow{
+		IDProduto:    row.IDProduto.String(),
+		Produto:      row.Produto,
+		ValorLiquido: numericToFloat64(row.ValorLiquido),
+		Unidades:     numericToFloat64(row.Unidades),
+	}
+}
+
+// TicketMedioRowToDTO converte uma linha do sqlc para o DTO
+func TicketMedioRowToDTO(row pgstore.GetTicketMedio30DiasRow) DashboardTicketMedioRow {
+	return DashboardTicketMedioRow{
+		TicketMedio30d: numericToFloat64(row.TicketMedio30d),
+		QtdePedidos30d: row.QtdePedidos30d,
+	}
+}
+
+// ClienteMaisFaturadoRowsToDTO converte slice de linhas
+func ClienteMaisFaturadoRowsToDTO(rows []pgstore.GetClientesMaisFaturados30DiasRow) []DashboardClienteMaisFaturadoRow {
+	dtos := make([]DashboardClienteMaisFaturadoRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = ClienteMaisFaturadoRowToDTO(row)
+	}
+	return dtos
+}
+
+// AniversarianteRowsToDTO converte slice de linhas
+func AniversarianteRowsToDTO(rows []pgstore.GetAniversariantesRow) []DashboardAniversarianteRow {
+	dtos := make([]DashboardAniversarianteRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = AniversarianteRowToDTO(row)
+	}
+	return dtos
+}
+
+// ProdutoMaisVendidoRowsToDTO converte slice de linhas
+func ProdutoMaisVendidoRowsToDTO(rows []pgstore.GetTop100ProdutosMaisVendidos30DiasRow) []DashboardProdutoMaisVendidoRow {
+	dtos := make([]DashboardProdutoMaisVendidoRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = ProdutoMaisVendidoRowToDTO(row)
+	}
+	return dtos
+}
+
+// TicketMedioRowsToDTO converte slice de linhas
+func TicketMedioRowsToDTO(rows []pgstore.GetTicketMedio30DiasRow) []DashboardTicketMedioRow {
+	dtos := make([]DashboardTicketMedioRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = TicketMedioRowToDTO(row)
 	}
 	return dtos
 }

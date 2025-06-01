@@ -95,8 +95,21 @@ const calculateTotals = (filteredData: SalesDataSummary[]): SalesTotals => {
     (acc, item) => ({
       totalBruto: acc.totalBruto + Number(item.total_bruto || 0),
       totalPago: acc.totalPago + Number(item.total_pago || 0),
+      totalDesconto: acc.totalDesconto + Number(item.total_desconto || 0),
+      totalAcrescimo: acc.totalAcrescimo + Number(item.total_acrescimo || 0),
+      totalTaxaEntrega:
+        acc.totalTaxaEntrega + Number(item.total_taxa_entrega || 0),
+      totalValorTotal:
+        acc.totalValorTotal + Number(item.total_valor_total || 0),
     }),
-    { totalBruto: 0, totalPago: 0 }
+    {
+      totalBruto: 0,
+      totalPago: 0,
+      totalDesconto: 0,
+      totalAcrescimo: 0,
+      totalTaxaEntrega: 0,
+      totalValorTotal: 0,
+    }
   );
 };
 
@@ -109,6 +122,10 @@ export default function SalesCard() {
   const [totals, setTotals] = useState<SalesTotals>({
     totalBruto: 0,
     totalPago: 0,
+    totalDesconto: 0,
+    totalAcrescimo: 0,
+    totalTaxaEntrega: 0,
+    totalValorTotal: 0,
   });
 
   // Carregar dados resumidos
@@ -193,6 +210,66 @@ export default function SalesCard() {
           <Box sx={{ mb: 3 }}>
             {/* Total Bruto */}
             <Box sx={{ mb: 2 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Subtotal
+                </Typography>
+                {loading ? (
+                  <Skeleton variant="text" width="60%" height={32} />
+                ) : (
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "text.primary" }}
+                  >
+                    {formatCurrency(totals.totalValorTotal)}
+                  </Typography>
+                )}
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Desconto
+                </Typography>
+                {loading ? (
+                  <Skeleton variant="text" width="60%" height={32} />
+                ) : (
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "error.main" }}
+                  >
+                    {formatCurrency(totals.totalDesconto)}
+                  </Typography>
+                )}
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Acréscimo
+                </Typography>
+                {loading ? (
+                  <Skeleton variant="text" width="60%" height={32} />
+                ) : (
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "info.main" }}
+                  >
+                    {formatCurrency(totals.totalAcrescimo)}
+                  </Typography>
+                )}
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Total Taxa de Entrega
+                </Typography>
+                {loading ? (
+                  <Skeleton variant="text" width="60%" height={32} />
+                ) : (
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "warning.main" }}
+                  >
+                    {formatCurrency(totals.totalTaxaEntrega)}
+                  </Typography>
+                )}
+              </Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Total Bruto
               </Typography>
@@ -201,7 +278,7 @@ export default function SalesCard() {
               ) : (
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 700, color: "success.main" }}
+                  sx={{ fontWeight: 700, color: "primary.main" }}
                 >
                   {formatCurrency(totals.totalBruto)}
                 </Typography>
@@ -218,7 +295,7 @@ export default function SalesCard() {
               ) : (
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 700, color: "primary.main" }}
+                  sx={{ fontWeight: 700, color: "success.main" }}
                 >
                   {formatCurrency(totals.totalPago)}
                 </Typography>

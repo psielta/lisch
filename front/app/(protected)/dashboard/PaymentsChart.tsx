@@ -181,6 +181,7 @@ export function PaymentsChart() {
       return {
         categories: [],
         series: [],
+        total: 0,
       };
 
     const filteredData = filterDataByPeriod(data, period);
@@ -199,12 +200,21 @@ export function PaymentsChart() {
       (a, b) => b[1] - a[1]
     );
 
-    // Criar uma série para cada categoria
+    // Calcular total geral
+    const total = sortedEntries.reduce((sum, [, valor]) => sum + valor, 0);
+
+    // Criar uma série para cada categoria com dataLabel customizado
     const series = sortedEntries.map(([categoria, valor]) => ({
       data: [valor],
       label: categoria,
       color: getCategoryColor(categoria),
       valueFormatter,
+      dataLabelStyle: {
+        fontSize: 12,
+        fontWeight: "bold",
+        fill: "#fff",
+        textAnchor: "middle",
+      },
     }));
 
     // Para o eixo X, usamos apenas uma categoria já que cada série representa uma categoria
@@ -213,6 +223,7 @@ export function PaymentsChart() {
     return {
       categories,
       series,
+      total,
     };
   }, [data, period]);
 
@@ -350,6 +361,14 @@ export function PaymentsChart() {
               >
                 Distribuição de pagamentos por forma para{" "}
                 {getPeriodLabel().toLowerCase()}
+                {chartData.total > 0 && (
+                  <Box
+                    component="span"
+                    sx={{ ml: 1, fontWeight: 600, color: "primary.main" }}
+                  >
+                    • Total: {valueFormatter(chartData.total)}
+                  </Box>
+                )}
               </Typography>
             </Box>
           </Box>
@@ -436,6 +455,15 @@ export function PaymentsChart() {
                     position: {
                       vertical: "bottom" as const,
                       horizontal: "center" as const,
+                    },
+                  },
+                }}
+                sx={{
+                  "& .MuiBarElement-root": {
+                    "& text": {
+                      fontSize: "12px !important",
+                      fontWeight: "bold !important",
+                      fill: "#fff !important",
                     },
                   },
                 }}

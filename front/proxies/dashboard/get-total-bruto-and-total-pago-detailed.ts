@@ -12,6 +12,7 @@ export interface Order {
   data_pedido_pronto: string;
   tipo_entrega: string;
   valor_total: number;
+  valor_pago: number;
   id_status: number;
   lat: number;
   lng: number;

@@ -14,6 +14,7 @@ import {
   Skeleton,
   IconButton,
   SelectChangeEvent,
+  Paper,
 } from "@mui/material";
 import {
   DataGrid,
@@ -33,16 +34,33 @@ const filterOptions: FilterOption[] = [
   { value: "last3months", label: "Últimos 03 meses" },
 ];
 
+// Função para normalizar data para UTC (sem horário)
+const normalizeToUTC = (date: Date): Date => {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+};
+
+// Função para converter string de data do backend para Date UTC
+const parseBackendDate = (dateString: string): Date => {
+  // Remove o Z e trata como UTC
+  const cleanDateString = dateString.replace("Z", "");
+  const date = new Date(cleanDateString + "Z");
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+};
+
 // Função para filtrar dados por período
 const filterDataByPeriod = (
   data: SalesDataDetailed[],
   period: FilterPeriod
 ): SalesDataDetailed[] => {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = normalizeToUTC(now);
 
   return data.filter((item) => {
-    const itemDate = new Date(item.dia);
+    const itemDate = parseBackendDate(item.dia);
 
     switch (period) {
       case "today":
@@ -50,22 +68,22 @@ const filterDataByPeriod = (
 
       case "yesterday":
         const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
         return itemDate.getTime() === yesterday.getTime();
 
       case "last7days":
         const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
         return itemDate >= sevenDaysAgo;
 
       case "last30days":
         const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
         return itemDate >= thirtyDaysAgo;
 
       case "last3months":
         const threeMonthsAgo = new Date(today);
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        threeMonthsAgo.setUTCMonth(threeMonthsAgo.getUTCMonth() - 3);
         return itemDate >= threeMonthsAgo;
 
       default:
@@ -81,6 +99,13 @@ interface SalesDetailModalProps {
   periodLabel: string;
 }
 
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
+
 export default function SalesDetailModal({
   open,
   onClose,
@@ -91,14 +116,33 @@ export default function SalesDetailModal({
   const [detailedData, setDetailedData] = useState<SalesDataDetailed[]>([]);
   const [filteredData, setFilteredData] = useState<SalesDataDetailed[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [totals, setTotals] = useState({
+    valorBruto: 0,
+    valorPago: 0,
+    valorTotal: 0,
+    taxaEntrega: 0,
+  });
+
+  // Função para calcular totais
+  const calculateTotals = (data: SalesDataDetailed[]) => {
+    const newTotals = data.reduce(
+      (acc, item) => ({
+        valorBruto: acc.valorBruto + (Number(item.valor_bruto) || 0),
+        valorPago: acc.valorPago + (Number(item.valor_pago) || 0),
+        valorTotal: acc.valorTotal + (Number(item.valor_total) || 0),
+        taxaEntrega: acc.taxaEntrega + (Number(item.taxa_entrega) || 0),
+      }),
+      { valorBruto: 0, valorPago: 0, valorTotal: 0, taxaEntrega: 0 }
+    );
+    setTotals(newTotals);
+  };
 
   // Colunas da DataGrid
   const columns: GridColDef[] = [
     {
-      field: "id",
-      headerName: "ID",
+      field: "codigo_pedido",
+      headerName: "Código",
       width: 90,
-      type: "number",
     },
     {
       field: "data_pedido_br",
@@ -191,6 +235,7 @@ export default function SalesDetailModal({
       // Aplicar filtro inicial
       const filtered = filterDataByPeriod(data, period);
       setFilteredData(filtered);
+      calculateTotals(filtered);
     } catch (error) {
       console.error("Erro ao carregar dados detalhados:", error);
     } finally {
@@ -203,6 +248,7 @@ export default function SalesDetailModal({
     if (detailedData.length > 0) {
       const filtered = filterDataByPeriod(detailedData, period);
       setFilteredData(filtered);
+      calculateTotals(filtered);
     }
   }, [period, detailedData]);
 
@@ -254,7 +300,7 @@ export default function SalesDetailModal({
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Vendas - {getPeriodLabel()}</Typography>
+        Vendas - {getPeriodLabel()}
         <IconButton onClick={onClose} size="small">
           <Close />
         </IconButton>
@@ -293,22 +339,58 @@ export default function SalesDetailModal({
               }}
               pageSizeOptions={[5, 10, 25, 50]}
               disableRowSelectionOnClick
-              sx={{
-                "& .MuiDataGrid-cell": {
-                  fontSize: "0.875rem",
-                },
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "grey.50",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                },
-              }}
-              localeText={{
-                noRowsLabel: "Nenhum pedido encontrado para este período",
-              }}
             />
           )}
         </Box>
+
+        {/* Totais Summary */}
+        <Paper
+          elevation={3}
+          sx={{
+            p: 2,
+            mt: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Valor Bruto Total
+            </Typography>
+            <Typography variant="h6" color="success.main">
+              {formatCurrency(totals.valorBruto)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Valor Pago Total
+            </Typography>
+            <Typography variant="h6" color="primary.main">
+              {formatCurrency(totals.valorPago)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Subtotal
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.valorTotal)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Total Taxa Entrega
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.taxaEntrega)}
+            </Typography>
+          </Box>
+        </Paper>
       </DialogContent>
 
       <DialogActions>

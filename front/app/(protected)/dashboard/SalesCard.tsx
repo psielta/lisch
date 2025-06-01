@@ -31,16 +31,33 @@ const filterOptions: FilterOption[] = [
   { value: "last3months", label: "Últimos 03 meses" },
 ];
 
+// Função para normalizar data para UTC (sem horário)
+const normalizeToUTC = (date: Date): Date => {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+};
+
+// Função para converter string de data do backend para Date UTC
+const parseBackendDate = (dateString: string): Date => {
+  // Remove o Z e trata como UTC
+  const cleanDateString = dateString.replace("Z", "");
+  const date = new Date(cleanDateString + "Z");
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+};
+
 // Função para filtrar dados por período
 const filterDataByPeriod = (
   data: SalesDataSummary[],
   period: FilterPeriod
 ): SalesDataSummary[] => {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = normalizeToUTC(now);
 
   return data.filter((item) => {
-    const itemDate = new Date(item.dia);
+    const itemDate = parseBackendDate(item.dia);
 
     switch (period) {
       case "today":
@@ -48,22 +65,22 @@ const filterDataByPeriod = (
 
       case "yesterday":
         const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setUTCDate(yesterday.getUTCDate() - 1);
         return itemDate.getTime() === yesterday.getTime();
 
       case "last7days":
         const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
         return itemDate >= sevenDaysAgo;
 
       case "last30days":
         const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setUTCDate(thirtyDaysAgo.getUTCDate() - 30);
         return itemDate >= thirtyDaysAgo;
 
       case "last3months":
         const threeMonthsAgo = new Date(today);
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        threeMonthsAgo.setUTCMonth(threeMonthsAgo.getUTCMonth() - 3);
         return itemDate >= threeMonthsAgo;
 
       default:
@@ -84,7 +101,8 @@ const calculateTotals = (filteredData: SalesDataSummary[]): SalesTotals => {
 };
 
 export default function SalesCard() {
-  const [period, setPeriod] = useState<FilterPeriod>("last30days");
+  // Mudança 1: Padrão agora é "today" em vez de "last30days"
+  const [period, setPeriod] = useState<FilterPeriod>("today");
   const [salesData, setSalesData] = useState<SalesDataSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [modalOpen, setModalOpen] = useState<boolean>(false);

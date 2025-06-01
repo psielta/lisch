@@ -21,11 +21,7 @@ import { getPagamentosPorDiaECategoria } from "@/proxies/dashboard/get-pagamento
 import PaymentsDetailModal from "./PaymentsDetailModal";
 
 // Styled components para parecer com shadcn/ui
-const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: "12px",
-  border: `1px solid ${theme.palette.divider}`,
-  boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
-}));
+const StyledCard = styled(Card)(({ theme }) => ({}));
 
 const StyledSelect = styled(Select)<SelectProps<FilterPeriod>>(({ theme }) => ({
   borderRadius: "8px",
@@ -72,16 +68,6 @@ const filterOptions: FilterOption[] = [
   { value: "last30days", label: "Últimos 30 dias" },
   { value: "last3months", label: "Últimos 03 meses" },
 ];
-
-// Interface para dados processados do gráfico
-type PaymentChartData = Record<
-  string,
-  string | number | Date | null | undefined
-> & {
-  categoria: string;
-  valor_liquido: number;
-  barColor: string;
-};
 
 // Função para normalizar data para UTC (sem horário)
 const normalizeToUTC = (date: Date): Date => {
@@ -191,7 +177,12 @@ export function PaymentsChart() {
 
   // Filtrar e processar dados para o gráfico
   const chartData = React.useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) return [];
+    if (!data || !Array.isArray(data) || data.length === 0)
+      return {
+        categories: [],
+        values: [],
+        colors: [],
+      };
 
     const filteredData = filterDataByPeriod(data, period);
 
@@ -204,16 +195,20 @@ export function PaymentsChart() {
       categoryMap.set(categoria, currentValue + (item.valor_liquido || 0));
     });
 
-    // Converter para array e ordenar por valor
-    const result: PaymentChartData[] = Array.from(categoryMap.entries())
-      .map(([categoria, valor_liquido]) => ({
-        categoria,
-        valor_liquido,
-        barColor: getCategoryColor(categoria),
-      }))
-      .sort((a, b) => b.valor_liquido - a.valor_liquido);
+    // Converter para arrays e ordenar por valor
+    const sortedEntries = Array.from(categoryMap.entries()).sort(
+      (a, b) => b[1] - a[1]
+    );
 
-    return result;
+    const categories = sortedEntries.map(([categoria]) => categoria);
+    const values = sortedEntries.map(([, valor]) => valor);
+    const colors = categories.map((categoria) => getCategoryColor(categoria));
+
+    return {
+      categories,
+      values,
+      colors,
+    };
   }, [data, period]);
 
   const handlePeriodChange: SelectProps<FilterPeriod>["onChange"] = (event) => {
@@ -383,7 +378,7 @@ export function PaymentsChart() {
           </Box>
         </CardHeader>
         <CardContent sx={{ p: "16px 24px 24px 24px" }}>
-          {chartData.length === 0 ? (
+          {chartData.categories.length === 0 ? (
             <Box
               sx={{
                 height: 400,
@@ -399,14 +394,18 @@ export function PaymentsChart() {
           ) : (
             <Box sx={{ width: "100%", height: 400 }}>
               <BarChart
-                dataset={chartData}
-                colors={chartData.map((item) => item.barColor)}
                 xAxis={[
                   {
-                    dataKey: "categoria",
+                    data: chartData.categories,
+                    scaleType: "band",
                     tickLabelStyle: {
                       fontSize: 12,
                       fill: "#666",
+                    },
+                    colorMap: {
+                      type: "ordinal",
+                      values: chartData.categories,
+                      colors: chartData.colors,
                     },
                   },
                 ]}
@@ -422,7 +421,7 @@ export function PaymentsChart() {
                 ]}
                 series={[
                   {
-                    dataKey: "valor_liquido",
+                    data: chartData.values,
                     label: "Valor Líquido",
                     valueFormatter,
                   },

@@ -13,6 +13,127 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getPagamentosDetalhadosUlt3Meses = `-- name: GetPagamentosDetalhadosUlt3Meses :many
+/*
+  Lista cada pagamento individual dos últimos 3 meses.
+  Campos suficientes para o modal, sem ` + "`" + `forma_pagamento` + "`" + `.
+*/
+SELECT
+    pp.id,
+    pp.id_pedido,
+    pp.categoria_pagamento,
+    pp.valor_pago,
+    pp.troco,
+    (pp.valor_pago - COALESCE(pp.troco, 0))::numeric(12,2)          AS valor_liquido,
+    (pp.created_at AT TIME ZONE 'America/Sao_Paulo')                AS created_br,
+    (pp.created_at AT TIME ZONE 'America/Sao_Paulo')::date          AS dia,
+    p.codigo_pedido,
+    (p.data_pedido AT TIME ZONE 'America/Sao_Paulo')                AS data_pedido_br,
+    c.nome_razao_social                                             AS cliente
+FROM   public.pedido_pagamentos pp
+JOIN   public.pedidos          p  ON p.id       = pp.id_pedido
+LEFT   JOIN public.clientes     c  ON c.id       = p.id_cliente
+WHERE  pp.deleted_at IS NULL
+  AND  p.deleted_at  IS NULL
+  AND  p.tenant_id   = $1
+  AND  (pp.created_at AT TIME ZONE 'America/Sao_Paulo')::date
+         >= CURRENT_DATE - INTERVAL '3 months'
+ORDER BY pp.created_at DESC
+`
+
+type GetPagamentosDetalhadosUlt3MesesRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	IDPedido           uuid.UUID      `json:"id_pedido"`
+	CategoriaPagamento pgtype.Text    `json:"categoria_pagamento"`
+	ValorPago          pgtype.Numeric `json:"valor_pago"`
+	Troco              pgtype.Numeric `json:"troco"`
+	ValorLiquido       pgtype.Numeric `json:"valor_liquido"`
+	CreatedBr          interface{}    `json:"created_br"`
+	Dia                pgtype.Date    `json:"dia"`
+	CodigoPedido       string         `json:"codigo_pedido"`
+	DataPedidoBr       interface{}    `json:"data_pedido_br"`
+	Cliente            pgtype.Text    `json:"cliente"`
+}
+
+func (q *Queries) GetPagamentosDetalhadosUlt3Meses(ctx context.Context, tenantID uuid.UUID) ([]GetPagamentosDetalhadosUlt3MesesRow, error) {
+	rows, err := q.db.Query(ctx, getPagamentosDetalhadosUlt3Meses, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPagamentosDetalhadosUlt3MesesRow
+	for rows.Next() {
+		var i GetPagamentosDetalhadosUlt3MesesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.IDPedido,
+			&i.CategoriaPagamento,
+			&i.ValorPago,
+			&i.Troco,
+			&i.ValorLiquido,
+			&i.CreatedBr,
+			&i.Dia,
+			&i.CodigoPedido,
+			&i.DataPedidoBr,
+			&i.Cliente,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPagamentosPorDiaECategoria = `-- name: GetPagamentosPorDiaECategoria :many
+/*
+  Pagamentos líquidos (valor_pago – troco) dos últimos 3 meses,
+  agrupados por DIA e CATEGORIA de pagamento.
+  • O tenant é passado no parâmetro $1.
+*/
+SELECT
+    (pp.created_at AT TIME ZONE 'America/Sao_Paulo')::date          AS dia,
+    pp.categoria_pagamento,
+    SUM(pp.valor_pago - COALESCE(pp.troco, 0))::numeric(12,2)       AS valor_liquido
+FROM   public.pedido_pagamentos pp
+JOIN   public.pedidos          p  ON p.id = pp.id_pedido            -- garante o tenant
+WHERE  pp.deleted_at IS NULL
+  AND  p.deleted_at  IS NULL
+  AND  p.tenant_id   = $1
+  AND  (pp.created_at AT TIME ZONE 'America/Sao_Paulo')::date
+         >= CURRENT_DATE - INTERVAL '3 months'
+GROUP BY dia, pp.categoria_pagamento
+ORDER BY dia, pp.categoria_pagamento
+`
+
+type GetPagamentosPorDiaECategoriaRow struct {
+	Dia                pgtype.Date    `json:"dia"`
+	CategoriaPagamento pgtype.Text    `json:"categoria_pagamento"`
+	ValorLiquido       pgtype.Numeric `json:"valor_liquido"`
+}
+
+func (q *Queries) GetPagamentosPorDiaECategoria(ctx context.Context, tenantID uuid.UUID) ([]GetPagamentosPorDiaECategoriaRow, error) {
+	rows, err := q.db.Query(ctx, getPagamentosPorDiaECategoria, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPagamentosPorDiaECategoriaRow
+	for rows.Next() {
+		var i GetPagamentosPorDiaECategoriaRow
+		if err := rows.Scan(&i.Dia, &i.CategoriaPagamento, &i.ValorLiquido); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTotalBrutoAndTotalPago = `-- name: GetTotalBrutoAndTotalPago :many
 SELECT
     (data_pedido AT TIME ZONE 'America/Sao_Paulo')::date          AS dia,

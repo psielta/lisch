@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { Box, Stack, Paper, Typography, Container, Grid } from "@mui/material";
 import { LocationOn, Phone, CalendarToday } from "@mui/icons-material";
 import SalesCard from "./SalesCard";
+import { PaymentsChart } from "./PaymentsChart";
 
 export default function Dashboard() {
   const { user, tenant } = useAuth();
@@ -145,23 +146,9 @@ export default function Dashboard() {
             </Paper>
           </Grid>
 
-          {/* Área para Gráficos Maiores */}
+          {/* Gráfico de Pagamentos */}
           <Grid size={{ xs: 12 }}>
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                minHeight: "400px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                Área para Gráficos
-              </Typography>
-            </Paper>
+            <PaymentsChart />
           </Grid>
         </Grid>
       </Container>

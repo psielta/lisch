@@ -184,3 +184,97 @@ func DetailedRowsToDTO(rows []pgstore.GetTotalBrutoAndTotalPagoDetailedRow) []Da
 	}
 	return dtos
 }
+
+// -----------------------------------------------------------------------------
+// Pagamentos – consultas GetPagamentosPorDiaECategoria / GetPagamentosDetalhadosUlt3Meses
+// -----------------------------------------------------------------------------
+
+// DashboardPaymentResumoRow representa o agregado de pagamentos (gráfico de barras)
+type DashboardPaymentResumoRow struct {
+	Dia                time.Time `json:"dia"`
+	CategoriaPagamento string    `json:"categoria_pagamento"`
+	ValorLiquido       float64   `json:"valor_liquido"`
+}
+
+// DashboardPaymentDetalhadoRow representa cada pagamento individual (tabela modal)
+type DashboardPaymentDetalhadoRow struct {
+	ID                 string    `json:"id"`
+	IDPedido           string    `json:"id_pedido"`
+	CategoriaPagamento string    `json:"categoria_pagamento,omitempty"`
+	ValorPago          float64   `json:"valor_pago,omitempty"`
+	Troco              float64   `json:"troco,omitempty"`
+	ValorLiquido       float64   `json:"valor_liquido"`
+	CreatedBr          time.Time `json:"created_br"`
+	Dia                time.Time `json:"dia"`
+	CodigoPedido       string    `json:"codigo_pedido"`
+	DataPedidoBr       time.Time `json:"data_pedido_br"`
+	Cliente            string    `json:"cliente,omitempty"`
+}
+
+// -----------------------------------------------------------------------------
+// Conversões das structs geradas pelo sqlc para DTOs
+// -----------------------------------------------------------------------------
+
+// PaymentResumoRowToDTO converte uma linha agregada do sqlc para o DTO
+func PaymentResumoRowToDTO(row pgstore.GetPagamentosPorDiaECategoriaRow) DashboardPaymentResumoRow {
+	dto := DashboardPaymentResumoRow{
+		Dia:          row.Dia.Time,
+		ValorLiquido: numericToFloat64(row.ValorLiquido),
+	}
+
+	// categoria_pagamento é pgtype.Text
+	if row.CategoriaPagamento.Valid {
+		dto.CategoriaPagamento = row.CategoriaPagamento.String
+	}
+
+	return dto
+}
+
+// PaymentDetalhadoRowToDTO converte uma linha detalhada do sqlc para o DTO
+func PaymentDetalhadoRowToDTO(row pgstore.GetPagamentosDetalhadosUlt3MesesRow) DashboardPaymentDetalhadoRow {
+	dto := DashboardPaymentDetalhadoRow{
+		ID:           row.ID.String(),
+		IDPedido:     row.IDPedido.String(),
+		ValorLiquido: numericToFloat64(row.ValorLiquido),
+		Dia:          row.Dia.Time,
+		CodigoPedido: row.CodigoPedido,
+	}
+
+	// Campos opcionais / pgtype.*
+	if row.CategoriaPagamento.Valid {
+		dto.CategoriaPagamento = row.CategoriaPagamento.String
+	}
+
+	dto.ValorPago = numericToFloat64(row.ValorPago)
+	dto.Troco = numericToFloat64(row.Troco)
+
+	if t, ok := row.CreatedBr.(time.Time); ok {
+		dto.CreatedBr = t
+	}
+	if t, ok := row.DataPedidoBr.(time.Time); ok {
+		dto.DataPedidoBr = t
+	}
+	if row.Cliente.Valid {
+		dto.Cliente = row.Cliente.String
+	}
+
+	return dto
+}
+
+// PaymentResumoRowsToDTO converte slice de linhas agregadas
+func PaymentResumoRowsToDTO(rows []pgstore.GetPagamentosPorDiaECategoriaRow) []DashboardPaymentResumoRow {
+	dtos := make([]DashboardPaymentResumoRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = PaymentResumoRowToDTO(row)
+	}
+	return dtos
+}
+
+// PaymentDetalhadoRowsToDTO converte slice de linhas detalhadas
+func PaymentDetalhadoRowsToDTO(rows []pgstore.GetPagamentosDetalhadosUlt3MesesRow) []DashboardPaymentDetalhadoRow {
+	dtos := make([]DashboardPaymentDetalhadoRow, len(rows))
+	for i, row := range rows {
+		dtos[i] = PaymentDetalhadoRowToDTO(row)
+	}
+	return dtos
+}

@@ -457,7 +457,7 @@ export default function GerenciarVendas({
                                 color: "inherit",
                               }}
                             >
-                              {pedido.cliente.nome_razao_social}
+                              {pedido.cliente?.nome_razao_social ?? ""}
                             </Typography>
                             <Typography
                               variant="caption"

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="06/01/2025 08:23:42" ReportInfo.CreatorVersion="2025.2.0.0">
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="06/01/2025 08:50:10" ReportInfo.CreatorVersion="2025.2.0.0">
   <Dictionary>
     <BusinessObjectDataSource Name="Pedidos" ReferenceName="Pedidos" DataType="System.Int32" Enabled="true">
       <Column Name="Id" DataType="System.Guid"/>
@@ -123,11 +123,11 @@
     </BusinessObjectDataSource>
   </Dictionary>
   <ReportPage Name="Page1" PaperWidth="80" PaperHeight="120" LeftMargin="4" TopMargin="4" RightMargin="4" BottomMargin="4" Watermark.Font="Arial, 60pt" UnlimitedHeight="true">
-    <ReportTitleBand Name="ReportTitle1" Width="272.16" Height="85.05">
+    <ReportTitleBand Name="ReportTitle1" Width="272.16" Height="85.05" CanGrow="true" CanShrink="true">
       <PictureObject Name="Picture1" Width="75.6" Height="75.6" DataColumn="Tenants.Photo"/>
-      <TextObject Name="Text1" Left="75.6" Width="189" Height="28.35" Text="[Tenants.Name]" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
-      <TextObject Name="Text2" Left="75.6" Top="28.35" Width="189" Height="28.35" Text="Endereço [Tenants.Endereco], [Tenants.Bairro], [Tenants.Cidade]" HorzAlign="Center" Font="Arial, 7pt, style=Bold"/>
-      <TextObject Name="Text3" Left="75.6" Top="56.7" Width="189" Height="18.9" Text="Telefone.: [Tenants.Telefone]" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <TextObject Name="Text1" Left="75.6" Width="189" Height="28.35" CanGrow="true" CanShrink="true" Text="[Tenants.Name]" HorzAlign="Center" Font="Arial, 10pt, style=Bold"/>
+      <TextObject Name="Text2" Left="75.6" Top="28.35" Width="189" Height="28.35" CanGrow="true" CanShrink="true" Text="Endereço [Tenants.Endereco], [Tenants.Bairro], [Tenants.Cidade]" HorzAlign="Center" Font="Arial, 7pt, style=Bold"/>
+      <TextObject Name="Text3" Left="75.6" Top="56.7" Width="189" Height="18.9" CanGrow="true" CanShrink="true" Text="Telefone.: [Tenants.Telefone]" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
     </ReportTitleBand>
     <PageHeaderBand Name="PageHeader1" Top="87.34" Width="272.16" Height="59.99" Border.Lines="Top, Bottom" Border.Style="Dot" CanGrow="true" CanShrink="true">
       <TextObject Name="Text29" Top="0.9" Width="264.6" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="Cliente: [Clientes.NomeRazaoSocial]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>

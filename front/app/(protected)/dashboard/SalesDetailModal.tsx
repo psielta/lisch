@@ -25,6 +25,7 @@ import {
 import { Close } from "@mui/icons-material";
 import { SalesDataDetailed, FilterPeriod, FilterOption } from "@/types/sales";
 import { getTotalBrutoAndTotalPagoDetailed } from "@/proxies/dashboard/get-total-bruto-and-total-pago-detailed";
+import { Badge } from "@/components/catalyst-ui-kit/badge";
 
 const filterOptions: FilterOption[] = [
   { value: "today", label: "Hoje" },
@@ -117,22 +118,33 @@ export default function SalesDetailModal({
   const [filteredData, setFilteredData] = useState<SalesDataDetailed[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [totals, setTotals] = useState({
+    valorTotal: 0,
+    acrescimo: 0,
+    taxaEntrega: 0,
+    desconto: 0,
     valorBruto: 0,
     valorPago: 0,
-    valorTotal: 0,
-    taxaEntrega: 0,
   });
 
   // Função para calcular totais
   const calculateTotals = (data: SalesDataDetailed[]) => {
     const newTotals = data.reduce(
       (acc, item) => ({
+        valorTotal: acc.valorTotal + (Number(item.valor_total) || 0),
+        acrescimo: acc.acrescimo + (Number(item.acrescimo) || 0),
+        taxaEntrega: acc.taxaEntrega + (Number(item.taxa_entrega) || 0),
+        desconto: acc.desconto + 0, // Adicionar campo de desconto quando disponível
         valorBruto: acc.valorBruto + (Number(item.valor_bruto) || 0),
         valorPago: acc.valorPago + (Number(item.valor_pago) || 0),
-        valorTotal: acc.valorTotal + (Number(item.valor_total) || 0),
-        taxaEntrega: acc.taxaEntrega + (Number(item.taxa_entrega) || 0),
       }),
-      { valorBruto: 0, valorPago: 0, valorTotal: 0, taxaEntrega: 0 }
+      {
+        valorTotal: 0,
+        acrescimo: 0,
+        taxaEntrega: 0,
+        desconto: 0,
+        valorBruto: 0,
+        valorPago: 0,
+      }
     );
     setTotals(newTotals);
   };
@@ -163,12 +175,68 @@ export default function SalesDetailModal({
       },
     },
     {
-      field: "status_descr",
-      headerName: "Status",
+      field: "finalizado",
+      headerName: "Finalizado",
       width: 120,
-      valueGetter: (value, row) => {
-        if (!value) return "N/A";
-        return value;
+      renderCell: (params) => {
+        if (!params.value) return <Badge color="red">Não</Badge>;
+        return params.value ? (
+          <Badge color="green">Sim</Badge>
+        ) : (
+          <Badge color="red">Não</Badge>
+        );
+      },
+    },
+    {
+      field: "valor_total",
+      headerName: "Subtotal",
+      width: 120,
+      type: "number",
+      valueFormatter: (value: string) => {
+        if (!value) return "R$ 0,00";
+        return new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(Number(value));
+      },
+    },
+    {
+      field: "acrescimo",
+      headerName: "Acréscimo",
+      width: 120,
+      type: "number",
+      valueFormatter: (value: string) => {
+        if (!value) return "R$ 0,00";
+        return new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(Number(value));
+      },
+    },
+    {
+      field: "taxa_entrega",
+      headerName: "Taxa Entrega",
+      width: 120,
+      type: "number",
+      valueFormatter: (value: string) => {
+        if (!value) return "R$ 0,00";
+        return new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(Number(value));
+      },
+    },
+    {
+      field: "desconto",
+      headerName: "Desconto",
+      width: 120,
+      type: "number",
+      valueFormatter: (value: string) => {
+        if (!value) return "R$ 0,00";
+        return new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(Number(value));
       },
     },
     {
@@ -190,32 +258,6 @@ export default function SalesDetailModal({
       width: 130,
       type: "number",
       valueGetter: (value, row) => {
-        if (!value) return "R$ 0,00";
-        return new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(Number(value));
-      },
-    },
-    {
-      field: "valor_total",
-      headerName: "Subtotal",
-      width: 120,
-      type: "number",
-      valueFormatter: (value: string) => {
-        if (!value) return "R$ 0,00";
-        return new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(Number(value));
-      },
-    },
-    {
-      field: "taxa_entrega",
-      headerName: "Taxa Entrega",
-      width: 120,
-      type: "number",
-      valueFormatter: (value: string) => {
         if (!value) return "R$ 0,00";
         return new Intl.NumberFormat("pt-BR", {
           style: "currency",
@@ -357,6 +399,42 @@ export default function SalesDetailModal({
         >
           <Box>
             <Typography variant="subtitle2" color="text.secondary">
+              Subtotal
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.valorTotal)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Acréscimo
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.acrescimo)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Taxa Entrega
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.taxaEntrega)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Desconto
+            </Typography>
+            <Typography variant="h6">
+              {formatCurrency(totals.desconto)}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
               Valor Bruto Total
             </Typography>
             <Typography variant="h6" color="success.main">
@@ -370,24 +448,6 @@ export default function SalesDetailModal({
             </Typography>
             <Typography variant="h6" color="primary.main">
               {formatCurrency(totals.valorPago)}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              Subtotal
-            </Typography>
-            <Typography variant="h6">
-              {formatCurrency(totals.valorTotal)}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              Total Taxa Entrega
-            </Typography>
-            <Typography variant="h6">
-              {formatCurrency(totals.taxaEntrega)}
             </Typography>
           </Box>
         </Paper>

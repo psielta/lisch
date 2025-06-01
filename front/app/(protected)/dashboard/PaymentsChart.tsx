@@ -180,8 +180,7 @@ export function PaymentsChart() {
     if (!data || !Array.isArray(data) || data.length === 0)
       return {
         categories: [],
-        values: [],
-        colors: [],
+        series: [],
       };
 
     const filteredData = filterDataByPeriod(data, period);
@@ -200,14 +199,20 @@ export function PaymentsChart() {
       (a, b) => b[1] - a[1]
     );
 
-    const categories = sortedEntries.map(([categoria]) => categoria);
-    const values = sortedEntries.map(([, valor]) => valor);
-    const colors = categories.map((categoria) => getCategoryColor(categoria));
+    // Criar uma série para cada categoria
+    const series = sortedEntries.map(([categoria, valor]) => ({
+      data: [valor],
+      label: categoria,
+      color: getCategoryColor(categoria),
+      valueFormatter,
+    }));
+
+    // Para o eixo X, usamos apenas uma categoria já que cada série representa uma categoria
+    const categories = ["Pagamentos"];
 
     return {
       categories,
-      values,
-      colors,
+      series,
     };
   }, [data, period]);
 
@@ -378,7 +383,7 @@ export function PaymentsChart() {
           </Box>
         </CardHeader>
         <CardContent sx={{ p: "16px 24px 24px 24px" }}>
-          {chartData.categories.length === 0 ? (
+          {chartData.series.length === 0 ? (
             <Box
               sx={{
                 height: 400,
@@ -402,11 +407,6 @@ export function PaymentsChart() {
                       fontSize: 12,
                       fill: "#666",
                     },
-                    colorMap: {
-                      type: "ordinal",
-                      values: chartData.categories,
-                      colors: chartData.colors,
-                    },
                   },
                 ]}
                 yAxis={[
@@ -419,13 +419,7 @@ export function PaymentsChart() {
                     },
                   },
                 ]}
-                series={[
-                  {
-                    data: chartData.values,
-                    label: "Valor Líquido",
-                    valueFormatter,
-                  },
-                ]}
+                series={chartData.series}
                 height={400}
                 margin={{
                   left: 100,

@@ -321,10 +321,10 @@ function DialogCliente({
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { maxHeight: "90vh" },
+        sx: { maxHeight: "90vh", minHeight: "70vh" },
       }}
     >
       <DialogTitle>
@@ -339,16 +339,14 @@ function DialogCliente({
       </DialogTitle>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogContent dividers sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <Grid container spacing={3}>
-            {/* Campo oculto para ID */}
+        <DialogContent dividers sx={{ maxHeight: "65vh", overflowY: "auto" }}>
+          <Grid container spacing={2}>
+            {/* Campos ocultos */}
             <Controller
               name="id"
               control={control}
               render={({ field }) => <input type="hidden" {...field} />}
             />
-
-            {/* Campo oculto para tenant_id */}
             <Controller
               name="tenant_id"
               control={control}
@@ -356,8 +354,8 @@ function DialogCliente({
             />
 
             {/* Tipo de Pessoa */}
-            <Grid size={12}>
-              <FormControl fullWidth>
+            <Grid size={6}>
+              <FormControl fullWidth size="small">
                 <InputLabel>Tipo de Pessoa</InputLabel>
                 <Controller
                   name="tipo_pessoa"
@@ -374,7 +372,7 @@ function DialogCliente({
                   )}
                 />
                 {errors.tipo_pessoa && (
-                  <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
                     {errors.tipo_pessoa.message}
                   </Typography>
                 )}
@@ -382,7 +380,7 @@ function DialogCliente({
             </Grid>
 
             {/* Nome/Razão Social */}
-            <Grid size={12}>
+            <Grid size={tipoPessoa === "J" ? 6 : 12}>
               <Controller
                 name="nome_razao_social"
                 control={control}
@@ -390,6 +388,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label={
                       tipoPessoa === "F" ? "Nome Completo" : "Razão Social"
                     }
@@ -403,7 +402,7 @@ function DialogCliente({
 
             {/* Nome Fantasia (apenas para PJ) */}
             {tipoPessoa === "J" && (
-              <Grid size={12}>
+              <Grid size={6}>
                 <Controller
                   name="nome_fantasia"
                   control={control}
@@ -411,6 +410,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="Nome Fantasia"
                       error={Boolean(errors.nome_fantasia)}
                       helperText={errors.nome_fantasia?.message}
@@ -420,8 +420,8 @@ function DialogCliente({
               </Grid>
             )}
 
-            {/* CPF/CNPJ e RG/IE */}
-            <Grid size={12}>
+            {/* CPF/CNPJ */}
+            <Grid size={6}>
               {tipoPessoa === "F" ? (
                 <Controller
                   name="cpf"
@@ -430,6 +430,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="CPF"
                       placeholder="00000000000"
                       error={Boolean(errors.cpf)}
@@ -448,6 +449,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="CNPJ"
                       placeholder="00000000000000"
                       error={Boolean(errors.cnpj)}
@@ -461,7 +463,8 @@ function DialogCliente({
               )}
             </Grid>
 
-            <Grid size={12}>
+            {/* RG/IE */}
+            <Grid size={6}>
               {tipoPessoa === "F" ? (
                 <Controller
                   name="rg"
@@ -470,6 +473,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="RG"
                       error={Boolean(errors.rg)}
                       helperText={errors.rg?.message}
@@ -484,6 +488,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="Inscrição Estadual"
                       error={Boolean(errors.ie)}
                       helperText={errors.ie?.message}
@@ -495,7 +500,7 @@ function DialogCliente({
 
             {/* Inscrição Municipal (apenas para PJ) */}
             {tipoPessoa === "J" && (
-              <Grid size={12}>
+              <Grid size={6}>
                 <Controller
                   name="im"
                   control={control}
@@ -503,6 +508,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="Inscrição Municipal"
                       error={Boolean(errors.im)}
                       helperText={errors.im?.message}
@@ -514,7 +520,7 @@ function DialogCliente({
 
             {/* Data de Nascimento (apenas para PF) */}
             {tipoPessoa === "F" && (
-              <Grid size={12}>
+              <Grid size={6}>
                 <Controller
                   name="data_nascimento"
                   control={control}
@@ -522,6 +528,7 @@ function DialogCliente({
                     <TextField
                       {...field}
                       fullWidth
+                      size="small"
                       label="Data de Nascimento"
                       type="date"
                       InputLabelProps={{ shrink: true }}
@@ -534,7 +541,7 @@ function DialogCliente({
             )}
 
             {/* E-mail */}
-            <Grid size={12}>
+            <Grid size={6}>
               <Controller
                 name="email"
                 control={control}
@@ -542,6 +549,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="E-mail"
                     type="email"
                     error={Boolean(errors.email)}
@@ -551,8 +559,8 @@ function DialogCliente({
               />
             </Grid>
 
-            {/* Telefones */}
-            <Grid size={12}>
+            {/* Telefone */}
+            <Grid size={6}>
               <Controller
                 name="telefone"
                 control={control}
@@ -560,6 +568,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Telefone"
                     error={Boolean(errors.telefone)}
                     helperText={errors.telefone?.message}
@@ -571,7 +580,8 @@ function DialogCliente({
               />
             </Grid>
 
-            <Grid size={12}>
+            {/* Celular */}
+            <Grid size={6}>
               <Controller
                 name="celular"
                 control={control}
@@ -579,6 +589,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Celular"
                     error={Boolean(errors.celular)}
                     helperText={errors.celular?.message}
@@ -591,7 +602,7 @@ function DialogCliente({
             </Grid>
 
             {/* CEP */}
-            <Grid size={12}>
+            <Grid size={3}>
               <Controller
                 name="cep"
                 control={control}
@@ -599,6 +610,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="CEP"
                     placeholder="00000000"
                     error={Boolean(errors.cep)}
@@ -610,7 +622,7 @@ function DialogCliente({
             </Grid>
 
             {/* Logradouro */}
-            <Grid size={12}>
+            <Grid size={6}>
               <Controller
                 name="logradouro"
                 control={control}
@@ -618,6 +630,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Logradouro"
                     error={Boolean(errors.logradouro)}
                     helperText={errors.logradouro?.message}
@@ -627,7 +640,7 @@ function DialogCliente({
             </Grid>
 
             {/* Número */}
-            <Grid size={12}>
+            <Grid size={3}>
               <Controller
                 name="numero"
                 control={control}
@@ -635,6 +648,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Número"
                     error={Boolean(errors.numero)}
                     helperText={errors.numero?.message}
@@ -644,7 +658,7 @@ function DialogCliente({
             </Grid>
 
             {/* Complemento */}
-            <Grid size={12}>
+            <Grid size={4}>
               <Controller
                 name="complemento"
                 control={control}
@@ -652,6 +666,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Complemento"
                     error={Boolean(errors.complemento)}
                     helperText={errors.complemento?.message}
@@ -661,7 +676,7 @@ function DialogCliente({
             </Grid>
 
             {/* Bairro */}
-            <Grid size={12}>
+            <Grid size={4}>
               <Controller
                 name="bairro"
                 control={control}
@@ -669,6 +684,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Bairro"
                     error={Boolean(errors.bairro)}
                     helperText={errors.bairro?.message}
@@ -678,7 +694,7 @@ function DialogCliente({
             </Grid>
 
             {/* Cidade */}
-            <Grid size={12}>
+            <Grid size={3}>
               <Controller
                 name="cidade"
                 control={control}
@@ -686,6 +702,7 @@ function DialogCliente({
                   <TextField
                     {...field}
                     fullWidth
+                    size="small"
                     label="Cidade"
                     error={Boolean(errors.cidade)}
                     helperText={errors.cidade?.message}
@@ -695,8 +712,8 @@ function DialogCliente({
             </Grid>
 
             {/* UF */}
-            <Grid size={12}>
-              <FormControl fullWidth>
+            <Grid size={1}>
+              <FormControl fullWidth size="small">
                 <InputLabel>UF</InputLabel>
                 <Controller
                   name="uf"
@@ -706,14 +723,14 @@ function DialogCliente({
                       <MenuItem value="">Selecione</MenuItem>
                       {estadosBrasileiros.map((estado) => (
                         <MenuItem key={estado.sigla} value={estado.sigla}>
-                          {estado.sigla} - {estado.nome}
+                          {estado.sigla}
                         </MenuItem>
                       ))}
                     </Select>
                   )}
                 />
                 {errors.uf && (
-                  <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
                     {errors.uf.message}
                   </Typography>
                 )}
@@ -722,11 +739,16 @@ function DialogCliente({
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleClose} disabled={isSubmitting}>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={handleClose} disabled={isSubmitting} size="medium">
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            size="medium"
+          >
             {isSubmitting ? "Salvando..." : "Salvar"}
           </Button>
         </DialogActions>

@@ -100,7 +100,7 @@ type PedidoItemAdicionalFullDTO struct {
 type PedidoCreateDTO struct {
 	TenantID           string             `json:"tenant_id"          validate:"required,uuid"`
 	IDCliente          string             `json:"id_cliente"         validate:"required,uuid"`
-	CodigoPedido       string             `json:"codigo_pedido"      validate:"required,max=20"`
+	CodigoPedido       string             `json:"codigo_pedido"      validate:"required,max=40"`
 	DataPedido         time.Time          `json:"data_pedido"        validate:"required"`
 	GMT                int16              `json:"gmt"                validate:"required"`
 	Cupom              *string            `json:"cupom,omitempty"`

@@ -1031,30 +1031,37 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
   }
 
   return (
-    <div className="space-y-4 w-full max-w-5xl">
+    <div className="space-y-3 w-full max-w-5xl">
       {/* Header com Status */}
       <Card variant="outlined">
         <CardContent>
-          <Box className="flex items-center justify-between mb-4">
+          <Box className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4 sm:gap-0">
             <div>
-              <Typography variant="h5" className="font-bold">
+              <Typography
+                variant="h5"
+                className="font-bold text-base sm:text-xl"
+              >
                 Pedido #{pedido.codigo_pedido}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                className="text-sm"
+              >
                 Cliente: {pedido.cliente.nome_razao_social}
               </Typography>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <Chip
                 icon={pedidoQuitado ? <CheckCircle /> : <AlertCircle />}
                 label={pedidoQuitado ? "Quitado" : "Pendente"}
                 color={pedidoQuitado ? "success" : "warning"}
-                size="medium"
+                size="small"
               />
               <Typography
                 variant="body2"
                 color="text.secondary"
-                className="mt-1"
+                className="mt-1 text-sm"
               >
                 {percentualPago.toFixed(1)}% pago
               </Typography>
@@ -1066,48 +1073,71 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
             <LinearProgress
               variant="determinate"
               value={Math.min(percentualPago, 100)}
-              sx={{ height: 8, borderRadius: 4 }}
+              sx={{ height: 6, borderRadius: 3 }}
             />
           </Box>
 
           {/* Resumo Financeiro */}
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             <Grid size={3}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                className="text-sm"
+              >
                 Total do Pedido
               </Typography>
-              <Typography variant="h6" className="font-bold">
+              <Typography
+                variant="h6"
+                className="font-bold text-base sm:text-lg"
+              >
                 {formatarMoeda(totalPedido)}
               </Typography>
             </Grid>
             <Grid size={3}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                className="text-sm"
+              >
                 Valor Pago
               </Typography>
               <Typography
                 variant="h6"
                 color="success.main"
-                className="font-bold"
+                className="font-bold text-base sm:text-lg"
               >
                 {formatarMoeda(valorPago)}
               </Typography>
             </Grid>
             <Grid size={3}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                className="text-sm"
+              >
                 Em Parcelas
               </Typography>
-              <Typography variant="h6" color="info.main" className="font-bold">
+              <Typography
+                variant="h6"
+                color="info.main"
+                className="font-bold text-base sm:text-lg"
+              >
                 {formatarMoeda(valorParcelas)}
               </Typography>
             </Grid>
             <Grid size={3}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                className="text-sm"
+              >
                 Falta Pagar
               </Typography>
               <Typography
                 variant="h6"
                 color={faltaPagar <= 0.01 ? "success.main" : "error.main"}
-                className="font-bold"
+                className="font-bold text-base sm:text-lg"
               >
                 {formatarMoeda(faltaPagar)}
               </Typography>

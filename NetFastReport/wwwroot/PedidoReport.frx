@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="05/30/2025 23:22:29" ReportInfo.CreatorVersion="2025.2.0.0">
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="05/31/2025 19:56:07" ReportInfo.CreatorVersion="2025.2.0.0">
   <Dictionary>
     <BusinessObjectDataSource Name="Pedidos" ReferenceName="Pedidos" DataType="System.Int32" Enabled="true">
       <Column Name="Id" DataType="System.Guid"/>
@@ -129,37 +129,42 @@
       <TextObject Name="Text2" Left="75.6" Top="28.35" Width="198.45" Height="28.35" Text="Endereço [Tenants.Endereco], [Tenants.Bairro], [Tenants.Cidade]" HorzAlign="Center" Font="Arial, 7pt, style=Bold"/>
       <TextObject Name="Text3" Left="75.6" Top="56.7" Width="198.45" Height="18.9" Text="Telefone.: [Tenants.Telefone]" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
     </ReportTitleBand>
-    <PageHeaderBand Name="PageHeader1" Top="86.65" Width="272.16" Height="59.99" Border.Lines="Top, Bottom" Border.Style="Dot" CanShrink="true">
-      <TextObject Name="Text29" Top="0.9" Width="274.05" Height="14.74" Text="Cliente: [Clientes.NomeRazaoSocial]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-      <TextObject Name="Text30" Top="15.35" Width="274.05" Height="14.74" CanShrink="true" Text="[IIf(Length([Clientes.Logradouro]) &gt; 0,[Clientes.Logradouro] + &quot;, &quot; + [Clientes.Numero] + &quot; - &quot; + [Clientes.Bairro],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-      <TextObject Name="Text31" Top="30.35" Width="274.05" Height="14.74" CanShrink="true" Text="[IIf(Length([Clientes.Cidade]) &gt; 0,[Clientes.Cidade] + &quot;, &quot; + [Clientes.Uf],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-      <TextObject Name="Text32" Top="45.25" Width="274.05" Height="14.74" CanShrink="true" Text="[IIf(Length([Clientes.Complemento]) &gt; 0, &quot;Complemento: &quot; + [Clientes.Complemento],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+    <PageHeaderBand Name="PageHeader1" Top="87.34" Width="272.16" Height="59.99" Border.Lines="Top, Bottom" Border.Style="Dot" CanGrow="true" CanShrink="true">
+      <TextObject Name="Text29" Top="0.9" Width="274.05" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="Cliente: [Clientes.NomeRazaoSocial]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <TextObject Name="Text30" Top="15.35" Width="274.05" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="[IIf(Length([Clientes.Logradouro]) &gt; 0,[Clientes.Logradouro] + &quot;, &quot; + [Clientes.Numero] + &quot; - &quot; + [Clientes.Bairro],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <TextObject Name="Text31" Top="30.35" Width="274.05" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="[IIf(Length([Clientes.Cidade]) &gt; 0,[Clientes.Cidade] + &quot;, &quot; + [Clientes.Uf],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <TextObject Name="Text32" Top="45.25" Width="274.05" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="[IIf(Length([Clientes.Complemento]) &gt; 0, &quot;Complemento: &quot; + [Clientes.Complemento],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
     </PageHeaderBand>
-    <DataBand Name="Data1" Top="165.58" Width="272.16" Height="29.64" Border.Lines="Top" Border.Style="Dot" CanShrink="true" DataSource="PedidoItens">
-      <TextObject Name="Text4" Width="207.9" Height="14.74" Text="([PedidoItens.Quantidade]x) [PedidoItens.NomeProduto]" Font="Arial, 8pt, style=Bold"/>
-      <TextObject Name="Text7" Left="207" Width="66.15" Height="14.74" Text="[PedidoItens.ValorUnitario]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-      <TextObject Name="Text33" Left="0.45" Top="14.9" Width="274.05" Height="14.74" CanShrink="true" Text="[IIf(Length([PedidoItens.Observacao]) &gt; 0,&quot;Obs.: &quot; +[PedidoItens.Observacao],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-      <ChildBand Name="Child1" Top="196.82" Width="272.16" Height="28.35">
+    <DataBand Name="Data1" Top="167.64" Width="272.16" Height="29.64" Border.Lines="Top" Border.Style="Dot" CanGrow="true" CanShrink="true" DataSource="PedidoItens">
+      <TextObject Name="Text4" Width="207.9" Height="14.74" CanGrow="true" CanShrink="true" Text="([PedidoItens.Quantidade]x) [PedidoItens.NomeProduto]" Font="Arial, 8pt, style=Bold"/>
+      <TextObject Name="Text7" Left="207" Width="66.15" Height="14.74" CanGrow="true" CanShrink="true" Text="[PedidoItens.ValorUnitario]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+      <TextObject Name="Text33" Left="0.45" Top="14.9" Width="274.05" Height="14.74" CanGrow="true" CanShrink="true" CanBreak="false" Text="[IIf(Length([PedidoItens.Observacao]) &gt; 0,&quot;Obs.: &quot; +[PedidoItens.Observacao],&quot;&quot;)]" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <ChildBand Name="Child1" Top="199.56" Width="272.16" Height="28.35">
         <SubreportObject Name="Subreport1" Width="274.05" Height="28.35" ReportPage="Page2"/>
       </ChildBand>
-      <DataHeaderBand Name="DataHeader1" Top="148.24" Width="272.16" Height="15.74">
+      <DataHeaderBand Name="DataHeader1" Top="149.61" Width="272.16" Height="15.74">
         <TextObject Name="Text10" Top="1" Width="274.05" Height="14.74" Text="ITENS" HorzAlign="Center" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
       </DataHeaderBand>
-      <DataFooterBand Name="DataFooter1" Top="226.77" Width="272.16" Height="92.89" Border.Lines="Top" Border.Style="Dot">
-        <TextObject Name="Text17" Top="19.9" Width="132.3" Height="14.74" Text="Sub-total:" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-        <TextObject Name="Text18" Top="34.35" Width="132.3" Height="14.74" Text="Taxa de entrega:" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-        <TextObject Name="Text19" Top="49.25" Width="132.3" Height="14.74" Text="Desconto" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-        <TextObject Name="Text20" Top="64.15" Width="132.3" Height="14.74" Text="Acréscimo" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-        <TextObject Name="Text21" Left="158.65" Top="19.78" Width="113.4" Height="14.74" Text="[Pedidos.ValorTotal]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text22" Left="158.65" Top="34.52" Width="113.4" Height="14.74" Text="[Pedidos.TaxaEntrega]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text23" Left="158.65" Top="49.26" Width="113.4" Height="14.74" Text="[Pedidos.Desconto]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text24" Left="158.65" Top="64.01" Width="113.4" Height="14.74" Text="[Pedidos.Acrescimo]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text25" Top="78.15" Width="132.3" Height="14.74" Text="Total" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
-        <TextObject Name="Text26" Left="158.2" Top="77.99" Width="113.4" Height="14.74" Text="[[Pedidos.ValorTotal]+[Pedidos.TaxaEntrega]+[Pedidos.Acrescimo]-[Pedidos.Desconto]]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text27" Top="3" Width="274.05" Height="14.74" Border.Lines="Bottom" Border.Style="Dot" Text="TOTAIS" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+      <DataFooterBand Name="DataFooter1" Top="230.2" Width="272.16" Height="90.89" Border.Lines="Top" Border.Style="Dot">
+        <TextObject Name="Text17" Top="17.9" Width="132.3" Height="14.74" Text="Sub-total:" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text18" Top="32.35" Width="132.3" Height="14.74" Text="Taxa de entrega:" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text19" Top="47.25" Width="132.3" Height="14.74" Text="Desconto" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text20" Top="62.15" Width="132.3" Height="14.74" Text="Acréscimo" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text21" Left="158.65" Top="17.78" Width="113.4" Height="14.74" Text="[Pedidos.ValorTotal]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+        <TextObject Name="Text22" Left="158.65" Top="32.52" Width="113.4" Height="14.74" Text="[Pedidos.TaxaEntrega]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+        <TextObject Name="Text23" Left="158.65" Top="47.26" Width="113.4" Height="14.74" Text="[Pedidos.Desconto]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+        <TextObject Name="Text24" Left="158.65" Top="62.01" Width="113.4" Height="14.74" Text="[Pedidos.Acrescimo]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+        <TextObject Name="Text25" Top="76.15" Width="132.3" Height="14.74" Text="Total" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text26" Left="158.2" Top="75.99" Width="113.4" Height="14.74" Text="[[Pedidos.ValorTotal]+[Pedidos.TaxaEntrega]+[Pedidos.Acrescimo]-[Pedidos.Desconto]]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
+        <TextObject Name="Text27" Top="1" Width="274.05" Height="14.74" Border.Lines="Bottom" Border.Style="Dot" Text="TOTAIS" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <ChildBand Name="Child2" Top="323.37" Width="272.16" Height="37.8" VisibleExpression="[Pedidos.TrocoPara] &gt; 0">
+          <TextObject Name="Text34" Top="18.9" Width="132.3" Height="18.9" Text="Troco para: [Pedidos.TrocoPara]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" Font="Arial, 8pt, style=Bold"/>
+          <TextObject Name="Text35" Top="2" Width="274.05" Height="14.74" Border.Lines="Top, Bottom" Border.Style="Dot" Text="OBSERVAÇÃO" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+          <TextObject Name="Text36" Left="132.3" Top="18.9" Width="141.75" Height="18.9" Text="Valor Troco: [[Pedidos.TrocoPara]-([Pedidos.ValorTotal]+[Pedidos.TaxaEntrega]-[Pedidos.Desconto]+[Pedidos.Acrescimo])]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" Font="Arial, 8pt, style=Bold"/>
+        </ChildBand>
       </DataFooterBand>
     </DataBand>
-    <PageFooterBand Name="PageFooter1" Top="321.26" Width="272.16" Height="28.35"/>
+    <PageFooterBand Name="PageFooter1" Top="363.46" Width="272.16" Height="9.45"/>
   </ReportPage>
   <ReportPage Name="Page2" PaperWidth="80" PaperHeight="0" LeftMargin="4" TopMargin="4" RightMargin="4" BottomMargin="4" Watermark.Font="Arial, 60pt">
     <DataBand Name="Data2" Width="272.16" Height="14.74" DataSource="PedidoItemAdicionais" Filter="[PedidoItemAdicionais.IdPedidoItem] == [PedidoItens.Id]">

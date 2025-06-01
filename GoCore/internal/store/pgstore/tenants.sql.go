@@ -60,28 +60,44 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const createTenant = `-- name: CreateTenant :one
 
 
-INSERT INTO tenants (name, plan, status, id_cliente_padrao, photo, telefone, endereco, bairro, cidade)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
+INSERT INTO tenants (name, plan, status, id_cliente_padrao, photo, telefone, endereco, bairro, cidade, taxa_entrega_padrao)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade, taxa_entrega_padrao
 `
 
 type CreateTenantParams struct {
-	Name            string      `json:"name"`
-	Plan            string      `json:"plan"`
-	Status          string      `json:"status"`
-	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
-	Photo           []byte      `json:"photo"`
-	Telefone        pgtype.Text `json:"telefone"`
-	Endereco        pgtype.Text `json:"endereco"`
-	Bairro          pgtype.Text `json:"bairro"`
-	Cidade          pgtype.Text `json:"cidade"`
+	Name              string         `json:"name"`
+	Plan              string         `json:"plan"`
+	Status            string         `json:"status"`
+	IDClientePadrao   pgtype.UUID    `json:"id_cliente_padrao"`
+	Photo             []byte         `json:"photo"`
+	Telefone          pgtype.Text    `json:"telefone"`
+	Endereco          pgtype.Text    `json:"endereco"`
+	Bairro            pgtype.Text    `json:"bairro"`
+	Cidade            pgtype.Text    `json:"cidade"`
+	TaxaEntregaPadrao pgtype.Numeric `json:"taxa_entrega_padrao"`
+}
+
+type CreateTenantRow struct {
+	ID                uuid.UUID      `json:"id"`
+	Name              string         `json:"name"`
+	Plan              string         `json:"plan"`
+	Status            string         `json:"status"`
+	CreatedAt         time.Time      `json:"created_at"`
+	IDClientePadrao   pgtype.UUID    `json:"id_cliente_padrao"`
+	Photo             []byte         `json:"photo"`
+	Telefone          pgtype.Text    `json:"telefone"`
+	Endereco          pgtype.Text    `json:"endereco"`
+	Bairro            pgtype.Text    `json:"bairro"`
+	Cidade            pgtype.Text    `json:"cidade"`
+	TaxaEntregaPadrao pgtype.Numeric `json:"taxa_entrega_padrao"`
 }
 
 // SQLC Queries for Multi-Tenant SaaS
 // ***********************
 // TENANTS
 // ***********************
-func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error) {
+func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (CreateTenantRow, error) {
 	row := q.db.QueryRow(ctx, createTenant,
 		arg.Name,
 		arg.Plan,
@@ -92,8 +108,9 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		arg.Endereco,
 		arg.Bairro,
 		arg.Cidade,
+		arg.TaxaEntregaPadrao,
 	)
-	var i Tenant
+	var i CreateTenantRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -106,6 +123,7 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 		&i.Endereco,
 		&i.Bairro,
 		&i.Cidade,
+		&i.TaxaEntregaPadrao,
 	)
 	return i, err
 }
@@ -226,7 +244,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (Product, er
 }
 
 const getTenant = `-- name: GetTenant :one
-SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
+SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade, seq_id, taxa_entrega_padrao
 FROM tenants
 WHERE id = $1
 `
@@ -246,6 +264,8 @@ func (q *Queries) GetTenant(ctx context.Context, id uuid.UUID) (Tenant, error) {
 		&i.Endereco,
 		&i.Bairro,
 		&i.Cidade,
+		&i.SeqID,
+		&i.TaxaEntregaPadrao,
 	)
 	return i, err
 }
@@ -365,7 +385,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 }
 
 const listTenants = `-- name: ListTenants :many
-SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
+SELECT id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade, seq_id, taxa_entrega_padrao
 FROM tenants
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -397,6 +417,8 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]Ten
 			&i.Endereco,
 			&i.Bairro,
 			&i.Cidade,
+			&i.SeqID,
+			&i.TaxaEntregaPadrao,
 		); err != nil {
 			return nil, err
 		}
@@ -513,25 +535,41 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
-SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5, photo = $6, telefone = $7, endereco = $8, bairro = $9, cidade = $10
+SET name = $2, plan = $3, status = $4, id_cliente_padrao = $5, photo = $6, telefone = $7, endereco = $8, bairro = $9, cidade = $10, taxa_entrega_padrao = $11
 WHERE id = $1
-RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade
+RETURNING id, name, plan, status, created_at, id_cliente_padrao, photo, telefone, endereco, bairro, cidade, taxa_entrega_padrao
 `
 
 type UpdateTenantParams struct {
-	ID              uuid.UUID   `json:"id"`
-	Name            string      `json:"name"`
-	Plan            string      `json:"plan"`
-	Status          string      `json:"status"`
-	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
-	Photo           []byte      `json:"photo"`
-	Telefone        pgtype.Text `json:"telefone"`
-	Endereco        pgtype.Text `json:"endereco"`
-	Bairro          pgtype.Text `json:"bairro"`
-	Cidade          pgtype.Text `json:"cidade"`
+	ID                uuid.UUID      `json:"id"`
+	Name              string         `json:"name"`
+	Plan              string         `json:"plan"`
+	Status            string         `json:"status"`
+	IDClientePadrao   pgtype.UUID    `json:"id_cliente_padrao"`
+	Photo             []byte         `json:"photo"`
+	Telefone          pgtype.Text    `json:"telefone"`
+	Endereco          pgtype.Text    `json:"endereco"`
+	Bairro            pgtype.Text    `json:"bairro"`
+	Cidade            pgtype.Text    `json:"cidade"`
+	TaxaEntregaPadrao pgtype.Numeric `json:"taxa_entrega_padrao"`
 }
 
-func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
+type UpdateTenantRow struct {
+	ID                uuid.UUID      `json:"id"`
+	Name              string         `json:"name"`
+	Plan              string         `json:"plan"`
+	Status            string         `json:"status"`
+	CreatedAt         time.Time      `json:"created_at"`
+	IDClientePadrao   pgtype.UUID    `json:"id_cliente_padrao"`
+	Photo             []byte         `json:"photo"`
+	Telefone          pgtype.Text    `json:"telefone"`
+	Endereco          pgtype.Text    `json:"endereco"`
+	Bairro            pgtype.Text    `json:"bairro"`
+	Cidade            pgtype.Text    `json:"cidade"`
+	TaxaEntregaPadrao pgtype.Numeric `json:"taxa_entrega_padrao"`
+}
+
+func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (UpdateTenantRow, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
 		arg.ID,
 		arg.Name,
@@ -543,8 +581,9 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		arg.Endereco,
 		arg.Bairro,
 		arg.Cidade,
+		arg.TaxaEntregaPadrao,
 	)
-	var i Tenant
+	var i UpdateTenantRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -557,6 +596,7 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Ten
 		&i.Endereco,
 		&i.Bairro,
 		&i.Cidade,
+		&i.TaxaEntregaPadrao,
 	)
 	return i, err
 }

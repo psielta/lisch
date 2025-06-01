@@ -34,6 +34,8 @@ export interface Tenant {
   endereco: string | null;
   bairro: string | null;
   cidade: string | null;
+  seq_id: number;
+  taxa_entrega_padrao: number;
 }
 
 interface LoginInput {

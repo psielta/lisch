@@ -19,77 +19,88 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/queries/qmhelper"
+	"github.com/volatiletech/sqlboiler/v4/types"
 	"github.com/volatiletech/strmangle"
 )
 
 // Tenant is an object representing the database table.
 type Tenant struct {
-	ID              string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Name            string      `boil:"name" json:"name" toml:"name" yaml:"name"`
-	Plan            string      `boil:"plan" json:"plan" toml:"plan" yaml:"plan"`
-	Status          string      `boil:"status" json:"status" toml:"status" yaml:"status"`
-	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	IDClientePadrao null.String `boil:"id_cliente_padrao" json:"id_cliente_padrao,omitempty" toml:"id_cliente_padrao" yaml:"id_cliente_padrao,omitempty"`
-	Photo           null.Bytes  `boil:"photo" json:"photo,omitempty" toml:"photo" yaml:"photo,omitempty"`
-	Telefone        null.String `boil:"telefone" json:"telefone,omitempty" toml:"telefone" yaml:"telefone,omitempty"`
-	Endereco        null.String `boil:"endereco" json:"endereco,omitempty" toml:"endereco" yaml:"endereco,omitempty"`
-	Bairro          null.String `boil:"bairro" json:"bairro,omitempty" toml:"bairro" yaml:"bairro,omitempty"`
-	Cidade          null.String `boil:"cidade" json:"cidade,omitempty" toml:"cidade" yaml:"cidade,omitempty"`
+	ID                string            `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Name              string            `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Plan              string            `boil:"plan" json:"plan" toml:"plan" yaml:"plan"`
+	Status            string            `boil:"status" json:"status" toml:"status" yaml:"status"`
+	CreatedAt         time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	IDClientePadrao   null.String       `boil:"id_cliente_padrao" json:"id_cliente_padrao,omitempty" toml:"id_cliente_padrao" yaml:"id_cliente_padrao,omitempty"`
+	Photo             null.Bytes        `boil:"photo" json:"photo,omitempty" toml:"photo" yaml:"photo,omitempty"`
+	Telefone          null.String       `boil:"telefone" json:"telefone,omitempty" toml:"telefone" yaml:"telefone,omitempty"`
+	Endereco          null.String       `boil:"endereco" json:"endereco,omitempty" toml:"endereco" yaml:"endereco,omitempty"`
+	Bairro            null.String       `boil:"bairro" json:"bairro,omitempty" toml:"bairro" yaml:"bairro,omitempty"`
+	Cidade            null.String       `boil:"cidade" json:"cidade,omitempty" toml:"cidade" yaml:"cidade,omitempty"`
+	SeqID             int64             `boil:"seq_id" json:"seq_id" toml:"seq_id" yaml:"seq_id"`
+	TaxaEntregaPadrao types.NullDecimal `boil:"taxa_entrega_padrao" json:"taxa_entrega_padrao,omitempty" toml:"taxa_entrega_padrao" yaml:"taxa_entrega_padrao,omitempty"`
 
 	R *tenantR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L tenantL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var TenantColumns = struct {
-	ID              string
-	Name            string
-	Plan            string
-	Status          string
-	CreatedAt       string
-	IDClientePadrao string
-	Photo           string
-	Telefone        string
-	Endereco        string
-	Bairro          string
-	Cidade          string
+	ID                string
+	Name              string
+	Plan              string
+	Status            string
+	CreatedAt         string
+	IDClientePadrao   string
+	Photo             string
+	Telefone          string
+	Endereco          string
+	Bairro            string
+	Cidade            string
+	SeqID             string
+	TaxaEntregaPadrao string
 }{
-	ID:              "id",
-	Name:            "name",
-	Plan:            "plan",
-	Status:          "status",
-	CreatedAt:       "created_at",
-	IDClientePadrao: "id_cliente_padrao",
-	Photo:           "photo",
-	Telefone:        "telefone",
-	Endereco:        "endereco",
-	Bairro:          "bairro",
-	Cidade:          "cidade",
+	ID:                "id",
+	Name:              "name",
+	Plan:              "plan",
+	Status:            "status",
+	CreatedAt:         "created_at",
+	IDClientePadrao:   "id_cliente_padrao",
+	Photo:             "photo",
+	Telefone:          "telefone",
+	Endereco:          "endereco",
+	Bairro:            "bairro",
+	Cidade:            "cidade",
+	SeqID:             "seq_id",
+	TaxaEntregaPadrao: "taxa_entrega_padrao",
 }
 
 var TenantTableColumns = struct {
-	ID              string
-	Name            string
-	Plan            string
-	Status          string
-	CreatedAt       string
-	IDClientePadrao string
-	Photo           string
-	Telefone        string
-	Endereco        string
-	Bairro          string
-	Cidade          string
+	ID                string
+	Name              string
+	Plan              string
+	Status            string
+	CreatedAt         string
+	IDClientePadrao   string
+	Photo             string
+	Telefone          string
+	Endereco          string
+	Bairro            string
+	Cidade            string
+	SeqID             string
+	TaxaEntregaPadrao string
 }{
-	ID:              "tenants.id",
-	Name:            "tenants.name",
-	Plan:            "tenants.plan",
-	Status:          "tenants.status",
-	CreatedAt:       "tenants.created_at",
-	IDClientePadrao: "tenants.id_cliente_padrao",
-	Photo:           "tenants.photo",
-	Telefone:        "tenants.telefone",
-	Endereco:        "tenants.endereco",
-	Bairro:          "tenants.bairro",
-	Cidade:          "tenants.cidade",
+	ID:                "tenants.id",
+	Name:              "tenants.name",
+	Plan:              "tenants.plan",
+	Status:            "tenants.status",
+	CreatedAt:         "tenants.created_at",
+	IDClientePadrao:   "tenants.id_cliente_padrao",
+	Photo:             "tenants.photo",
+	Telefone:          "tenants.telefone",
+	Endereco:          "tenants.endereco",
+	Bairro:            "tenants.bairro",
+	Cidade:            "tenants.cidade",
+	SeqID:             "tenants.seq_id",
+	TaxaEntregaPadrao: "tenants.taxa_entrega_padrao",
 }
 
 // Generated where
@@ -119,29 +130,33 @@ func (w whereHelpernull_Bytes) IsNull() qm.QueryMod    { return qmhelper.WhereIs
 func (w whereHelpernull_Bytes) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var TenantWhere = struct {
-	ID              whereHelperstring
-	Name            whereHelperstring
-	Plan            whereHelperstring
-	Status          whereHelperstring
-	CreatedAt       whereHelpertime_Time
-	IDClientePadrao whereHelpernull_String
-	Photo           whereHelpernull_Bytes
-	Telefone        whereHelpernull_String
-	Endereco        whereHelpernull_String
-	Bairro          whereHelpernull_String
-	Cidade          whereHelpernull_String
+	ID                whereHelperstring
+	Name              whereHelperstring
+	Plan              whereHelperstring
+	Status            whereHelperstring
+	CreatedAt         whereHelpertime_Time
+	IDClientePadrao   whereHelpernull_String
+	Photo             whereHelpernull_Bytes
+	Telefone          whereHelpernull_String
+	Endereco          whereHelpernull_String
+	Bairro            whereHelpernull_String
+	Cidade            whereHelpernull_String
+	SeqID             whereHelperint64
+	TaxaEntregaPadrao whereHelpertypes_NullDecimal
 }{
-	ID:              whereHelperstring{field: "\"tenants\".\"id\""},
-	Name:            whereHelperstring{field: "\"tenants\".\"name\""},
-	Plan:            whereHelperstring{field: "\"tenants\".\"plan\""},
-	Status:          whereHelperstring{field: "\"tenants\".\"status\""},
-	CreatedAt:       whereHelpertime_Time{field: "\"tenants\".\"created_at\""},
-	IDClientePadrao: whereHelpernull_String{field: "\"tenants\".\"id_cliente_padrao\""},
-	Photo:           whereHelpernull_Bytes{field: "\"tenants\".\"photo\""},
-	Telefone:        whereHelpernull_String{field: "\"tenants\".\"telefone\""},
-	Endereco:        whereHelpernull_String{field: "\"tenants\".\"endereco\""},
-	Bairro:          whereHelpernull_String{field: "\"tenants\".\"bairro\""},
-	Cidade:          whereHelpernull_String{field: "\"tenants\".\"cidade\""},
+	ID:                whereHelperstring{field: "\"tenants\".\"id\""},
+	Name:              whereHelperstring{field: "\"tenants\".\"name\""},
+	Plan:              whereHelperstring{field: "\"tenants\".\"plan\""},
+	Status:            whereHelperstring{field: "\"tenants\".\"status\""},
+	CreatedAt:         whereHelpertime_Time{field: "\"tenants\".\"created_at\""},
+	IDClientePadrao:   whereHelpernull_String{field: "\"tenants\".\"id_cliente_padrao\""},
+	Photo:             whereHelpernull_Bytes{field: "\"tenants\".\"photo\""},
+	Telefone:          whereHelpernull_String{field: "\"tenants\".\"telefone\""},
+	Endereco:          whereHelpernull_String{field: "\"tenants\".\"endereco\""},
+	Bairro:            whereHelpernull_String{field: "\"tenants\".\"bairro\""},
+	Cidade:            whereHelpernull_String{field: "\"tenants\".\"cidade\""},
+	SeqID:             whereHelperint64{field: "\"tenants\".\"seq_id\""},
+	TaxaEntregaPadrao: whereHelpertypes_NullDecimal{field: "\"tenants\".\"taxa_entrega_padrao\""},
 }
 
 // TenantRels is where relationship names are stored.
@@ -222,9 +237,9 @@ func (r *tenantR) GetUsers() UserSlice {
 type tenantL struct{}
 
 var (
-	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade"}
+	tenantAllColumns            = []string{"id", "name", "plan", "status", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade", "seq_id", "taxa_entrega_padrao"}
 	tenantColumnsWithoutDefault = []string{"name", "plan", "status"}
-	tenantColumnsWithDefault    = []string{"id", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade"}
+	tenantColumnsWithDefault    = []string{"id", "created_at", "id_cliente_padrao", "photo", "telefone", "endereco", "bairro", "cidade", "seq_id", "taxa_entrega_padrao"}
 	tenantPrimaryKeyColumns     = []string{"id"}
 	tenantGeneratedColumns      = []string{}
 )

@@ -45,6 +45,7 @@ async function page() {
   if (page) {
     produtodata = page.produtos;
   }
+  console.log(tenant);
   return (
     <Vendas
       produtos={produtodata}
@@ -53,6 +54,7 @@ async function page() {
       adicionais={adicionais?.adicionais ?? []}
       pedido={null}
       defaultCliente={defaultCliente}
+      tenant={tenant}
     />
   );
 }

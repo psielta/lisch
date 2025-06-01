@@ -1,9 +1,10 @@
 "use client";
 import { Print } from "@mui/icons-material";
-import { useAuth, User } from "@/context/auth-context";
+import { useAuth, User, Tenant } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import DialogCliente from "@/components/dialogs/DialogCliente";
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { format } from "date-fns";
 import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
@@ -177,6 +178,7 @@ function Vendas({
   adicionais,
   pedido,
   defaultCliente,
+  tenant,
 }: {
   produtos: ProdutoResponse[];
   user: User;
@@ -184,7 +186,9 @@ function Vendas({
   adicionais: CategoriaAdicionalResponse[];
   pedido?: PedidoResponse | null;
   defaultCliente: PedidoClienteDTO | null | undefined;
+  tenant: Tenant;
 }) {
+  console.log(tenant);
   let pedidoValidationSchema = Yup.object({
     id: Yup.string().optional().nullable(),
     id_cliente: Yup.string()
@@ -240,7 +244,6 @@ function Vendas({
     ),
   });
 
-  const { tenant } = useAuth();
   console.log(produtos);
   const router = useRouter();
 
@@ -253,6 +256,9 @@ function Vendas({
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [shouldPrint, setShouldPrint] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoadingClientes, setIsLoadingClientes] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
     defaultCliente && pedido?.cliente
       ? [defaultCliente, pedido.cliente]
@@ -270,7 +276,8 @@ function Vendas({
     useState<PedidoClienteDTO | null>(null);
 
   const getCodigoPadrao = () => {
-    return `P${new Date().getFullYear()}${new Date().getMonth()}${new Date().getDate()}-${new Date().getHours()}${new Date().getMinutes()}${new Date().getSeconds()}`;
+    const now = new Date();
+    return `P${format(now, "yyyyMMdd-HHmmss")}`;
   };
 
   const initialValues: PedidoFormValues = {
@@ -451,10 +458,25 @@ function Vendas({
   const fetchClientes = useMemo(
     () =>
       debounce(async (query: string) => {
-        const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
-          `/clientes/smartsearch?search=${query}&page_size=250`
-        );
-        setClienteOptions(resp.data.items);
+        if (query.length < 3) {
+          setHasSearched(false);
+          return;
+        }
+
+        try {
+          setIsLoadingClientes(true);
+          const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
+            `/clientes/smartsearch?search=${query}&page_size=250`
+          );
+          setClienteOptions(resp.data.items);
+          setHasSearched(true);
+        } catch (error) {
+          console.error("Erro ao buscar clientes:", error);
+          setClienteOptions([]);
+          setHasSearched(true);
+        } finally {
+          setIsLoadingClientes(false);
+        }
       }, 300),
     []
   );
@@ -609,7 +631,7 @@ function Vendas({
             <>
               <Form className="flex h-screen overflow-hidden">
                 {/* Left Sidebar - Resumo do Pedido */}
-                <aside className="hidden lg:flex w-80 flex-col border-r border-border overflow-y-auto">
+                <aside className="hidden lg:flex w-80 md:w-56 xl:w-80 flex-col border-r border-border overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
@@ -624,20 +646,22 @@ function Vendas({
                       {formik.values.itens.length > 0 ? (
                         <div className="space-y-6">
                           {/* Header do pedido */}
-                          <div className="bg-gradient-to-r from-primary/25 to-primary/34 rounded-xl p-4 border border-primary/20">
-                            <div className="flex items-center justify-between mb-2">
+                          <div className="bg-gradient-to-r from-primary/25 to-primary/34 rounded-lg p-2 sm:p-3 border border-primary/20">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                               <Typography
                                 variant="h6"
-                                className="font-bold text-foreground"
+                                className="font-bold text-sm sm:text-base"
                               >
-                                Pedido #{formik.values.codigo_pedido || "Novo"}
+                                {formik.values.id
+                                  ? `#${formik.values.codigo_pedido}`
+                                  : "Novo Pedido"}
                               </Typography>
                               <Chip
                                 icon={getStatusIcon(formik.values.tipo_entrega)}
                                 label={formik.values.tipo_entrega}
                                 size="small"
                                 sx={{
-                                  backgroundColor: getStatusColor(
+                                  bgcolor: getStatusColor(
                                     formik.values.tipo_entrega
                                   ),
                                   color: "white",
@@ -835,8 +859,8 @@ function Vendas({
                                       key={index}
                                       className="border-b border-border pb-4 last:border-b-0 last:pb-0"
                                     >
-                                      <div className="flex justify-between items-start mb-2">
-                                        <div className="flex-1">
+                                      <div className="flex justify-between items-start mb-2 flex-wrap">
+                                        <div className="flex-1 min-w-0">
                                           <Typography
                                             variant="subtitle2"
                                             className="font-medium"
@@ -859,7 +883,7 @@ function Vendas({
                                             </Typography>
                                           )}
                                         </div>
-                                        <div className="text-right ml-4">
+                                        <div className="text-right ml-4 shrink-0">
                                           <Typography
                                             variant="body2"
                                             className="font-medium"
@@ -878,7 +902,7 @@ function Vendas({
                                             )}
                                           </Typography>
                                         </div>
-                                        <div className="flex items-center gap-1 ml-2">
+                                        <div className="flex items-center gap-1 ml-2 shrink-0">
                                           <IconButton
                                             size="small"
                                             onClick={() =>
@@ -1065,8 +1089,13 @@ function Vendas({
                                   onInputChange={(_, newInput, reason) => {
                                     if (reason === "input") {
                                       setInputValue(newInput);
-                                      if (newInput.length >= 3)
+                                      if (newInput.length >= 3) {
+                                        setHasSearched(false); // Reset do estado quando inicia nova busca
                                         fetchClientes(newInput);
+                                      } else {
+                                        setHasSearched(false);
+                                        setIsLoadingClientes(false);
+                                      }
                                     }
                                   }}
                                   onChange={(_, option) => {
@@ -1090,9 +1119,14 @@ function Vendas({
                                   isOptionEqualToValue={(opt, val) =>
                                     opt.id === val.id
                                   }
-                                  loading={
-                                    inputValue.length >= 3 &&
-                                    clienteOptions.length === 0
+                                  loading={isLoadingClientes}
+                                  // Propriedade para mostrar mensagem quando não há resultados
+                                  noOptionsText={
+                                    inputValue.length < 3
+                                      ? "Digite pelo menos 3 caracteres para buscar"
+                                      : hasSearched && !isLoadingClientes
+                                      ? "Nenhum cliente encontrado"
+                                      : "Digite para buscar clientes"
                                   }
                                   onBlur={() => {
                                     const selecionado = clienteOptions.find(
@@ -1166,7 +1200,7 @@ function Vendas({
                           </Grid>
 
                           {/* Código do Pedido */}
-                          <Grid size={12}>
+                          {/* <Grid size={12}>
                             <TextField
                               size="small"
                               fullWidth
@@ -1185,7 +1219,7 @@ function Vendas({
                               }
                               required
                             />
-                          </Grid>
+                          </Grid> */}
 
                           {/* Tipo de Entrega */}
                           <Grid size={6}>
@@ -1195,11 +1229,21 @@ function Vendas({
                                 name="tipo_entrega"
                                 value={formik.values.tipo_entrega}
                                 onChange={(e) => {
+                                  debugger;
                                   formik.handleChange(e);
                                   if (e.target.value !== "Delivery") {
                                     formik.setFieldValue(
                                       "taxa_entrega",
                                       "0.00"
+                                    );
+                                  } else if (
+                                    (tenant?.taxa_entrega_padrao ?? 0) > 0
+                                  ) {
+                                    formik.setFieldValue(
+                                      "taxa_entrega",
+                                      (
+                                        tenant?.taxa_entrega_padrao ?? 0
+                                      ).toFixed(2)
                                     );
                                   }
                                 }}
@@ -1393,17 +1437,23 @@ function Vendas({
                         {/* Submit Button */}
                         <Box
                           sx={{
-                            mt: 4,
                             display: "flex",
-                            justifyContent: "space-between",
-                            gap: 2,
+                            mt: { xs: 1 }, // Ajusta o espaçamento superior em telas pequenas
+                            flexDirection: { xs: "column", sm: "row" }, // Empilha em telas pequenas (<600px)
+                            justifyContent: {
+                              xs: "center",
+                              sm: "space-between",
+                            }, // Centraliza em telas pequenas
+                            alignItems: { xs: "center", sm: "flex-start" }, // Alinha ao centro em telas pequenas
+                            gap: { xs: 1, sm: 2 }, // Reduz espaçamento em telas pequenas
+                            flexWrap: "wrap", // Permite quebra de linha se necessário
                           }}
                         >
-                          <Box>
+                          <Box sx={{ mb: { xs: 1, sm: 0 } }}>
                             {formik.values.id && (
                               <Button
                                 variant="outlined"
-                                size="large"
+                                size="medium"
                                 startIcon={
                                   isPrintLoading ? (
                                     <CircularProgress size={16} />
@@ -1415,6 +1465,7 @@ function Vendas({
                                   handlePrintPedido(formik.values.id || "")
                                 }
                                 disabled={isPrintLoading || isAnyLoading}
+                                sx={{ minWidth: { xs: "120px", sm: "140px" } }} // Garante largura mínima
                               >
                                 {isPrintLoading
                                   ? "Imprimindo..."
@@ -1422,19 +1473,28 @@ function Vendas({
                               </Button>
                             )}
                           </Box>
-                          <Box sx={{ display: "flex", gap: 2 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: { xs: "column", sm: "row" }, // Empilha botões à direita em telas pequenas
+                              gap: { xs: 1, sm: 2 }, // Ajusta espaçamento
+                              alignItems: { xs: "center", sm: "flex-start" },
+                              flexWrap: "wrap",
+                            }}
+                          >
                             <Button
                               variant="outlined"
-                              size="large"
+                              size="medium"
                               onClick={() => router.push("/gerenciar-vendas")}
                               disabled={isAnyLoading}
+                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
                             >
                               Voltar
                             </Button>
                             <Button
                               type="submit"
                               variant="contained"
-                              size="large"
+                              size="medium"
                               disabled={
                                 !formik.isValid ||
                                 formik.values.itens.length === 0 ||
@@ -1446,6 +1506,7 @@ function Vendas({
                                   <CircularProgress size={16} />
                                 ) : null
                               }
+                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
                             >
                               {isSubmitting && !shouldPrint
                                 ? "Salvando..."
@@ -1455,7 +1516,7 @@ function Vendas({
                             </Button>
                             <Button
                               variant="contained"
-                              size="large"
+                              size="medium"
                               color="secondary"
                               disabled={
                                 !formik.isValid ||
@@ -1473,6 +1534,7 @@ function Vendas({
                                 setShouldPrint(true);
                                 formik.handleSubmit();
                               }}
+                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
                             >
                               {isSubmitting && shouldPrint
                                 ? "Salvando..."
@@ -1488,7 +1550,7 @@ function Vendas({
                 </div>
 
                 {/* Right Sidebar - Produtos */}
-                <aside className="hidden lg:flex w-80 flex-col border-l border-border bg-card overflow-y-auto">
+                <aside className="hidden lg:flex w-80 md:w-56 xl:w-80 flex-col border-l border-border bg-card overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">

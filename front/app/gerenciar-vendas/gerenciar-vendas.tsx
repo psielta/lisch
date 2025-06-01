@@ -290,8 +290,8 @@ export default function GerenciarVendas({
   return (
     <div className="flex min-h-screen h-screen w-full">
       <div className="w-full h-full grow lg:flex">
-        <div className="flex-1 h-full xl:flex">
-          <div className="h-full flex flex-col border-b border-border px-4 py-6 sm:px-6 lg:pl-8 xl:w-64 xl:shrink-0 xl:border-r xl:border-b-0 xl:pl-6 bg-card">
+        <div className="flex-1 h-full flex">
+          <div className="h-full flex flex-col border-b border-border py-6 px-3 md:w-56 xl:w-80 xl:shrink-0 xl:border-r xl:border-b-0 bg-card">
             <div className="border-b border-border pb-4 mb-4 flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-semibold text-start text-foreground">
@@ -565,7 +565,7 @@ export default function GerenciarVendas({
           </div>
         </div>
 
-        <div className="h-full shrink-0 border-t border-border px-4 py-6 sm:px-6 lg:w-85 lg:border-t-0 lg:border-l lg:pr-8 xl:pr-6 bg-card overflow-y-auto">
+        <div className="h-full shrink-0 border-t border-border w-100 md:w-60 xl:w-80 2xl:w-100 px-3 py-6 lg:border-t-0 lg:border-l bg-card overflow-y-auto">
           {selectedPedido ? (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 border border-primary/20">
@@ -849,14 +849,15 @@ export default function GerenciarVendas({
                   backgroundColor: "background.paper",
                   border: 1,
                   borderColor: "divider",
+                  width: "100%",
                 }}
               >
-                <CardContent sx={{ padding: 3 }}>
+                <CardContent sx={{ padding: { xs: 2, sm: 3 } }}>
                   <Typography
                     variant="h6"
-                    className="font-semibold mb-3 flex items-center gap-2"
+                    className="font-semibold mb-3 flex items-center gap-2 text-base sm:text-lg"
                   >
-                    <Receipt sx={{ fontSize: 20 }} />
+                    <Receipt sx={{ fontSize: { xs: 18, sm: 20 } }} />
                     Itens do Pedido
                   </Typography>
                   <div className="space-y-4">
@@ -886,11 +887,11 @@ export default function GerenciarVendas({
                           key={index}
                           className="border-b border-border pb-4 last:border-b-0 last:pb-0"
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
+                            <div className="flex-1 min-w-0">
                               <Typography
                                 variant="subtitle2"
-                                className="font-medium"
+                                className="font-medium text-sm sm:text-base break-words"
                               >
                                 {produto?.nome || "Produto não encontrado"}
                                 {produto2 && ` + ${produto2.nome}`}
@@ -898,6 +899,7 @@ export default function GerenciarVendas({
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
+                                className="block text-xs sm:text-sm"
                               >
                                 {categoria?.nome}{" "}
                                 {categoriaOpcao && `• ${categoriaOpcao.nome}`}
@@ -905,16 +907,16 @@ export default function GerenciarVendas({
                               {item.observacao && (
                                 <Typography
                                   variant="caption"
-                                  className="block text-amber-600 mt-1"
+                                  className="block text-amber-600 mt-1 text-xs sm:text-sm"
                                 >
                                   Obs: {item.observacao}
                                 </Typography>
                               )}
                             </div>
-                            <div className="text-right ml-4">
+                            <div className="text-left sm:text-right shrink-0">
                               <Typography
                                 variant="body2"
-                                className="font-medium"
+                                className="font-medium text-sm sm:text-base"
                               >
                                 {item.quantidade}x{" "}
                                 {formatCurrency(
@@ -924,6 +926,7 @@ export default function GerenciarVendas({
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
+                                className="text-xs sm:text-sm"
                               >
                                 {formatCurrency(
                                   parseFloat(item.valor_unitario).toString()
@@ -932,11 +935,11 @@ export default function GerenciarVendas({
                             </div>
                           </div>
                           {item.adicionais && item.adicionais.length > 0 && (
-                            <div className="ml-4 mt-2 space-y-1">
+                            <div className="ml-2 sm:ml-4 mt-2 space-y-1">
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
-                                className="font-medium"
+                                className="font-medium text-xs sm:text-sm"
                               >
                                 Adicionais:
                               </Typography>
@@ -947,16 +950,16 @@ export default function GerenciarVendas({
                                 return (
                                   <div
                                     key={addIndex}
-                                    className="flex justify-between items-center text-sm"
+                                    className="flex justify-between items-center text-xs sm:text-sm"
                                   >
-                                    <span className="text-muted-foreground">
+                                    <span className="text-muted-foreground break-words pr-2">
                                       •{" "}
                                       {adicionalData?.opcao.nome ||
                                         "Adicional não encontrado"}
                                       {adicional.quantidade > 1 &&
                                         ` (${adicional.quantidade}x)`}
                                     </span>
-                                    <span className="text-muted-foreground">
+                                    <span className="text-muted-foreground shrink-0">
                                       {formatCurrency(adicional.valor)}
                                     </span>
                                   </div>

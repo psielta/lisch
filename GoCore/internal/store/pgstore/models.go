@@ -314,6 +314,12 @@ type PedidoPagamento struct {
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type PedidoSeqDiarium struct {
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Dia      pgtype.Date `json:"dia"`
+	Seq      int32       `json:"seq"`
+}
+
 type PedidoStatus struct {
 	ID        int16  `json:"id"`
 	Descricao string `json:"descricao"`
@@ -426,17 +432,19 @@ type Session struct {
 }
 
 type Tenant struct {
-	ID              uuid.UUID   `json:"id"`
-	Name            string      `json:"name"`
-	Plan            string      `json:"plan"`
-	Status          string      `json:"status"`
-	CreatedAt       time.Time   `json:"created_at"`
-	IDClientePadrao pgtype.UUID `json:"id_cliente_padrao"`
-	Photo           []byte      `json:"photo"`
-	Telefone        pgtype.Text `json:"telefone"`
-	Endereco        pgtype.Text `json:"endereco"`
-	Bairro          pgtype.Text `json:"bairro"`
-	Cidade          pgtype.Text `json:"cidade"`
+	ID                uuid.UUID      `json:"id"`
+	Name              string         `json:"name"`
+	Plan              string         `json:"plan"`
+	Status            string         `json:"status"`
+	CreatedAt         time.Time      `json:"created_at"`
+	IDClientePadrao   pgtype.UUID    `json:"id_cliente_padrao"`
+	Photo             []byte         `json:"photo"`
+	Telefone          pgtype.Text    `json:"telefone"`
+	Endereco          pgtype.Text    `json:"endereco"`
+	Bairro            pgtype.Text    `json:"bairro"`
+	Cidade            pgtype.Text    `json:"cidade"`
+	SeqID             int64          `json:"seq_id"`
+	TaxaEntregaPadrao pgtype.Numeric `json:"taxa_entrega_padrao"`
 }
 
 type User struct {

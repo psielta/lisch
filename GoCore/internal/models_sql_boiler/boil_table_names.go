@@ -14,6 +14,7 @@ var TableNames = struct {
 	PedidoItemAdicionais     string
 	PedidoItens              string
 	PedidoPagamentos         string
+	PedidoSeqDiaria          string
 	PedidoStatus             string
 	Pedidos                  string
 	Products                 string
@@ -33,6 +34,7 @@ var TableNames = struct {
 	PedidoItemAdicionais:     "pedido_item_adicionais",
 	PedidoItens:              "pedido_itens",
 	PedidoPagamentos:         "pedido_pagamentos",
+	PedidoSeqDiaria:          "pedido_seq_diaria",
 	PedidoStatus:             "pedido_status",
 	Pedidos:                  "pedidos",
 	Products:                 "products",

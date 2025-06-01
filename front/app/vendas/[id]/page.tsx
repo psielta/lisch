@@ -103,6 +103,7 @@ export default async function Page({
       adicionais={dadosFinais.adicionais}
       pedido={pedidoEditarDTO?.pedido}
       defaultCliente={defaultCliente}
+      tenant={tenant}
     />
   );
 }

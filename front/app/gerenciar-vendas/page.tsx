@@ -41,6 +41,7 @@ async function page() {
         categorias={categorias ?? []}
         adicionais={adicionais?.adicionais ?? []}
         idPedidoSelecionado={null}
+        user={user}
       />
     </div>
   );

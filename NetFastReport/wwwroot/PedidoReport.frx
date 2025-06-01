@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="06/01/2025 08:11:31" ReportInfo.CreatorVersion="2025.2.0.0">
+<Report ScriptLanguage="CSharp" ReportInfo.Created="05/30/2025 20:39:54" ReportInfo.Modified="06/01/2025 08:23:42" ReportInfo.CreatorVersion="2025.2.0.0">
   <Dictionary>
     <BusinessObjectDataSource Name="Pedidos" ReferenceName="Pedidos" DataType="System.Int32" Enabled="true">
       <Column Name="Id" DataType="System.Guid"/>
@@ -143,7 +143,7 @@
         <SubreportObject Name="Subreport1" Width="264.6" Height="28.35" ReportPage="Page2"/>
       </ChildBand>
       <DataHeaderBand Name="DataHeader1" Top="149.61" Width="272.16" Height="15.74">
-        <TextObject Name="Text10" Top="1" Width="264.6" Height="14.74" Text="ITENS" HorzAlign="Center" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text10" Top="1" Width="274.05" Height="14.74" Text="ITENS" HorzAlign="Center" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
       </DataHeaderBand>
       <DataFooterBand Name="DataFooter1" Top="230.2" Width="272.16" Height="90.89" Border.Lines="Top" Border.Style="Dot">
         <TextObject Name="Text17" Top="17.9" Width="132.3" Height="14.74" Text="Sub-total:" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
@@ -156,10 +156,10 @@
         <TextObject Name="Text24" Left="160.65" Top="62.01" Width="103.95" Height="14.74" Text="[Pedidos.Acrescimo]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
         <TextObject Name="Text25" Top="76.15" Width="132.3" Height="14.74" Text="Total" VertAlign="Center" Font="Arial, 8pt, style=Bold"/>
         <TextObject Name="Text26" Left="160.65" Top="75.99" Width="103.95" Height="14.74" Text="[[Pedidos.ValorTotal]+[Pedidos.TaxaEntrega]+[Pedidos.Acrescimo]-[Pedidos.Desconto]]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" WordWrap="false" Font="Arial, 8pt, style=Bold" Trimming="EllipsisCharacter"/>
-        <TextObject Name="Text27" Top="1" Width="264.6" Height="14.74" Border.Lines="Bottom" Border.Style="Dot" Text="TOTAIS" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+        <TextObject Name="Text27" Top="1" Width="274.05" Height="14.74" Border.Lines="Bottom" Border.Style="Dot" Text="TOTAIS     " HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
         <ChildBand Name="Child2" Top="323.37" Width="272.16" Height="37.8" VisibleExpression="[Pedidos.TrocoPara] &gt; 0">
           <TextObject Name="Text34" Top="18.9" Width="132.3" Height="18.9" Text="Troco para: [Pedidos.TrocoPara]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" Font="Arial, 8pt, style=Bold"/>
-          <TextObject Name="Text35" Top="2" Width="264.6" Height="14.74" Border.Lines="Top, Bottom" Border.Style="Dot" Text="OBSERVAÇÃO" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
+          <TextObject Name="Text35" Top="2" Width="274.05" Height="14.74" Border.Lines="Top, Bottom" Border.Style="Dot" Text="OBSERVAÇÃO" HorzAlign="Center" Font="Arial, 8pt, style=Bold"/>
           <TextObject Name="Text36" Left="132.3" Top="18.9" Width="132.3" Height="18.9" Text="Valor Troco: [[Pedidos.TrocoPara]-([Pedidos.ValorTotal]+[Pedidos.TaxaEntrega]-[Pedidos.Desconto]+[Pedidos.Acrescimo])]" Format="Currency" Format.UseLocale="true" Format.DecimalDigits="2" HorzAlign="Right" Font="Arial, 8pt, style=Bold"/>
         </ChildBand>
       </DataFooterBand>

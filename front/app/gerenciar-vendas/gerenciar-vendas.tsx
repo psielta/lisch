@@ -47,6 +47,8 @@ import {
   Restaurant,
   Storefront,
 } from "@mui/icons-material";
+import DialogCliente from "@/components/dialogs/DialogCliente";
+import { ClienteResponse } from "@/rxjs/clientes/cliente.model";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
@@ -63,6 +65,7 @@ import { toast } from "sonner";
 import api from "@/lib/api";
 import debounce from "lodash.debounce";
 import { PaginatedResponse } from "@/rxjs/clientes/cliente.model";
+import { User } from "@/context/auth-context";
 
 // Interface para os filtros
 interface FiltroPedidos {
@@ -123,12 +126,14 @@ export default function GerenciarVendas({
   categorias,
   adicionais,
   idPedidoSelecionado,
+  user,
 }: {
   pedidos: PedidoResponse[];
   produtos: ProdutoResponse[];
   categorias: ICoreCategoria[];
   adicionais: CategoriaAdicionalResponse[];
   idPedidoSelecionado: string | null;
+  user: User;
 }) {
   const theme = useTheme();
   const router = useRouter();
@@ -141,6 +146,33 @@ export default function GerenciarVendas({
   const openMenu = Boolean(anchorEl);
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [dialogClienteOpen, setDialogClienteOpen] = useState(false);
+  const [clienteParaEdicao, setClienteParaEdicao] =
+    useState<PedidoClienteDTO | null>(null);
+  const handleAbrirDialogEditarCliente = () => {
+    if (selectedPedido?.cliente) {
+      setClienteParaEdicao(selectedPedido.cliente);
+      setDialogClienteOpen(true);
+    } else {
+      toast.error("Nenhum pedido selecionado");
+    }
+  };
+
+  const handleClienteSalvo = (clienteSalvo: any) => {
+    // Atualizar o cliente no pedido selecionado
+    if (selectedPedido) {
+      const pedidosAtualizados = pedidos.map((pedido) =>
+        pedido.id === selectedPedido.id
+          ? { ...pedido, cliente: clienteSalvo }
+          : pedido
+      );
+      setPedidos(pedidosAtualizados);
+    }
+
+    toast.success("Cliente atualizado com sucesso!");
+    setDialogClienteOpen(false);
+    setClienteParaEdicao(null);
+  };
 
   // Função para buscar clientes com debounce
   const fetchClientes = useMemo(
@@ -782,13 +814,24 @@ export default function GerenciarVendas({
                 }}
               >
                 <CardContent sx={{ padding: 3 }}>
-                  <Typography
-                    variant="h6"
-                    className="font-semibold mb-3 flex items-center gap-2"
-                  >
-                    <Person sx={{ fontSize: 20 }} />
-                    Cliente
-                  </Typography>
+                  <div className="flex items-center justify-between mb-3">
+                    <Typography
+                      variant="h6"
+                      className="font-semibold flex items-center gap-2"
+                    >
+                      <Person sx={{ fontSize: 20 }} />
+                      Cliente
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Edit fontSize="small" />}
+                      onClick={handleAbrirDialogEditarCliente}
+                      disabled={!selectedPedido}
+                    >
+                      Editar Cliente
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     <Typography variant="body2" className="font-medium">
                       {selectedPedido.cliente.nome_razao_social}
@@ -1265,6 +1308,17 @@ export default function GerenciarVendas({
           )}
         </Formik>
       </Dialog>
+
+      <DialogCliente
+        open={dialogClienteOpen}
+        onClose={() => {
+          setDialogClienteOpen(false);
+          setClienteParaEdicao(null);
+        }}
+        user={user} // Você precisará passar o user como prop para o componente
+        cliente={clienteParaEdicao as ClienteResponse}
+        onClienteSaved={handleClienteSalvo}
+      />
     </div>
   );
 }

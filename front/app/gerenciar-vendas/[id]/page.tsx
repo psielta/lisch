@@ -44,6 +44,7 @@ export default async function Page(
         categorias={categorias ?? []}
         adicionais={adicionais?.adicionais ?? []}
         idPedidoSelecionado={id}
+        user={user}
       />
     </div>
   );

@@ -154,7 +154,7 @@ export default function SalesDetailModal({
     {
       field: "codigo_pedido",
       headerName: "Código",
-      width: 90,
+      width: 250,
     },
     {
       field: "data_pedido_br",
@@ -329,10 +329,20 @@ export default function SalesDetailModal({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
       fullWidth
       PaperProps={{
-        sx: { height: "80vh" },
+        sx: {
+          height: {
+            xs: "100vh",
+            md: "100vh",
+            xl: "80vh",
+          },
+          minWidth: {
+            xs: "100%",
+            md: "100%",
+            xl: "80vw",
+          },
+        },
       }}
     >
       <DialogTitle

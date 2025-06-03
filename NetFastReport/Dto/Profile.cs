@@ -18,6 +18,14 @@ namespace NetFastReport.Dto
                     }
                     return src.IdProdutoNavigation.Nome ?? string.Empty;
                 }))
+                .ForMember(dest => dest.NomeProduto2, opt => opt.MapFrom((src, dest, destMember, context) =>
+                {
+                    if (src.IdProduto2Navigation == null)
+                    {
+                        return string.Empty;
+                    }
+                    return src.IdProduto2Navigation.Nome ?? string.Empty;
+                }))
                 .ForMember(dest => dest.NomeOpcao, opt => opt.MapFrom((src, dest, destMember, context) =>
                 {
                     if (src.IdCategoriaOpcaoNavigation == null)

@@ -78,6 +78,8 @@ namespace NetFastReport.Controllers
             Pedido? pedido = await _context.Pedidos
                 .Include(p => p.PedidoItens.Where(pi => pi.DeletedAt == null))
                     .ThenInclude(x => x.IdProdutoNavigation)
+                .Include(p => p.PedidoItens.Where(pi => pi.DeletedAt == null))
+                    .ThenInclude(x => x.IdProduto2Navigation)
                 .Include(p => p.PedidoItens)
                     .ThenInclude(pi => pi.PedidoItemAdicionais.Where(pia => pia.DeletedAt == null)).ThenInclude(x => x.IdAdicionalOpcaoNavigation)
                 .Include(p => p.PedidoItens)

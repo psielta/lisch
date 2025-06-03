@@ -33,6 +33,7 @@ namespace NetFastReport.Dto.Models
 
         #region Navigation Properties
         public string NomeProduto { get; set; } = null!;
+        public string NomeProduto2 { get; set; } = null!;
         public string NomeOpcao { get; set; } = null!;
 
         #endregion

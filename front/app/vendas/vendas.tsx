@@ -5,8 +5,11 @@ import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import DialogCliente from "@/components/dialogs/DialogCliente";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { format } from "date-fns";
-import { ShoppingCart, Package, Menu, X, Search } from "lucide-react";
-import { ICoreCategoria } from "@/rxjs/categoria/categoria.model";
+import { ShoppingCart, Package, Menu, X, Search, Pizza } from "lucide-react";
+import {
+  ICoreCategoria,
+  ICategoriaOpcao,
+} from "@/rxjs/categoria/categoria.model";
 import { CategoriaAdicionalResponse } from "@/rxjs/adicionais/categoria-adicional.model";
 import debounce from "lodash.debounce";
 import {
@@ -45,6 +48,8 @@ import {
 } from "@mui/material";
 
 import { ItemModal as NewItemModal } from "../vendas/ItemModal";
+// Importe o PizzaMeiaModal que você criou
+// import { PizzaMeiaModal } from "../vendas/PizzaMeiaModal";
 
 import {
   Receipt,
@@ -90,9 +95,9 @@ import {
   selectPedidoState,
 } from "@/rxjs/pedido/pedido.slice";
 import { Badge } from "@/components/catalyst-ui-kit/badge";
+import { PizzaMeiaModal } from "./PizzaMeiaModal";
 
-// ... (mantenha todas as interfaces e schemas existentes)
-
+// Interfaces
 interface PedidoFormValues {
   id?: string;
   tenant_id: string;
@@ -126,6 +131,25 @@ interface ItemModalData {
   produto: ProdutoResponse;
   item?: PedidoItemDTO;
   index?: number;
+}
+
+// Nova interface para pizza meio a meio
+interface PizzaMeiaModalData {
+  categoria: ICoreCategoria;
+  categoriaOpcao: ICategoriaOpcao;
+  item?: PedidoItemDTO;
+  index?: number;
+}
+
+// Interface para itens da sidebar
+interface SidebarItem {
+  type: "produto" | "pizza-meia";
+  id: string;
+  nome: string;
+  descricao?: string;
+  data:
+    | ProdutoResponse
+    | { categoria: ICoreCategoria; categoriaOpcao: ICategoriaOpcao };
 }
 
 export function buildItemSchema(adicionais: CategoriaAdicionalResponse[]) {
@@ -268,8 +292,14 @@ function Vendas({
       ? [pedido.cliente]
       : []
   );
+
+  // Estados para modais
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<ItemModalData | null>(null);
+  const [pizzaMeiaModalOpen, setPizzaMeiaModalOpen] = useState(false);
+  const [pizzaMeiaModalData, setPizzaMeiaModalData] =
+    useState<PizzaMeiaModalData | null>(null);
+
   const theme = useTheme();
   const [dialogClienteOpen, setDialogClienteOpen] = useState(false);
   const [clienteParaEdicao, setClienteParaEdicao] =
@@ -372,17 +402,92 @@ function Vendas({
     }).format(parseFloat(value));
   };
 
-  const filteredProdutos =
-    produtos?.filter((produto) =>
-      produto.nome.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+  // Gerar itens da sidebar incluindo opções de pizza meio a meio
+  const sidebarItems = useMemo(() => {
+    const items: SidebarItem[] = [];
+
+    // Adicionar opções de pizza meio a meio primeiro
+    categorias.forEach((categoria) => {
+      if (categoria.opcao_meia === "M" || categoria.opcao_meia === "V") {
+        categoria.opcoes?.forEach((opcao) => {
+          const nome = `02 Sabores (Meio a Meio) - ${categoria.nome} - ${opcao.nome}`;
+
+          if (nome.toLowerCase().includes(searchTerm.toLowerCase())) {
+            items.push({
+              type: "pizza-meia",
+              id: `pizza-meia-${categoria.id}-${opcao.id}`,
+              nome,
+              descricao: `Pizza meio a meio ${categoria.nome} ${opcao.nome}`,
+              data: { categoria, categoriaOpcao: opcao },
+            });
+          }
+        });
+      }
+    });
+
+    // Adicionar produtos normais depois
+    const filteredProdutos =
+      produtos?.filter((produto) =>
+        produto.nome.toLowerCase().includes(searchTerm.toLowerCase())
+      ) || [];
+
+    filteredProdutos.forEach((produto) => {
+      items.push({
+        type: "produto",
+        id: `produto-${produto.id}`,
+        nome: produto.nome,
+        descricao: produto.descricao,
+        data: produto,
+      });
+    });
+
+    return items;
+  }, [produtos, categorias, searchTerm]);
 
   const handleAddItem = (produto: ProdutoResponse) => {
     setModalData({ produto });
     setModalOpen(true);
   };
 
+  const handleAddPizzaMeia = (
+    categoria: ICoreCategoria,
+    categoriaOpcao: ICategoriaOpcao
+  ) => {
+    setPizzaMeiaModalData({ categoria, categoriaOpcao });
+    setPizzaMeiaModalOpen(true);
+  };
+
+  const handleSidebarItemClick = (item: SidebarItem) => {
+    if (item.type === "produto") {
+      handleAddItem(item.data as ProdutoResponse);
+    } else if (item.type === "pizza-meia") {
+      const { categoria, categoriaOpcao } = item.data as {
+        categoria: ICoreCategoria;
+        categoriaOpcao: ICategoriaOpcao;
+      };
+      handleAddPizzaMeia(categoria, categoriaOpcao);
+    }
+  };
+
   const handleEditItem = async (item: PedidoItemDTO, index: number) => {
+    // Verificar se é uma pizza meio a meio
+    if (item.id_produto_2) {
+      // É uma pizza meio a meio
+      const categoria = categorias.find((c) => c.id === item.id_categoria);
+      const categoriaOpcao = categoria?.opcoes?.find(
+        (o) => o.id === item.id_categoria_opcao
+      );
+
+      if (categoria && categoriaOpcao) {
+        setPizzaMeiaModalData({ categoria, categoriaOpcao, item, index });
+        setPizzaMeiaModalOpen(true);
+      } else {
+        toast.error("Categoria ou opção não encontrada para esta pizza");
+      }
+      return;
+    }
+
+    // É um produto normal
     let produto = produtos.find((p) => p.id === item.id_produto);
 
     if (!produto) {
@@ -842,6 +947,11 @@ function Vendas({
                                   const produto = produtos.find(
                                     (p) => p.id === item.id_produto
                                   );
+                                  const produto2 = item.id_produto_2
+                                    ? produtos.find(
+                                        (p) => p.id === item.id_produto_2
+                                      )
+                                    : null;
                                   const categoria = categorias.find(
                                     (c) => c.id === item.id_categoria
                                   );
@@ -854,6 +964,8 @@ function Vendas({
                                       0
                                     );
 
+                                  const isPizzaMeia = !!item.id_produto_2;
+
                                   return (
                                     <div
                                       key={index}
@@ -861,27 +973,29 @@ function Vendas({
                                     >
                                       <div className="flex justify-between items-start mb-2 flex-wrap">
                                         <div className="flex-1 min-w-0">
-                                          <Typography
-                                            variant="subtitle2"
-                                            className="font-medium"
-                                          >
-                                            {produto?.nome ||
-                                              "Produto não encontrado ou excluído do sistema"}
-                                          </Typography>
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                          >
-                                            {categoria?.nome}
-                                          </Typography>
-                                          {item.observacao && (
+                                          {isPizzaMeia ? (
                                             <Typography
-                                              variant="caption"
-                                              className="block text-amber-600 mt-1"
+                                              variant="subtitle2"
+                                              className="font-medium flex items-center gap-1"
                                             >
-                                              Obs: {item.observacao}
+                                              <Pizza className="h-4 w-4 text-orange-500" />
+                                              Pizza Meio a Meio
+                                            </Typography>
+                                          ) : (
+                                            <Typography
+                                              variant="subtitle2"
+                                              className="font-medium"
+                                            >
+                                              {produto?.nome ||
+                                                "Produto não encontrado ou excluído do sistema"}
                                             </Typography>
                                           )}
+                                          {/* <Typography
+                                            variant="caption"
+                                            color="primary"
+                                          >
+                                            {categoria?.nome}
+                                          </Typography> */}
                                         </div>
                                         <div className="text-right ml-4 shrink-0">
                                           <Typography
@@ -930,6 +1044,29 @@ function Vendas({
                                           </IconButton>
                                         </div>
                                       </div>
+
+                                      {/* Sabores da Pizza */}
+                                      {isPizzaMeia && (
+                                        <div className="ml-4 mt-2 space-y-1">
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            className="font-medium"
+                                          >
+                                            Sabores:
+                                          </Typography>
+                                          <div className="text-sm text-muted-foreground">
+                                            •{" "}
+                                            {produto?.nome ||
+                                              "Produto não encontrado"}
+                                          </div>
+                                          <div className="text-sm text-muted-foreground">
+                                            •{" "}
+                                            {produto2?.nome ||
+                                              "Produto não encontrado"}
+                                          </div>
+                                        </div>
+                                      )}
 
                                       {/* Adicionais */}
                                       {item.adicionais &&
@@ -987,6 +1124,21 @@ function Vendas({
                                             )}
                                           </div>
                                         )}
+                                      {/* Observação */}
+                                      {item.observacao && (
+                                        <div className="ml-4 mt-2 space-y-1">
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            className="font-medium"
+                                          >
+                                            Observação:
+                                          </Typography>
+                                          <div className="text-sm font-semibold text-primary">
+                                            • {item.observacao}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   );
                                 })}
@@ -1090,7 +1242,7 @@ function Vendas({
                                     if (reason === "input") {
                                       setInputValue(newInput);
                                       if (newInput.length >= 3) {
-                                        setHasSearched(false); // Reset do estado quando inicia nova busca
+                                        setHasSearched(false);
                                         fetchClientes(newInput);
                                       } else {
                                         setHasSearched(false);
@@ -1229,7 +1381,6 @@ function Vendas({
                                 name="tipo_entrega"
                                 value={formik.values.tipo_entrega}
                                 onChange={(e) => {
-                                  debugger;
                                   formik.handleChange(e);
                                   if (e.target.value !== "Delivery") {
                                     formik.setFieldValue(
@@ -1294,7 +1445,7 @@ function Vendas({
                             />
                           </Grid>
 
-                          {/* Nome da Taxa de Entrega, Troco Para e Valor do Troco */}
+                          {/* Troco Para e Valor do Troco */}
                           <Grid size={12}>
                             <Box sx={{ display: "flex", gap: 2 }}>
                               <TextField
@@ -1374,7 +1525,7 @@ function Vendas({
                             />
                           </Grid>
 
-                          {/* Taxa de Entrega */}
+                          {/* Nome da Taxa de Entrega */}
                           <Grid size={6}>
                             <TextField
                               size="small"
@@ -1404,12 +1555,12 @@ function Vendas({
                             />
                           </Grid>
 
-                          {/* Acrecimo */}
+                          {/* Acréscimo */}
                           <Grid size={6}>
                             <TextField
                               size="small"
                               fullWidth
-                              label="Acrecimo"
+                              label="Acréscimo"
                               name="acrescimo"
                               type="number"
                               value={formik.values.acrescimo}
@@ -1438,15 +1589,15 @@ function Vendas({
                         <Box
                           sx={{
                             display: "flex",
-                            mt: { xs: 1 }, // Ajusta o espaçamento superior em telas pequenas
-                            flexDirection: { xs: "column", sm: "row" }, // Empilha em telas pequenas (<600px)
+                            mt: { xs: 1 },
+                            flexDirection: { xs: "column", sm: "row" },
                             justifyContent: {
                               xs: "center",
                               sm: "space-between",
-                            }, // Centraliza em telas pequenas
-                            alignItems: { xs: "center", sm: "flex-start" }, // Alinha ao centro em telas pequenas
-                            gap: { xs: 1, sm: 2 }, // Reduz espaçamento em telas pequenas
-                            flexWrap: "wrap", // Permite quebra de linha se necessário
+                            },
+                            alignItems: { xs: "center", sm: "flex-start" },
+                            gap: { xs: 1, sm: 2 },
+                            flexWrap: "wrap",
                           }}
                         >
                           <Box sx={{ mb: { xs: 1, sm: 0 } }}>
@@ -1465,7 +1616,7 @@ function Vendas({
                                   handlePrintPedido(formik.values.id || "")
                                 }
                                 disabled={isPrintLoading || isAnyLoading}
-                                sx={{ minWidth: { xs: "120px", sm: "140px" } }} // Garante largura mínima
+                                sx={{ minWidth: { xs: "120px", sm: "140px" } }}
                               >
                                 {isPrintLoading
                                   ? "Imprimindo..."
@@ -1476,8 +1627,8 @@ function Vendas({
                           <Box
                             sx={{
                               display: "flex",
-                              flexDirection: { xs: "column", sm: "row" }, // Empilha botões à direita em telas pequenas
-                              gap: { xs: 1, sm: 2 }, // Ajusta espaçamento
+                              flexDirection: { xs: "column", sm: "row" },
+                              gap: { xs: 1, sm: 2 },
                               alignItems: { xs: "center", sm: "flex-start" },
                               flexWrap: "wrap",
                             }}
@@ -1549,63 +1700,68 @@ function Vendas({
                   </main>
                 </div>
 
-                {/* Right Sidebar - Produtos */}
+                {/* Right Sidebar - Produtos e Pizza Meio a Meio */}
                 <aside className="hidden lg:flex w-80 md:w-56 xl:w-80 flex-col border-l border-border bg-card overflow-y-auto">
                   <div className="h-full flex flex-col">
                     <div className="p-4 border-b border-border">
                       <h2 className="font-semibold text-xl flex items-center gap-2">
                         <Package className="h-5 w-5" />
-                        Produtos
+                        Produtos & Pizzas
                       </h2>
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                      {produtos && produtos.length > 0 ? (
-                        filteredProdutos.length > 0 ? (
-                          <List sx={{ padding: 0 }}>
-                            {filteredProdutos.map((produto) => (
-                              <ListItem key={produto.id} disablePadding>
-                                <ListItemButton
-                                  onClick={() => handleAddItem(produto)}
-                                  disabled={isFormDisabled}
-                                  sx={{
-                                    "&:hover": {
-                                      backgroundColor: "rgba(0, 0, 0, 0.04)",
-                                    },
-                                    padding: "12px 16px",
-                                  }}
-                                >
+                      {sidebarItems && sidebarItems.length > 0 ? (
+                        <List sx={{ padding: 0 }}>
+                          {sidebarItems.map((item) => (
+                            <ListItem key={item.id} disablePadding>
+                              <ListItemButton
+                                onClick={() => handleSidebarItemClick(item)}
+                                disabled={isFormDisabled}
+                                sx={{
+                                  "&:hover": {
+                                    backgroundColor: "rgba(0, 0, 0, 0.04)",
+                                  },
+                                  padding: "12px 16px",
+                                  borderLeft:
+                                    item.type === "pizza-meia"
+                                      ? "3px solid"
+                                      : "none",
+                                  borderLeftColor:
+                                    item.type === "pizza-meia"
+                                      ? "orange"
+                                      : "transparent",
+                                }}
+                              >
+                                <div className="flex items-start gap-2 w-full">
+                                  {item.type === "pizza-meia" && (
+                                    <Pizza className="h-4 w-4 text-orange-500 mt-1 flex-shrink-0" />
+                                  )}
                                   <ListItemText
-                                    primary={produto.nome}
-                                    secondary={produto.descricao}
+                                    primary={item.nome}
+                                    secondary={item.descricao}
                                     primaryTypographyProps={{
                                       fontSize: "14px",
-                                      fontWeight: 400,
+                                      fontWeight:
+                                        item.type === "pizza-meia" ? 500 : 400,
+                                      color:
+                                        item.type === "pizza-meia"
+                                          ? "orange"
+                                          : "inherit",
+                                    }}
+                                    secondaryTypographyProps={{
+                                      fontSize: "12px",
+                                      color:
+                                        item.type === "pizza-meia"
+                                          ? "text.secondary"
+                                          : "text.secondary",
                                     }}
                                   />
-                                </ListItemButton>
-                              </ListItem>
-                            ))}
-                          </List>
-                        ) : (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              height: "200px",
-                              padding: "40px 0",
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              textAlign="center"
-                            >
-                              Nenhum produto encontrado
-                            </Typography>
-                          </Box>
-                        )
+                                </div>
+                              </ListItemButton>
+                            </ListItem>
+                          ))}
+                        </List>
                       ) : (
                         <Box
                           sx={{
@@ -1621,7 +1777,9 @@ function Vendas({
                             color="text.secondary"
                             textAlign="center"
                           >
-                            Nenhum produto encontrado
+                            {searchTerm
+                              ? "Nenhum item encontrado"
+                              : "Nenhum produto disponível"}
                           </Typography>
                         </Box>
                       )}
@@ -1631,7 +1789,7 @@ function Vendas({
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="Buscar produtos..."
+                          placeholder="Buscar produtos e pizzas..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           disabled={isFormDisabled}
@@ -1643,7 +1801,7 @@ function Vendas({
                   </div>
                 </aside>
 
-                {/* Modal para Adicionar/Editar Item */}
+                {/* Modal para Adicionar/Editar Item Normal */}
                 <NewItemModal
                   open={modalOpen}
                   onClose={() => {
@@ -1669,6 +1827,33 @@ function Vendas({
                     setModalData(null);
                   }}
                   categorias={categorias}
+                />
+
+                <PizzaMeiaModal
+                  open={pizzaMeiaModalOpen}
+                  onClose={() => {
+                    setPizzaMeiaModalOpen(false);
+                    setPizzaMeiaModalData(null);
+                  }}
+                  modalData={pizzaMeiaModalData}
+                  produtos={produtos}
+                  adicionais={adicionais}
+                  onSave={(item) => {
+                    if (pizzaMeiaModalData?.index !== undefined) {
+                      // Editar item existente
+                      const newItens = [...formik.values.itens];
+                      newItens[pizzaMeiaModalData.index] = item;
+                      formik.setFieldValue("itens", newItens);
+                    } else {
+                      // Adicionar novo item
+                      formik.setFieldValue("itens", [
+                        ...formik.values.itens,
+                        item,
+                      ]);
+                    }
+                    setPizzaMeiaModalOpen(false);
+                    setPizzaMeiaModalData(null);
+                  }}
                 />
               </Form>
               <DialogCliente

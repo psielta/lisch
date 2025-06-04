@@ -237,6 +237,34 @@ function TableCliente({
   const columnHelper = createColumnHelper<ClienteResponse>();
 
   const columns = [
+    columnHelper.display({
+      id: "actions",
+      header: "Ações",
+      cell: (info) => (
+        <Dropdown>
+          <DropdownButton>
+            <EllipsisHorizontalIcon className="h-5 w-5" />
+          </DropdownButton>
+          <DropdownMenu>
+            <DropdownItem
+              onClick={() =>
+                router.push(`/cadastros/clientes/${info.row.original.id}`)
+              }
+            >
+              Editar
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => {
+                setSelectedCliente(info.row.original);
+                setDeleteDialogOpen(true);
+              }}
+            >
+              Excluir
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      ),
+    }),
     columnHelper.accessor("nome_razao_social", {
       header: "Nome/Razão Social",
       cell: (info) => (
@@ -288,34 +316,6 @@ function TableCliente({
     columnHelper.accessor("created_at", {
       header: "Criado em",
       cell: (info) => format(new Date(info.getValue()), "dd/MM/yyyy"),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "Ações",
-      cell: (info) => (
-        <Dropdown>
-          <DropdownButton>
-            <EllipsisHorizontalIcon className="h-5 w-5" />
-          </DropdownButton>
-          <DropdownMenu>
-            <DropdownItem
-              onClick={() =>
-                router.push(`/cadastros/clientes/${info.row.original.id}`)
-              }
-            >
-              Editar
-            </DropdownItem>
-            <DropdownItem
-              onClick={() => {
-                setSelectedCliente(info.row.original);
-                setDeleteDialogOpen(true);
-              }}
-            >
-              Excluir
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-      ),
     }),
   ];
 

@@ -20,6 +20,7 @@ import {
   selectListProdutoActionState,
   setNome,
 } from "@/rxjs/produto/produto.slice";
+import { Button as ButtonMui } from "@mui/material";
 import {
   listProdutosAction,
   deleteProdutoAction,
@@ -63,10 +64,7 @@ import {
   PaginationPage,
   PaginationPrevious,
 } from "@/components/catalyst-ui-kit/pagination";
-import {
-  EllipsisHorizontalIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon, PencilIcon } from "@heroicons/react/24/solid";
 import { useAppDispatch } from "@/rxjs/hooks";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -197,6 +195,23 @@ function TableProduto({
   const columnHelper = createColumnHelper<ProdutoResponse>();
 
   const columns = [
+    columnHelper.display({
+      id: "actions",
+      size: 50,
+      header: "Ações",
+      cell: (info) => (
+        <ButtonMui
+          variant="outlined"
+          color="primary"
+          onClick={() =>
+            router.push(`/cadastros/produtos/${info.row.original.id}`)
+          }
+          startIcon={<PencilIcon className="w-3 h-3" />}
+        >
+          Editar
+        </ButtonMui>
+      ),
+    }),
     columnHelper.accessor("seq_id", {
       header: "ID",
       cell: (info) => info.getValue() || "-",
@@ -287,34 +302,6 @@ function TableProduto({
     columnHelper.accessor("created_at", {
       header: "Criado em",
       cell: (info) => format(new Date(info.getValue()), "dd/MM/yyyy"),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "Ações",
-      cell: (info) => (
-        <Dropdown>
-          <DropdownButton>
-            <EllipsisHorizontalIcon className="h-5 w-5" />
-          </DropdownButton>
-          <DropdownMenu>
-            <DropdownItem
-              onClick={() =>
-                router.push(`/cadastros/produtos/${info.row.original.id}`)
-              }
-            >
-              Editar
-            </DropdownItem>
-            <DropdownItem
-              onClick={() => {
-                setSelectedProduto(info.row.original);
-                setDeleteDialogOpen(true);
-              }}
-            >
-              Excluir
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-      ),
     }),
   ];
 

@@ -20,18 +20,6 @@ type CreateCategoriaAdicionalRequest struct {
 	Opcoes      []CreateCategoriaAdicionalOpcaoRequest `json:"opcoes" validate:"omitempty,dive"`
 }
 
-// Atualização (PUT) de um grupo de adicionais
-type UpdateCategoriaAdicionalRequest struct {
-	IDCategoria string                                 `json:"id_categoria" validate:"required,uuid"`
-	CodigoTipo  *string                                `json:"codigo_tipo" validate:"omitempty,max=100"`
-	Nome        string                                 `json:"nome" validate:"required,min=1,max=100"`
-	Selecao     string                                 `json:"selecao" validate:"required,oneof=U M Q"`
-	Minimo      *int32                                 `json:"minimo" validate:"omitempty,gte=0"`
-	Limite      *int32                                 `json:"limite" validate:"omitempty,gte=0"`
-	Status      int16                                  `json:"status" validate:"oneof=0 1"`
-	Opcoes      []CreateCategoriaAdicionalOpcaoRequest `json:"opcoes" validate:"omitempty,dive"`
-}
-
 // ---------- Responses ----------
 
 type CategoriaAdicionalResponse struct {
@@ -117,4 +105,16 @@ func ConvertSQLBoilerCategoriaAdicionaisListToDTO(
 	}
 
 	return out
+}
+
+// DTO do grupo de adicionais (PUT)
+type UpdateCategoriaAdicionalRequest struct {
+	IDCategoria string                                 `json:"id_categoria" validate:"required,uuid"`
+	CodigoTipo  *string                                `json:"codigo_tipo,omitempty" validate:"omitempty,max=100"`
+	Nome        string                                 `json:"nome"        validate:"required,min=1,max=100"`
+	Selecao     string                                 `json:"selecao"     validate:"required,oneof=U M Q"`
+	Minimo      *int32                                 `json:"minimo,omitempty" validate:"omitempty,gte=0"`
+	Limite      *int32                                 `json:"limite,omitempty" validate:"omitempty,gte=0"`
+	Status      int16                                  `json:"status"      validate:"oneof=0 1"`
+	Opcoes      []UpdateCategoriaAdicionalOpcaoRequest `json:"opcoes"  validate:"required,min=1,dive"`
 }

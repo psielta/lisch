@@ -514,104 +514,121 @@ export default function FormCategoriaAdicional({
           </p>
 
           <div className="mt-10 space-y-8 border-b border-border pb-12">
-            {fields.map((f, i) => (
-              <div key={f.id} className="grid grid-cols-12 gap-4 items-start">
-                <Controller
-                  name={`opcoes.${i}.id`}
-                  control={control}
-                  render={({ field }) => <input type="hidden" {...field} />}
-                />
+            {fields.map((f, i) => {
+              // Obter os dados atuais desta opção específica do array observado
+              const watchedOpcoes = watch("opcoes");
+              const currentOptionData = watchedOpcoes?.[i];
 
-                {/* Nome */}
-                <div className="col-span-12 sm:col-span-3">
-                  <label className="block text-sm mb-1">Nome</label>
+              // Verificar se a opção atual TEM um ID de banco de dados
+              const hasDatabaseId = !!currentOptionData?.id;
+
+              // A condição para desabilitar é: ser a última opção OU ter ID do banco
+              const isRemoveDisabled = fields.length <= 1 || hasDatabaseId;
+
+              return (
+                <div key={f.id} className="grid grid-cols-12 gap-4 items-start">
                   <Controller
-                    name={`opcoes.${i}.nome`}
+                    name={`opcoes.${i}.id`}
                     control={control}
-                    render={({ field }) => (
-                      <input {...field} className={inputCls} />
-                    )}
+                    render={({ field }) => <input type="hidden" {...field} />}
                   />
-                  {errors.opcoes?.[i]?.nome && (
-                    <p className="mt-1 text-sm text-destructive">
-                      {errors.opcoes[i]?.nome?.message}
-                    </p>
-                  )}
-                </div>
 
-                {/* Valor */}
-                <div className="col-span-12 sm:col-span-2">
-                  <label className="block text-sm mb-1">Valor (R$)</label>
-                  <Controller
-                    name={`opcoes.${i}.valor`}
-                    control={control}
-                    render={({ field }) => (
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        className={inputCls}
-                      />
+                  {/* Nome */}
+                  <div className="col-span-12 sm:col-span-3">
+                    <label className="block text-sm mb-1">Nome</label>
+                    <Controller
+                      name={`opcoes.${i}.nome`}
+                      control={control}
+                      render={({ field }) => (
+                        <input {...field} className={inputCls} />
+                      )}
+                    />
+                    {errors.opcoes?.[i]?.nome && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {errors.opcoes[i]?.nome?.message}
+                      </p>
                     )}
-                  />
-                  {errors.opcoes?.[i]?.valor && (
-                    <p className="mt-1 text-sm text-destructive">
-                      {errors.opcoes[i]?.valor?.message}
-                    </p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Código */}
-                <div className="col-span-12 sm:col-span-3">
-                  <label className="block text-sm mb-1">Código</label>
-                  <Controller
-                    name={`opcoes.${i}.codigo`}
-                    control={control}
-                    render={({ field }) => (
-                      <input {...field} className={inputCls} />
+                  {/* Valor */}
+                  <div className="col-span-12 sm:col-span-2">
+                    <label className="block text-sm mb-1">Valor (R$)</label>
+                    <Controller
+                      name={`opcoes.${i}.valor`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...field}
+                          className={inputCls}
+                        />
+                      )}
+                    />
+                    {errors.opcoes?.[i]?.valor && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {errors.opcoes[i]?.valor?.message}
+                      </p>
                     )}
-                  />
-                  {errors.opcoes?.[i]?.codigo && (
-                    <p className="mt-1 text-sm text-destructive">
-                      {errors.opcoes[i]?.codigo?.message}
-                    </p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Status */}
-                <div className="col-span-12 sm:col-span-2">
-                  <label className="block text-sm mb-1">Status</label>
-                  <Controller
-                    name={`opcoes.${i}.status`}
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        value={String(field.value)}
-                        onChange={(e) =>
-                          field.onChange(e.target.value === "1" ? 1 : 0)
-                        }
-                        className={inputCls}
-                      >
-                        <option value="1">Ativo</option>
-                        <option value="0">Inativo</option>
-                      </select>
+                  {/* Código */}
+                  <div className="col-span-12 sm:col-span-3">
+                    <label className="block text-sm mb-1">Código</label>
+                    <Controller
+                      name={`opcoes.${i}.codigo`}
+                      control={control}
+                      render={({ field }) => (
+                        <input {...field} className={inputCls} />
+                      )}
+                    />
+                    {errors.opcoes?.[i]?.codigo && (
+                      <p className="mt-1 text-sm text-destructive">
+                        {errors.opcoes[i]?.codigo?.message}
+                      </p>
                     )}
-                  />
-                </div>
+                  </div>
 
-                {/* Remover */}
-                <div className="col-span-12 sm:col-span-2 flex items-end">
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    disabled={fields.length <= 1}
-                    className="rounded-full bg-destructive text-white p-2 disabled:opacity-40"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+                  {/* Status */}
+                  <div className="col-span-12 sm:col-span-2">
+                    <label className="block text-sm mb-1">Status</label>
+                    <Controller
+                      name={`opcoes.${i}.status`}
+                      control={control}
+                      render={({ field }) => (
+                        <select
+                          value={String(field.value)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value === "1" ? 1 : 0)
+                          }
+                          className={inputCls}
+                        >
+                          <option value="1">Ativo</option>
+                          <option value="0">Inativo</option>
+                        </select>
+                      )}
+                    />
+                  </div>
+
+                  {/* Remover */}
+                  <div className="col-span-12 sm:col-span-2 flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => remove(i)}
+                      disabled={isRemoveDisabled}
+                      className={`rounded-full p-2 text-white shadow-sm ${
+                        isRemoveDisabled
+                          ? "bg-zinc-200 dark:bg-zinc-700 text-muted-foreground cursor-not-allowed opacity-40"
+                          : "bg-destructive hover:bg-destructive/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      }`}
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                      <span className="sr-only">Remover opção</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <Button
               type="button"

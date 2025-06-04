@@ -412,35 +412,30 @@ func (api *Api) handleCategoriaAdicionais_Post(w http.ResponseWriter, r *http.Re
 	jsonutils.EncodeJson(w, r, http.StatusCreated, resp)
 }
 
-// handleCategoriaAdicionais_Put atualiza um grupo de adicionais existente
+// handleCategoriaAdicionais_Put atualiza um grupo de adicionais sem recriar todas as opções
 func (api *Api) handleCategoriaAdicionais_Put(w http.ResponseWriter, r *http.Request) {
 	api.Logger.Info("handleCategoriaAdicionais_Put")
 
-	// Obter ID da URL
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "id is required"})
 		return
 	}
-
-	// Validar UUID
-	_, err := uuid.Parse(id)
-	if err != nil {
+	if _, err := uuid.Parse(id); err != nil {
 		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid id format"})
 		return
 	}
 
-	// Obter tenant ID do contexto
 	tenantID := api.getTenantIDFromContext(r)
 	if tenantID == uuid.Nil {
 		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 		return
 	}
 
-	// Decodificar e validar o payload JSON
+	// ── 1. Decodifica / valida JSON ──────────────────────────────────────────────
 	updateDTO, problems, err := jsonutils.DecodeValidJsonV10[dto.UpdateCategoriaAdicionalRequest](r)
 	if err != nil {
-		api.Logger.Error("erro ao decodificar/validar JSON", zap.Error(err))
+		api.Logger.Error("decode/validate", zap.Error(err))
 		if problems != nil {
 			jsonutils.EncodeJson(w, r, http.StatusBadRequest, problems)
 		} else {
@@ -449,172 +444,162 @@ func (api *Api) handleCategoriaAdicionais_Put(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Validações específicas para o tipo de seleção
-	if updateDTO.Selecao == "Q" {
-		if updateDTO.Minimo == nil || updateDTO.Limite == nil {
-			jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "minimo and limite are required for selecao=Q"})
-			return
-		}
-		if *updateDTO.Minimo > *updateDTO.Limite {
-			jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "minimo cannot be greater than limite"})
-			return
-		}
-	}
-
-	// Verificar se a lista de opções não é vazia
-	if len(updateDTO.Opcoes) == 0 {
-		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "at least one option is required"})
+	if updateDTO.Selecao == "Q" && (updateDTO.Minimo == nil || updateDTO.Limite == nil || *updateDTO.Minimo > *updateDTO.Limite) {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "minimo/limite inválidos"})
 		return
 	}
 
-	// Verificar se a categoria existe e pertence ao tenant
-	_, err = models_sql_boiler.Categorias(
-		qm.Where("id = ?", updateDTO.IDCategoria),
-		qm.Where("id_tenant = ?", tenantID),
-		qm.Where("deleted_at IS NULL"),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
-
+	// ── 2. Carrega adicional + categoria (garantia de permissão) ────────────────
+	adicional, err := api.loadAdicional(r, id, tenantID)
 	if err != nil {
+		status := http.StatusInternalServerError
 		if errors.Is(err, sql.ErrNoRows) {
-			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{"error": "categoria not found or not authorized"})
-			return
+			status = http.StatusNotFound
 		}
-		api.Logger.Error("erro ao buscar categoria", zap.Error(err))
-		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		jsonutils.EncodeJson(w, r, status, map[string]any{"error": "adicional not found or not authorized"})
 		return
 	}
 
-	// Buscar adicional existente
-	adicionalExistente, err := api.loadAdicional(r, id, tenantID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{"error": "adicional not found or not authorized"})
-			return
-		}
-		api.Logger.Error("erro ao buscar adicional", zap.Error(err))
-		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
-		return
-	}
-
-	// Iniciar transação
+	// ── 3. Inicia transação ─────────────────────────────────────────────────────
 	tx, err := api.SQLBoilerDB.GetDB().BeginTx(r.Context(), nil)
 	if err != nil {
-		api.Logger.Error("erro ao iniciar transação", zap.Error(err))
+		api.Logger.Error("begin tx", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
 	defer tx.Rollback()
 
-	// Atualizar dados do adicional
-	adicionalExistente.IDCategoria = updateDTO.IDCategoria
-	adicionalExistente.Nome = updateDTO.Nome
-	adicionalExistente.Selecao = updateDTO.Selecao
-	adicionalExistente.Status = updateDTO.Status
+	// ── 4. Atualiza campos do adicional -------------------------------------------------
+	adicional.IDCategoria = updateDTO.IDCategoria
+	adicional.Nome = updateDTO.Nome
+	adicional.Selecao = updateDTO.Selecao
+	adicional.Status = updateDTO.Status
 
-	// Atualizar campos opcionais
 	if updateDTO.CodigoTipo != nil {
-		adicionalExistente.CodigoTipo.SetValid(*updateDTO.CodigoTipo)
+		adicional.CodigoTipo.SetValid(*updateDTO.CodigoTipo)
 	} else {
-		adicionalExistente.CodigoTipo.Valid = false
+		adicional.CodigoTipo.Valid = false
 	}
-
 	if updateDTO.Minimo != nil {
-		adicionalExistente.Minimo.SetValid(int(*updateDTO.Minimo))
+		adicional.Minimo.SetValid(int(*updateDTO.Minimo))
 	} else {
-		adicionalExistente.Minimo.Valid = false
+		adicional.Minimo.Valid = false
 	}
-
 	if updateDTO.Limite != nil {
-		adicionalExistente.Limite.SetValid(int(*updateDTO.Limite))
+		adicional.Limite.SetValid(int(*updateDTO.Limite))
 	} else {
-		adicionalExistente.Limite.Valid = false
+		adicional.Limite.Valid = false
 	}
 
-	// Atualizar adicional no banco
-	_, err = adicionalExistente.Update(r.Context(), tx, boil.Infer())
-	if err != nil {
-		api.Logger.Error("erro ao atualizar adicional", zap.Error(err))
+	if _, err = adicional.Update(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("update adicional", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error updating adicional"})
 		return
 	}
 
-	// Buscar todas as opções existentes do adicional
-	opcoesExistentes, err := models_sql_boiler.CategoriaAdicionalOpcoes(
+	// ── 5. Carrega todas as opções existentes (mapa por ID) ─────────────────────
+	existentesSlice, err := models_sql_boiler.CategoriaAdicionalOpcoes(
 		qm.Where("id_categoria_adicional = ?", id),
 		qm.Where("deleted_at IS NULL"),
 	).All(r.Context(), tx)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		api.Logger.Error("erro ao buscar opções existentes", zap.Error(err))
+	if err != nil {
+		api.Logger.Error("load options", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
 
-	// Remover todas as opções existentes (soft delete)
-	for _, opcao := range opcoesExistentes {
-		opcao.DeletedAt.SetValid(time.Now().UTC())
-		_, err = opcao.Update(r.Context(), tx, boil.Infer())
-		if err != nil {
-			api.Logger.Error("erro ao realizar soft delete de opção", zap.Error(err))
-			jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error removing adicional option"})
-			return
+	existentes := make(map[string]*models_sql_boiler.CategoriaAdicionalOpcao, len(existentesSlice))
+	maxSeqID := int64(0)
+	for _, op := range existentesSlice {
+		existentes[op.ID] = op
+		if op.SeqID > maxSeqID {
+			maxSeqID = op.SeqID
 		}
 	}
 
-	// Inserir novas opções com novos IDs para evitar conflitos com histórico
-	for i, opcaoDTO := range updateDTO.Opcoes {
-		novaOpcao := &models_sql_boiler.CategoriaAdicionalOpcao{
-			ID:                   uuid.New().String(),
-			SeqID:                int64(i + 1),
-			IDCategoriaAdicional: id,
-			Nome:                 opcaoDTO.Nome,
-			Status:               opcaoDTO.Status,
+	// ── 6. Percorre DTO -> atualiza ou insere ───────────────────────────────────
+	processados := make(map[string]bool)
+
+	for _, dtoOpc := range updateDTO.Opcoes {
+		var opcao *models_sql_boiler.CategoriaAdicionalOpcao
+
+		// --- a) Já existia? -----------------------------------------------------
+		if dtoOpc.ID != nil && existentes[*dtoOpc.ID] != nil {
+			opcao = existentes[*dtoOpc.ID]
+		} else {
+			// nova opção
+			maxSeqID++
+			opcao = &models_sql_boiler.CategoriaAdicionalOpcao{
+				ID:                   uuid.NewString(),
+				SeqID:                maxSeqID,
+				IDCategoriaAdicional: id,
+			}
 		}
 
-		// Converter valor
-		valor, err := decimalutils.FromString(opcaoDTO.Valor)
+		// campos comuns
+		opcao.Nome = dtoOpc.Nome
+		opcao.Status = dtoOpc.Status
+
+		// Valor decimal
+		valor, err := decimalutils.FromString(dtoOpc.Valor)
 		if err != nil {
-			api.Logger.Error("erro ao converter valor", zap.Error(err))
-			jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "invalid valor format"})
+			api.Logger.Error("valor inválido", zap.Error(err))
+			jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "valor inválido"})
 			return
 		}
-		novaOpcao.Valor = valor
+		opcao.Valor = valor
 
-		// Definir campos opcionais
-		if opcaoDTO.Codigo != nil {
-			novaOpcao.Codigo.SetValid(*opcaoDTO.Codigo)
+		if dtoOpc.Codigo != nil {
+			opcao.Codigo.SetValid(*dtoOpc.Codigo)
+		} else {
+			opcao.Codigo.Valid = false
 		}
 
-		// Inserir a opção
-		if err := novaOpcao.Insert(r.Context(), tx, boil.Infer()); err != nil {
-			api.Logger.Error("erro ao inserir opção", zap.Error(err))
-			jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating adicional option"})
-			return
+		// persiste
+		if dtoOpc.ID != nil && existentes[*dtoOpc.ID] != nil {
+			if _, err := opcao.Update(r.Context(), tx, boil.Infer()); err != nil {
+				api.Logger.Error("update opcao", zap.Error(err))
+				jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error updating option"})
+				return
+			}
+		} else {
+			if err := opcao.Insert(r.Context(), tx, boil.Infer()); err != nil {
+				api.Logger.Error("insert opcao", zap.Error(err))
+				jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error inserting option"})
+				return
+			}
+		}
+
+		processados[opcao.ID] = true
+	}
+
+	// ── 7. Soft-delete das opções que não vieram no DTO -------------------------
+	for idOpt, op := range existentes {
+		if !processados[idOpt] {
+			op.DeletedAt.SetValid(time.Now().UTC())
+			if _, err := op.Update(r.Context(), tx, boil.Infer()); err != nil {
+				api.Logger.Error("soft-delete opcao", zap.Error(err))
+				jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error deleting option"})
+				return
+			}
 		}
 	}
 
-	// Confirmar transação
+	// ── 8. Commit e resposta ----------------------------------------------------
 	if err := tx.Commit(); err != nil {
-		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
+		api.Logger.Error("commit", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
 
-	// Buscar adicional atualizado com opções para resposta
-	adicionalAtualizado, err := models_sql_boiler.CategoriaAdicionais(
+	// carrega adicional completo com opções para devolver
+	adicionalAtualizado, _ := models_sql_boiler.CategoriaAdicionais(
 		qm.Where("id = ?", id),
 		qm.Load(models_sql_boiler.CategoriaAdicionalRels.IDCategoriaAdicionalCategoriaAdicionalOpcoes,
 			qm.Where("deleted_at IS NULL"),
 			qm.OrderBy("seq_id")),
 	).One(r.Context(), api.SQLBoilerDB.GetDB())
 
-	if err != nil {
-		api.Logger.Error("erro ao buscar adicional atualizado", zap.Error(err))
-		jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{"message": "adicional updated successfully", "id": id})
-		return
-	}
-
-	// Converter e retornar
 	resp := dto.ConvertSQLBoilerCategoriaAdicionalToDTO(adicionalAtualizado)
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
 }

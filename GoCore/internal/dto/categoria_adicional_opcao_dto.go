@@ -17,10 +17,11 @@ type CreateCategoriaAdicionalOpcaoRequest struct {
 }
 
 type UpdateCategoriaAdicionalOpcaoRequest struct {
-	Codigo *string `json:"codigo" validate:"omitempty,max=100"`
-	Nome   string  `json:"nome" validate:"required,min=1,max=100"`
-	Valor  string  `json:"valor" validate:"required,numeric"`
-	Status int16   `json:"status" validate:"oneof=0 1"`
+	ID     *string `json:"id,omitempty"     validate:"omitempty,uuid"`
+	Codigo *string `json:"codigo,omitempty" validate:"omitempty,max=100"`
+	Nome   string  `json:"nome"             validate:"required,min=1,max=100"`
+	Valor  string  `json:"valor"            validate:"required,numeric"`
+	Status int16   `json:"status"           validate:"oneof=0 1"`
 }
 
 // ---------- Responses ----------

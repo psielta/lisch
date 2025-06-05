@@ -25,6 +25,7 @@ type Api struct {
 	UserService      services.UserService
 	ClienteService   services.ClienteService
 	DashboardService services.DashboardService
+	OutboxService    services.OutboxService
 	Sessions         *scs.SessionManager
 	JWTSecret        []byte
 	tenantCache      sync.Map
@@ -52,6 +53,7 @@ func NewApi(router *chi.Mux,
 	userService services.UserService,
 	clienteService services.ClienteService,
 	dashboardService services.DashboardService,
+	outboxService services.OutboxService,
 	sessions *scs.SessionManager, jwtSecret []byte,
 	validate *validator.Validate,
 	pool *pgxpool.Pool,
@@ -62,6 +64,7 @@ func NewApi(router *chi.Mux,
 		UserService:      userService,
 		ClienteService:   clienteService,
 		DashboardService: dashboardService,
+		OutboxService:    outboxService,
 		Sessions:         sessions,
 		JWTSecret:        jwtSecret,
 		cacheExpiration:  15 * time.Minute, // Cache expira em 15 minutos
@@ -103,6 +106,20 @@ func (api *Api) getTenantIDFromContext(r *http.Request) uuid.UUID {
 	})
 
 	return user.TenantID
+}
+
+func (api *Api) getUserIDFromContext(r *http.Request) uuid.UUID {
+	userIDValue := api.Sessions.Get(r.Context(), "AuthenticatedUserId")
+	if userIDValue == nil {
+		return uuid.Nil
+	}
+
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		return uuid.Nil
+	}
+
+	return userID
 }
 
 // Método para limpar cache expirado (pode ser chamado periodicamente)

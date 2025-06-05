@@ -17,6 +17,7 @@ type CreateCategoriaAdicionalRequest struct {
 	Minimo      *int32                                 `json:"minimo" validate:"omitempty,gte=0"`
 	Limite      *int32                                 `json:"limite" validate:"omitempty,gte=0"`
 	Status      int16                                  `json:"status" validate:"oneof=0 1"`
+	IsMain      *bool                                  `json:"is_main" validate:"omitempty,boolean"`
 	Opcoes      []CreateCategoriaAdicionalOpcaoRequest `json:"opcoes" validate:"omitempty,dive"`
 }
 
@@ -32,6 +33,7 @@ type CategoriaAdicionalResponse struct {
 	Minimo      *int32                            `json:"minimo,omitempty"`
 	Limite      *int32                            `json:"limite,omitempty"`
 	Status      int16                             `json:"status"`
+	IsMain      *bool                             `json:"is_main,omitempty"`
 	CreatedAt   time.Time                         `json:"created_at"`
 	UpdatedAt   time.Time                         `json:"updated_at"`
 	DeletedAt   *time.Time                        `json:"deleted_at,omitempty"`
@@ -56,6 +58,7 @@ func ConvertSQLBoilerCategoriaAdicionalToDTO(add *models_sql_boiler.CategoriaAdi
 		Nome:        add.Nome,
 		Selecao:     add.Selecao,
 		Status:      add.Status,
+		IsMain:      &add.IsMain.Bool,
 		CreatedAt:   add.CreatedAt,
 		UpdatedAt:   add.UpdatedAt,
 	}
@@ -116,5 +119,6 @@ type UpdateCategoriaAdicionalRequest struct {
 	Minimo      *int32                                 `json:"minimo,omitempty" validate:"omitempty,gte=0"`
 	Limite      *int32                                 `json:"limite,omitempty" validate:"omitempty,gte=0"`
 	Status      int16                                  `json:"status"      validate:"oneof=0 1"`
+	IsMain      *bool                                  `json:"is_main" validate:"omitempty,boolean"`
 	Opcoes      []UpdateCategoriaAdicionalOpcaoRequest `json:"opcoes"  validate:"required,min=1,dive"`
 }

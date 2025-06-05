@@ -39,6 +39,7 @@ type CategoriaAdicional struct {
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	IsMain    null.Bool `boil:"is_main" json:"is_main,omitempty" toml:"is_main" yaml:"is_main,omitempty"`
 
 	R *categoriaAdicionalR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L categoriaAdicionalL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -57,6 +58,7 @@ var CategoriaAdicionalColumns = struct {
 	CreatedAt   string
 	UpdatedAt   string
 	DeletedAt   string
+	IsMain      string
 }{
 	ID:          "id",
 	SeqID:       "seq_id",
@@ -70,6 +72,7 @@ var CategoriaAdicionalColumns = struct {
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
 	DeletedAt:   "deleted_at",
+	IsMain:      "is_main",
 }
 
 var CategoriaAdicionalTableColumns = struct {
@@ -85,6 +88,7 @@ var CategoriaAdicionalTableColumns = struct {
 	CreatedAt   string
 	UpdatedAt   string
 	DeletedAt   string
+	IsMain      string
 }{
 	ID:          "categoria_adicionais.id",
 	SeqID:       "categoria_adicionais.seq_id",
@@ -98,6 +102,7 @@ var CategoriaAdicionalTableColumns = struct {
 	CreatedAt:   "categoria_adicionais.created_at",
 	UpdatedAt:   "categoria_adicionais.updated_at",
 	DeletedAt:   "categoria_adicionais.deleted_at",
+	IsMain:      "categoria_adicionais.is_main",
 }
 
 // Generated where
@@ -318,6 +323,30 @@ func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
 func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelpernull_Bool struct{ field string }
+
+func (w whereHelpernull_Bool) EQ(x null.Bool) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Bool) NEQ(x null.Bool) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Bool) LT(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Bool) LTE(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Bool) GT(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Bool) GTE(x null.Bool) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
+func (w whereHelpernull_Bool) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var CategoriaAdicionalWhere = struct {
 	ID          whereHelperstring
 	SeqID       whereHelperint64
@@ -331,6 +360,7 @@ var CategoriaAdicionalWhere = struct {
 	CreatedAt   whereHelpertime_Time
 	UpdatedAt   whereHelpertime_Time
 	DeletedAt   whereHelpernull_Time
+	IsMain      whereHelpernull_Bool
 }{
 	ID:          whereHelperstring{field: "\"categoria_adicionais\".\"id\""},
 	SeqID:       whereHelperint64{field: "\"categoria_adicionais\".\"seq_id\""},
@@ -344,6 +374,7 @@ var CategoriaAdicionalWhere = struct {
 	CreatedAt:   whereHelpertime_Time{field: "\"categoria_adicionais\".\"created_at\""},
 	UpdatedAt:   whereHelpertime_Time{field: "\"categoria_adicionais\".\"updated_at\""},
 	DeletedAt:   whereHelpernull_Time{field: "\"categoria_adicionais\".\"deleted_at\""},
+	IsMain:      whereHelpernull_Bool{field: "\"categoria_adicionais\".\"is_main\""},
 }
 
 // CategoriaAdicionalRels is where relationship names are stored.
@@ -384,9 +415,9 @@ func (r *categoriaAdicionalR) GetIDCategoriaAdicionalCategoriaAdicionalOpcoes() 
 type categoriaAdicionalL struct{}
 
 var (
-	categoriaAdicionalAllColumns            = []string{"id", "seq_id", "id_categoria", "codigo_tipo", "nome", "selecao", "minimo", "limite", "status", "created_at", "updated_at", "deleted_at"}
+	categoriaAdicionalAllColumns            = []string{"id", "seq_id", "id_categoria", "codigo_tipo", "nome", "selecao", "minimo", "limite", "status", "created_at", "updated_at", "deleted_at", "is_main"}
 	categoriaAdicionalColumnsWithoutDefault = []string{"seq_id", "id_categoria", "nome", "selecao", "status"}
-	categoriaAdicionalColumnsWithDefault    = []string{"id", "codigo_tipo", "minimo", "limite", "created_at", "updated_at", "deleted_at"}
+	categoriaAdicionalColumnsWithDefault    = []string{"id", "codigo_tipo", "minimo", "limite", "created_at", "updated_at", "deleted_at", "is_main"}
 	categoriaAdicionalPrimaryKeyColumns     = []string{"id"}
 	categoriaAdicionalGeneratedColumns      = []string{}
 )

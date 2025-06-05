@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"go.uber.org/zap"
@@ -332,6 +333,7 @@ func (api *Api) handleCategoriaAdicionais_Post(w http.ResponseWriter, r *http.Re
 		Nome:        createDTO.Nome,
 		Selecao:     createDTO.Selecao,
 		Status:      createDTO.Status,
+		IsMain:      null.Bool{Bool: false, Valid: true},
 	}
 
 	// Definir campos opcionais
@@ -345,6 +347,10 @@ func (api *Api) handleCategoriaAdicionais_Post(w http.ResponseWriter, r *http.Re
 
 	if createDTO.Limite != nil {
 		adicional.Limite.SetValid(int(*createDTO.Limite))
+	}
+
+	if createDTO.IsMain != nil {
+		adicional.IsMain = api.nullBoolFromPtr(createDTO.IsMain)
 	}
 
 	// Inserir o adicional
@@ -489,6 +495,10 @@ func (api *Api) handleCategoriaAdicionais_Put(w http.ResponseWriter, r *http.Req
 		adicional.Limite.SetValid(int(*updateDTO.Limite))
 	} else {
 		adicional.Limite.Valid = false
+	}
+
+	if updateDTO.IsMain != nil {
+		adicional.IsMain = api.nullBoolFromPtr(updateDTO.IsMain)
 	}
 
 	if _, err = adicional.Update(r.Context(), tx, boil.Infer()); err != nil {

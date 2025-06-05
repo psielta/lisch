@@ -45,7 +45,8 @@ type Categoria struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	// Data e hora de exclusão lógica (soft delete)
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+	TipoVisualizacao pgtype.Int4        `json:"tipo_visualizacao"`
 }
 
 // Tipos de adicionais disponíveis em cada categoria do cardápio
@@ -65,6 +66,7 @@ type CategoriaAdicionai struct {
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	IsMain    pgtype.Bool        `json:"is_main"`
 }
 
 type CategoriaAdicionaisView struct {
@@ -205,6 +207,20 @@ type Culinaria struct {
 	IDCulinaria int32  `json:"id_culinaria"`
 	Nome        string `json:"nome"`
 	MeioMeio    int16  `json:"meio_meio"`
+}
+
+type OutboxEvent struct {
+	ID            int64       `json:"id"`
+	AggregateType string      `json:"aggregate_type"`
+	AggregateID   string      `json:"aggregate_id"`
+	EventType     string      `json:"event_type"`
+	Payload       []byte      `json:"payload"`
+	CreatedAt     time.Time   `json:"created_at"`
+	Processed     bool        `json:"processed"`
+	Attempts      int32       `json:"attempts"`
+	LastError     pgtype.Text `json:"last_error"`
+	TenantID      uuid.UUID   `json:"tenant_id"`
+	UserID        uuid.UUID   `json:"user_id"`
 }
 
 type Pedido struct {

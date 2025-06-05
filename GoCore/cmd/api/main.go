@@ -82,6 +82,7 @@ func main() {
 		UserService:      services.NewUserService(pool),
 		ClienteService:   services.NewClienteService(pool),
 		DashboardService: services.NewDashboardService(pool),
+		OutboxService:    services.NewOutboxService(pool),
 		Sessions:         s,
 		JWTSecret:        []byte(jwtSecret),
 		Validate:         validate,

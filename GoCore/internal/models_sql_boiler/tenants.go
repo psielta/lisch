@@ -164,6 +164,7 @@ var TenantRels = struct {
 	IDClientePadraoCliente string
 	Categorias             string
 	Clientes               string
+	OutboxEvents           string
 	Pedidos                string
 	Products               string
 	Users                  string
@@ -171,6 +172,7 @@ var TenantRels = struct {
 	IDClientePadraoCliente: "IDClientePadraoCliente",
 	Categorias:             "Categorias",
 	Clientes:               "Clientes",
+	OutboxEvents:           "OutboxEvents",
 	Pedidos:                "Pedidos",
 	Products:               "Products",
 	Users:                  "Users",
@@ -178,12 +180,13 @@ var TenantRels = struct {
 
 // tenantR is where relationships are stored.
 type tenantR struct {
-	IDClientePadraoCliente *Cliente       `boil:"IDClientePadraoCliente" json:"IDClientePadraoCliente" toml:"IDClientePadraoCliente" yaml:"IDClientePadraoCliente"`
-	Categorias             CategoriaSlice `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
-	Clientes               ClienteSlice   `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
-	Pedidos                PedidoSlice    `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
-	Products               ProductSlice   `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
-	Users                  UserSlice      `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
+	IDClientePadraoCliente *Cliente         `boil:"IDClientePadraoCliente" json:"IDClientePadraoCliente" toml:"IDClientePadraoCliente" yaml:"IDClientePadraoCliente"`
+	Categorias             CategoriaSlice   `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
+	Clientes               ClienteSlice     `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
+	OutboxEvents           OutboxEventSlice `boil:"OutboxEvents" json:"OutboxEvents" toml:"OutboxEvents" yaml:"OutboxEvents"`
+	Pedidos                PedidoSlice      `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
+	Products               ProductSlice     `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
+	Users                  UserSlice        `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
 }
 
 // NewStruct creates a new relationship struct
@@ -210,6 +213,13 @@ func (r *tenantR) GetClientes() ClienteSlice {
 		return nil
 	}
 	return r.Clientes
+}
+
+func (r *tenantR) GetOutboxEvents() OutboxEventSlice {
+	if r == nil {
+		return nil
+	}
+	return r.OutboxEvents
 }
 
 func (r *tenantR) GetPedidos() PedidoSlice {
@@ -586,6 +596,20 @@ func (o *Tenant) Clientes(mods ...qm.QueryMod) clienteQuery {
 	)
 
 	return Clientes(queryMods...)
+}
+
+// OutboxEvents retrieves all the outbox_event's OutboxEvents with an executor.
+func (o *Tenant) OutboxEvents(mods ...qm.QueryMod) outboxEventQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"outbox_event\".\"tenant_id\"=?", o.ID),
+	)
+
+	return OutboxEvents(queryMods...)
 }
 
 // Pedidos retrieves all the pedido's Pedidos with an executor.
@@ -970,6 +994,119 @@ func (tenantL) LoadClientes(ctx context.Context, e boil.ContextExecutor, singula
 				local.R.Clientes = append(local.R.Clientes, foreign)
 				if foreign.R == nil {
 					foreign.R = &clienteR{}
+				}
+				foreign.R.Tenant = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadOutboxEvents allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (tenantL) LoadOutboxEvents(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTenant interface{}, mods queries.Applicator) error {
+	var slice []*Tenant
+	var object *Tenant
+
+	if singular {
+		var ok bool
+		object, ok = maybeTenant.(*Tenant)
+		if !ok {
+			object = new(Tenant)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeTenant))
+			}
+		}
+	} else {
+		s, ok := maybeTenant.(*[]*Tenant)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeTenant))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &tenantR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &tenantR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`outbox_event`),
+		qm.WhereIn(`outbox_event.tenant_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load outbox_event")
+	}
+
+	var resultSlice []*OutboxEvent
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice outbox_event")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on outbox_event")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for outbox_event")
+	}
+
+	if len(outboxEventAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.OutboxEvents = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &outboxEventR{}
+			}
+			foreign.R.Tenant = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.TenantID {
+				local.R.OutboxEvents = append(local.R.OutboxEvents, foreign)
+				if foreign.R == nil {
+					foreign.R = &outboxEventR{}
 				}
 				foreign.R.Tenant = local
 				break
@@ -1496,6 +1633,59 @@ func (o *Tenant) AddClientes(ctx context.Context, exec boil.ContextExecutor, ins
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &clienteR{
+				Tenant: o,
+			}
+		} else {
+			rel.R.Tenant = o
+		}
+	}
+	return nil
+}
+
+// AddOutboxEvents adds the given related objects to the existing relationships
+// of the tenant, optionally inserting them as new records.
+// Appends related to o.R.OutboxEvents.
+// Sets related.R.Tenant appropriately.
+func (o *Tenant) AddOutboxEvents(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*OutboxEvent) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.TenantID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"outbox_event\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"tenant_id"}),
+				strmangle.WhereClause("\"", "\"", 2, outboxEventPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.TenantID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &tenantR{
+			OutboxEvents: related,
+		}
+	} else {
+		o.R.OutboxEvents = append(o.R.OutboxEvents, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &outboxEventR{
 				Tenant: o,
 			}
 		} else {

@@ -11,6 +11,7 @@ var TableNames = struct {
 	Clientes                 string
 	ContasReceber            string
 	Culinarias               string
+	OutboxEvent              string
 	PedidoItemAdicionais     string
 	PedidoItens              string
 	PedidoPagamentos         string
@@ -31,6 +32,7 @@ var TableNames = struct {
 	Clientes:                 "clientes",
 	ContasReceber:            "contas_receber",
 	Culinarias:               "culinarias",
+	OutboxEvent:              "outbox_event",
 	PedidoItemAdicionais:     "pedido_item_adicionais",
 	PedidoItens:              "pedido_itens",
 	PedidoPagamentos:         "pedido_pagamentos",

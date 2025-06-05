@@ -56,7 +56,8 @@ type Categoria struct {
 	CreatedAt         time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt         time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	// Data e hora de exclusão lógica (soft delete)
-	DeletedAt null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	DeletedAt        null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	TipoVisualizacao null.Int  `boil:"tipo_visualizacao" json:"tipo_visualizacao,omitempty" toml:"tipo_visualizacao" yaml:"tipo_visualizacao,omitempty"`
 
 	R *categoriaR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L categoriaL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -84,6 +85,7 @@ var CategoriaColumns = struct {
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         string
+	TipoVisualizacao  string
 }{
 	ID:                "id",
 	SeqID:             "seq_id",
@@ -106,6 +108,7 @@ var CategoriaColumns = struct {
 	CreatedAt:         "created_at",
 	UpdatedAt:         "updated_at",
 	DeletedAt:         "deleted_at",
+	TipoVisualizacao:  "tipo_visualizacao",
 }
 
 var CategoriaTableColumns = struct {
@@ -130,6 +133,7 @@ var CategoriaTableColumns = struct {
 	CreatedAt         string
 	UpdatedAt         string
 	DeletedAt         string
+	TipoVisualizacao  string
 }{
 	ID:                "categorias.id",
 	SeqID:             "categorias.seq_id",
@@ -152,6 +156,7 @@ var CategoriaTableColumns = struct {
 	CreatedAt:         "categorias.created_at",
 	UpdatedAt:         "categorias.updated_at",
 	DeletedAt:         "categorias.deleted_at",
+	TipoVisualizacao:  "categorias.tipo_visualizacao",
 }
 
 // Generated where
@@ -201,6 +206,7 @@ var CategoriaWhere = struct {
 	CreatedAt         whereHelpertime_Time
 	UpdatedAt         whereHelpertime_Time
 	DeletedAt         whereHelpernull_Time
+	TipoVisualizacao  whereHelpernull_Int
 }{
 	ID:                whereHelperstring{field: "\"categorias\".\"id\""},
 	SeqID:             whereHelperint64{field: "\"categorias\".\"seq_id\""},
@@ -223,6 +229,7 @@ var CategoriaWhere = struct {
 	CreatedAt:         whereHelpertime_Time{field: "\"categorias\".\"created_at\""},
 	UpdatedAt:         whereHelpertime_Time{field: "\"categorias\".\"updated_at\""},
 	DeletedAt:         whereHelpernull_Time{field: "\"categorias\".\"deleted_at\""},
+	TipoVisualizacao:  whereHelpernull_Int{field: "\"categorias\".\"tipo_visualizacao\""},
 }
 
 // CategoriaRels is where relationship names are stored.
@@ -303,9 +310,9 @@ func (r *categoriaR) GetIDCategoriumProdutos() ProdutoSlice {
 type categoriaL struct{}
 
 var (
-	categoriaAllColumns            = []string{"id", "seq_id", "id_tenant", "id_culinaria", "nome", "descricao", "inicio", "fim", "ativo", "opcao_meia", "ordem", "disponivel_domingo", "disponivel_segunda", "disponivel_terca", "disponivel_quarta", "disponivel_quinta", "disponivel_sexta", "disponivel_sabado", "created_at", "updated_at", "deleted_at"}
+	categoriaAllColumns            = []string{"id", "seq_id", "id_tenant", "id_culinaria", "nome", "descricao", "inicio", "fim", "ativo", "opcao_meia", "ordem", "disponivel_domingo", "disponivel_segunda", "disponivel_terca", "disponivel_quarta", "disponivel_quinta", "disponivel_sexta", "disponivel_sabado", "created_at", "updated_at", "deleted_at", "tipo_visualizacao"}
 	categoriaColumnsWithoutDefault = []string{"id_tenant", "id_culinaria", "nome", "inicio", "fim"}
-	categoriaColumnsWithDefault    = []string{"id", "seq_id", "descricao", "ativo", "opcao_meia", "ordem", "disponivel_domingo", "disponivel_segunda", "disponivel_terca", "disponivel_quarta", "disponivel_quinta", "disponivel_sexta", "disponivel_sabado", "created_at", "updated_at", "deleted_at"}
+	categoriaColumnsWithDefault    = []string{"id", "seq_id", "descricao", "ativo", "opcao_meia", "ordem", "disponivel_domingo", "disponivel_segunda", "disponivel_terca", "disponivel_quarta", "disponivel_quinta", "disponivel_sexta", "disponivel_sabado", "created_at", "updated_at", "deleted_at", "tipo_visualizacao"}
 	categoriaPrimaryKeyColumns     = []string{"id"}
 	categoriaGeneratedColumns      = []string{}
 )

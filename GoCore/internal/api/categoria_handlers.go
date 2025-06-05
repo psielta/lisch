@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"go.uber.org/zap"
@@ -112,6 +113,12 @@ func (api *Api) handleCategorias_Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := api.getUserIDFromContext(r)
+	if userID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
 	// Decodificar e validar o payload JSON
 	createDTO, problems, err := jsonutils.DecodeValidJsonV10[dto.CoreCategoriaCreateDTO](r)
 	if err != nil {
@@ -155,6 +162,7 @@ func (api *Api) handleCategorias_Post(w http.ResponseWriter, r *http.Request) {
 		DisponivelQuinta:  1,
 		DisponivelSexta:   1,
 		DisponivelSabado:  1,
+		TipoVisualizacao:  null.Int{Int: 0, Valid: true},
 	}
 
 	// Atualizar campos opcionais se fornecidos
@@ -211,6 +219,10 @@ func (api *Api) handleCategorias_Post(w http.ResponseWriter, r *http.Request) {
 		categoria.DisponivelSabado = *createDTO.DisponivelSabado
 	}
 
+	if createDTO.TipoVisualizacao != nil {
+		categoria.TipoVisualizacao = null.Int{Int: int(*createDTO.TipoVisualizacao), Valid: true}
+	}
+
 	// Inserir categoria no banco
 	if err := categoria.Insert(r.Context(), tx, boil.Infer()); err != nil {
 		api.Logger.Error("erro ao inserir categoria", zap.Error(err))
@@ -237,18 +249,11 @@ func (api *Api) handleCategorias_Post(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Confirmar transação
-	if err := tx.Commit(); err != nil {
-		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
-		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
-		return
-	}
-
 	// Buscar categoria completa com opções para resposta
 	categoriaCompleta, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", categoria.ID),
 		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		api.Logger.Error("erro ao buscar categoria criada", zap.Error(err))
@@ -258,6 +263,35 @@ func (api *Api) handleCategorias_Post(w http.ResponseWriter, r *http.Request) {
 
 	// Converter e retornar
 	resp := dto.ConvertSQLBoilerCategoriaToCoreDTO(categoriaCompleta)
+
+	payload, err := jsonutils.Marshal(resp)
+	if err != nil {
+		api.Logger.Error("erro ao serializar categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error serializing categoria"})
+		return
+	}
+	outboxEvent := &models_sql_boiler.OutboxEvent{
+		TenantID:      tenantID.String(),
+		UserID:        userID.String(),
+		AggregateType: "categoria",
+		AggregateID:   categoria.ID,
+		EventType:     "upsert",
+		Payload:       payload,
+	}
+
+	if err := outboxEvent.Insert(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("erro ao inserir evento do outbox", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating outbox event"})
+		return
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
 	jsonutils.EncodeJson(w, r, http.StatusCreated, resp)
 }
 
@@ -281,6 +315,12 @@ func (api *Api) handleCategorias_Put(w http.ResponseWriter, r *http.Request) {
 	// Obter tenant ID do contexto
 	tenantID := api.getTenantIDFromContext(r)
 	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	userID := api.getUserIDFromContext(r)
+	if userID == uuid.Nil {
 		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 		return
 	}
@@ -398,6 +438,10 @@ func (api *Api) handleCategorias_Put(w http.ResponseWriter, r *http.Request) {
 		categoriaExistente.DisponivelSabado = *updateDTO.DisponivelSabado
 	}
 
+	if updateDTO.TipoVisualizacao != nil {
+		categoriaExistente.TipoVisualizacao = null.Int{Int: int(*updateDTO.TipoVisualizacao), Valid: true}
+	}
+
 	// Atualizar categoria no banco
 	_, err = categoriaExistente.Update(r.Context(), tx, boil.Infer())
 	if err != nil {
@@ -484,18 +528,11 @@ func (api *Api) handleCategorias_Put(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Confirmar transação
-	if err := tx.Commit(); err != nil {
-		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
-		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
-		return
-	}
-
 	// Buscar categoria atualizada com opções para resposta
 	categoriaAtualizada, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", id),
 		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes, qm.Where("deleted_at IS NULL")),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		api.Logger.Error("erro ao buscar categoria atualizada", zap.Error(err))
@@ -505,6 +542,36 @@ func (api *Api) handleCategorias_Put(w http.ResponseWriter, r *http.Request) {
 
 	// Converter e retornar
 	resp := dto.ConvertSQLBoilerCategoriaToCoreDTO(categoriaAtualizada)
+
+	payload, err := jsonutils.Marshal(resp)
+	if err != nil {
+		api.Logger.Error("erro ao serializar categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error serializing categoria"})
+		return
+	}
+
+	outboxEvent := &models_sql_boiler.OutboxEvent{
+		TenantID:      tenantID.String(),
+		UserID:        userID.String(),
+		AggregateType: "categoria",
+		AggregateID:   id,
+		EventType:     "upsert",
+		Payload:       payload,
+	}
+
+	if err := outboxEvent.Insert(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("erro ao inserir evento do outbox", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating outbox event"})
+		return
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
 	jsonutils.EncodeJson(w, r, http.StatusOK, resp)
 }
 
@@ -532,6 +599,12 @@ func (api *Api) handleCategorias_PutStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	userID := api.getUserIDFromContext(r)
+	if userID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
 	// Decodificar e validar o payload JSON
 	updateDTO, problems, err := jsonutils.DecodeValidJsonV10[dto.CategoriaStatusUpdateDTO](r)
 	if err != nil {
@@ -544,11 +617,19 @@ func (api *Api) handleCategorias_PutStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	tx, err := api.SQLBoilerDB.GetDB().BeginTx(r.Context(), nil)
+	if err != nil {
+		api.Logger.Error("erro ao iniciar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+	defer tx.Rollback()
+
 	// Buscar categoria existente
 	categoria, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", id),
 		qm.Where("deleted_at IS NULL"),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -570,9 +651,54 @@ func (api *Api) handleCategorias_PutStatus(w http.ResponseWriter, r *http.Reques
 	categoria.Ativo = *updateDTO.Ativo
 
 	// Salvar alterações
-	_, err = categoria.Update(r.Context(), api.SQLBoilerDB.GetDB(), boil.Infer())
+	_, err = categoria.Update(r.Context(), tx, boil.Infer())
 	if err != nil {
 		api.Logger.Error("erro ao atualizar status da categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// obter categoria atualizada com opções
+	categoriaAtualizada, err := models_sql_boiler.Categorias(
+		qm.Where("id = ?", id),
+		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes, qm.Where("deleted_at IS NULL")),
+	).One(r.Context(), tx)
+
+	if err != nil {
+		api.Logger.Error("erro ao buscar categoria atualizada", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// converter e retornar
+	resp := dto.ConvertSQLBoilerCategoriaToCoreDTO(categoriaAtualizada)
+
+	payload, err := jsonutils.Marshal(resp)
+
+	if err != nil {
+		api.Logger.Error("erro ao serializar categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error serializing categoria"})
+		return
+	}
+
+	outboxEvent := &models_sql_boiler.OutboxEvent{
+		TenantID:      tenantID.String(),
+		UserID:        userID.String(),
+		AggregateType: "categoria",
+		AggregateID:   id,
+		EventType:     "upsert",
+		Payload:       payload,
+	}
+
+	if err := outboxEvent.Insert(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("erro ao inserir evento do outbox", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating outbox event"})
+		return
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
@@ -604,6 +730,21 @@ func (api *Api) handleCategorias_PutOrdem(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	userID := api.getUserIDFromContext(r)
+	if userID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	// Iniciar transação
+	tx, err := api.SQLBoilerDB.GetDB().BeginTx(r.Context(), nil)
+	if err != nil {
+		api.Logger.Error("erro ao iniciar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+	defer tx.Rollback()
+
 	// Decodificar e validar o payload JSON
 	updateDTO, problems, err := jsonutils.DecodeValidJsonV10[dto.CategoriaOrdemUpdateDTO](r)
 	if err != nil {
@@ -620,7 +761,7 @@ func (api *Api) handleCategorias_PutOrdem(w http.ResponseWriter, r *http.Request
 	categoria, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", id),
 		qm.Where("deleted_at IS NULL"),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -642,9 +783,54 @@ func (api *Api) handleCategorias_PutOrdem(w http.ResponseWriter, r *http.Request
 	categoria.Ordem.SetValid(int(*updateDTO.Ordem))
 
 	// Salvar alterações
-	_, err = categoria.Update(r.Context(), api.SQLBoilerDB.GetDB(), boil.Infer())
+	_, err = categoria.Update(r.Context(), tx, boil.Infer())
 	if err != nil {
 		api.Logger.Error("erro ao atualizar ordem da categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// obter categoria atualizada com opções
+	categoriaAtualizada, err := models_sql_boiler.Categorias(
+		qm.Where("id = ?", id),
+		qm.Load(models_sql_boiler.CategoriaRels.CategoriaOpcoes, qm.Where("deleted_at IS NULL")),
+	).One(r.Context(), tx)
+
+	if err != nil {
+		api.Logger.Error("erro ao buscar categoria atualizada", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// converter e retornar
+	resp := dto.ConvertSQLBoilerCategoriaToCoreDTO(categoriaAtualizada)
+
+	payload, err := jsonutils.Marshal(resp)
+
+	if err != nil {
+		api.Logger.Error("erro ao serializar categoria", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error serializing categoria"})
+		return
+	}
+
+	outboxEvent := &models_sql_boiler.OutboxEvent{
+		TenantID:      tenantID.String(),
+		UserID:        userID.String(),
+		AggregateType: "categoria",
+		AggregateID:   id,
+		EventType:     "upsert",
+		Payload:       payload,
+	}
+
+	if err := outboxEvent.Insert(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("erro ao inserir evento do outbox", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating outbox event"})
+		return
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}
@@ -682,6 +868,21 @@ func (api *Api) handleCategorias_PutOpcoesAlterarStatus(w http.ResponseWriter, r
 		return
 	}
 
+	userID := api.getUserIDFromContext(r)
+	if userID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	// Iniciar transação
+	tx, err := api.SQLBoilerDB.GetDB().BeginTx(r.Context(), nil)
+	if err != nil {
+		api.Logger.Error("erro ao iniciar transação", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+	defer tx.Rollback()
+
 	// Decodificar e validar o payload JSON
 	updateDTO, problems, err := jsonutils.DecodeValidJsonV10[dto.CategoriaOpcaoStatusUpdateDTO](r)
 	if err != nil {
@@ -698,7 +899,7 @@ func (api *Api) handleCategorias_PutOpcoesAlterarStatus(w http.ResponseWriter, r
 	categoria, err := models_sql_boiler.Categorias(
 		qm.Where("id = ?", categoriaID),
 		qm.Where("deleted_at IS NULL"),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -721,7 +922,7 @@ func (api *Api) handleCategorias_PutOpcoesAlterarStatus(w http.ResponseWriter, r
 		qm.Where("id = ?", opcaoID),
 		qm.Where("id_categoria = ?", categoriaID),
 		qm.Where("deleted_at IS NULL"),
-	).One(r.Context(), api.SQLBoilerDB.GetDB())
+	).One(r.Context(), tx)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -737,9 +938,55 @@ func (api *Api) handleCategorias_PutOpcoesAlterarStatus(w http.ResponseWriter, r
 	opcao.Status = *updateDTO.Status
 
 	// Salvar alterações
-	_, err = opcao.Update(r.Context(), api.SQLBoilerDB.GetDB(), boil.Infer())
+	_, err = opcao.Update(r.Context(), tx, boil.Infer())
 	if err != nil {
 		api.Logger.Error("erro ao atualizar status da opção", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// obter opção atualizada
+	opcaoAtualizada, err := models_sql_boiler.CategoriaOpcoes(
+		qm.Where("id = ?", opcaoID),
+		qm.Where("id_categoria = ?", categoriaID),
+		qm.Where("deleted_at IS NULL"),
+	).One(r.Context(), tx)
+
+	if err != nil {
+		api.Logger.Error("erro ao buscar opção atualizada", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
+		return
+	}
+
+	// converter e retornar
+	resp := dto.ConvertSQLBoilerCategoriaOpcaoToDTO(opcaoAtualizada)
+
+	payload, err := jsonutils.Marshal(resp)
+
+	if err != nil {
+		api.Logger.Error("erro ao serializar opção", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error serializing opcao"})
+		return
+	}
+
+	outboxEvent := &models_sql_boiler.OutboxEvent{
+		TenantID:      tenantID.String(),
+		UserID:        userID.String(),
+		AggregateType: "categoria",
+		AggregateID:   categoriaID,
+		EventType:     "upsert",
+		Payload:       payload,
+	}
+
+	if err := outboxEvent.Insert(r.Context(), tx, boil.Infer()); err != nil {
+		api.Logger.Error("erro ao inserir evento do outbox", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "error creating outbox event"})
+		return
+	}
+
+	// Confirmar transação
+	if err := tx.Commit(); err != nil {
+		api.Logger.Error("erro ao confirmar transação", zap.Error(err))
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}

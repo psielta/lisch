@@ -25,6 +25,7 @@ type CoreCategoriaCreateDTO struct {
 	DisponivelQuinta  *int16    `json:"disponivel_quinta" validate:"omitempty,oneof=0 1"`
 	DisponivelSexta   *int16    `json:"disponivel_sexta" validate:"omitempty,oneof=0 1"`
 	DisponivelSabado  *int16    `json:"disponivel_sabado" validate:"omitempty,oneof=0 1"`
+	TipoVisualizacao  *int16    `json:"tipo_visualizacao" validate:"omitempty,oneof=0 1"`
 	Opcoes            []struct {
 		Nome   string `json:"nome" validate:"required,min=2,max=100"`
 		Status *int16 `json:"status" validate:"omitempty,oneof=0 1"`
@@ -49,6 +50,7 @@ type CoreCategoriaUpdateDTO struct {
 	DisponivelQuinta  *int16  `json:"disponivel_quinta" validate:"omitempty,oneof=0 1"`
 	DisponivelSexta   *int16  `json:"disponivel_sexta" validate:"omitempty,oneof=0 1"`
 	DisponivelSabado  *int16  `json:"disponivel_sabado" validate:"omitempty,oneof=0 1"`
+	TipoVisualizacao  *int16  `json:"tipo_visualizacao" validate:"omitempty,oneof=0 1"`
 	Opcoes            []struct {
 		ID     string `json:"id,omitempty"`
 		Nome   string `json:"nome" validate:"required,min=2,max=100"`
@@ -88,6 +90,7 @@ type CoreCategoriaResponseDTO struct {
 	DisponivelQuinta  int16                `json:"disponivel_quinta"`
 	DisponivelSexta   int16                `json:"disponivel_sexta"`
 	DisponivelSabado  int16                `json:"disponivel_sabado"`
+	TipoVisualizacao  *int                 `json:"tipo_visualizacao"`
 	CreatedAt         time.Time            `json:"created_at"`
 	UpdatedAt         time.Time            `json:"updated_at"`
 	DeletedAt         *time.Time           `json:"deleted_at,omitempty"`
@@ -117,6 +120,7 @@ func ConvertSQLBoilerCategoriaToCoreDTO(categoria *models_sql_boiler.Categoria) 
 		DisponivelQuinta:  categoria.DisponivelQuinta,
 		DisponivelSexta:   categoria.DisponivelSexta,
 		DisponivelSabado:  categoria.DisponivelSabado,
+		TipoVisualizacao:  &categoria.TipoVisualizacao.Int,
 		CreatedAt:         categoria.CreatedAt,
 		UpdatedAt:         categoria.UpdatedAt,
 	}

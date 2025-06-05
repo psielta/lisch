@@ -115,3 +115,10 @@ func (api *Api) ptr(ns null.String) *string {
 func (api *Api) intPtr(ni null.Int) *int {
 	return api.nullIntToPtr(ni)
 }
+
+func (api *Api) nullBoolFromPtr(b *bool) null.Bool {
+	if b == nil {
+		return null.Bool{}
+	}
+	return null.Bool{Bool: *b, Valid: true}
+}

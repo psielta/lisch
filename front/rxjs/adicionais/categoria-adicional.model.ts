@@ -31,6 +31,7 @@ export interface CreateCategoriaAdicionalRequest {
   minimo?: number;
   limite?: number;
   status: 0 | 1;
+  is_main?: boolean;
   /** Opcional: já cria opções junto com o grupo */
   opcoes?: Omit<
     CreateCategoriaAdicionalOpcaoRequest,
@@ -68,6 +69,7 @@ export interface CategoriaAdicionalResponse {
   minimo?: number;
   limite?: number;
   status: 0 | 1;
+  is_main?: boolean;
   created_at: string;
   updated_at: string;
   deleted_at?: string;

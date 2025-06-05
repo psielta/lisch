@@ -57,6 +57,7 @@ const adicionalSchema = z
     limite: z.number().int().positive().optional().or(z.literal("")),
     status: z.union([z.literal(0), z.literal(1)]).default(1),
     habilita_limite: z.boolean().optional(), // UI (para seleção M)
+    is_main: z.boolean().optional(),
     opcoes: z.array(opcaoSchema).min(1, "Adicione ao menos 1 opção"),
   })
   .superRefine((val, ctx) => {
@@ -134,6 +135,7 @@ export default function FormCategoriaAdicional({
     limite: data?.limite ?? "",
     status: (data?.status ?? 1) as 0 | 1,
     habilita_limite: data?.selecao === "M" && !!data?.limite,
+    is_main: data?.is_main ?? false,
     opcoes: data?.opcoes?.map((o) => ({
       id: o.id,
       codigo: o.codigo ?? "",
@@ -195,6 +197,7 @@ export default function FormCategoriaAdicional({
           : selecao === "M" && values.habilita_limite
           ? Number(values.limite)
           : undefined,
+      is_main: values.is_main ?? false,
       opcoes: values.opcoes.map((o) => ({
         ...o,
         valor: o.valor.toFixed(2),
@@ -293,18 +296,39 @@ export default function FormCategoriaAdicional({
             <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
               <label className={labelCls}>Nome</label>
               <div className="mt-2 sm:col-span-2 sm:mt-0">
-                <Controller
-                  name="nome"
-                  control={control}
-                  render={({ field }) => (
-                    <input {...field} className={inputCls} />
-                  )}
-                />
-                {errors.nome && (
-                  <p className="mt-2 text-sm text-destructive">
-                    {errors.nome.message}
-                  </p>
-                )}
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <Controller
+                      name="nome"
+                      control={control}
+                      render={({ field }) => (
+                        <input {...field} className={inputCls} />
+                      )}
+                    />
+                    {errors.nome && (
+                      <p className="mt-2 text-sm text-destructive">
+                        {errors.nome.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Controller
+                      name="is_main"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                      )}
+                    />
+                    <label className="text-sm text-muted-foreground">
+                      Principal?
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 

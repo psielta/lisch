@@ -63,6 +63,7 @@ const categoriaSchema = z.object({
   disponivel_quinta: z.number().optional(),
   disponivel_sexta: z.number().optional(),
   disponivel_sabado: z.number().optional(),
+  tipo_visualizacao: z.number().optional(),
   opcoes: z
     .array(
       z.object({
@@ -131,6 +132,7 @@ export default function FormCategoria({
       categoria?.disponivel_sabado === undefined
         ? 1
         : Number(categoria.disponivel_sabado),
+    tipo_visualizacao: categoria?.tipo_visualizacao || 0,
     opcoes: categoria?.opcoes?.map((op) => ({
       id: op.id || undefined,
       nome: op.nome,
@@ -495,6 +497,40 @@ export default function FormCategoria({
                     </p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+              <label className="block text-sm font-medium leading-6 text-foreground sm:pt-1.5">
+                Tipo de Visualização
+              </label>
+              <div className="mt-2 sm:col-span-2 sm:mt-0">
+                <Controller
+                  name="tipo_visualizacao"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          className="mr-2"
+                          checked={field.value === 0}
+                          onChange={() => field.onChange(0)}
+                        />
+                        <span className="text-sm">Padrão</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          className="mr-2"
+                          checked={field.value === 1}
+                          onChange={() => field.onChange(1)}
+                        />
+                        <span className="text-sm">Personalizado</span>
+                      </label>
+                    </div>
+                  )}
+                />
               </div>
             </div>
 

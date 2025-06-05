@@ -41,6 +41,7 @@ export interface ICoreCategoria {
   created_at: string;
   updated_at: string;
   deleted_at?: string;
+  tipo_visualizacao?: number;
   opcoes: ICategoriaOpcao[];
 }
 
@@ -65,6 +66,7 @@ export interface ICoreCategoriaCreate {
   disponivel_quinta?: number;
   disponivel_sexta?: number;
   disponivel_sabado?: number;
+  tipo_visualizacao?: number;
   opcoes: {
     nome: string;
     status?: number;
@@ -92,6 +94,7 @@ export interface ICoreCategoriaUpdate {
   disponivel_quinta?: number;
   disponivel_sexta?: number;
   disponivel_sabado?: number;
+  tipo_visualizacao?: number;
   opcoes: {
     id?: string;
     nome: string;

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { toast } from "sonner";
 
 /* ------------------------------------------------------------------
  *  Interfaces – DTOs de Requisição
@@ -301,6 +302,10 @@ export class CategoriaAdicionalService {
           `Conflict: ${(data as ApiError).error || "Resource conflict"}`
         );
       }
+      toast.error(
+        (data as ApiError).error || "Ocorreu um erro ao processar a requisição"
+      );
+
       return new Error(
         `Server Error: ${(data as ApiError).error || "Internal"}`
       );

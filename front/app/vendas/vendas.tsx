@@ -6,6 +6,9 @@ import DialogCliente from "@/components/dialogs/DialogCliente";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ShoppingCart, Package, Menu, X, Search, Pizza } from "lucide-react";
+// Imports adicionais necessários
+import { MultiItemModal } from "./MultiItemModal";
+import { AdicionaisSecundariosDialog } from "./AdicionaisSecundariosDialog";
 import {
   ICoreCategoria,
   ICategoriaOpcao,
@@ -139,6 +142,11 @@ interface PizzaMeiaModalData {
   categoriaOpcao: ICategoriaOpcao;
   item?: PedidoItemDTO;
   index?: number;
+}
+
+interface MultiItemModalData {
+  produto: ProdutoResponse;
+  items?: PedidoItemDTO[];
 }
 
 // Interface para itens da sidebar
@@ -299,7 +307,9 @@ function Vendas({
   const [pizzaMeiaModalOpen, setPizzaMeiaModalOpen] = useState(false);
   const [pizzaMeiaModalData, setPizzaMeiaModalData] =
     useState<PizzaMeiaModalData | null>(null);
-
+  const [multiItemModalOpen, setMultiItemModalOpen] = useState(false);
+  const [multiItemModalData, setMultiItemModalData] =
+    useState<MultiItemModalData | null>(null);
   const theme = useTheme();
   const [dialogClienteOpen, setDialogClienteOpen] = useState(false);
   const [clienteParaEdicao, setClienteParaEdicao] =
@@ -444,9 +454,32 @@ function Vendas({
     return items;
   }, [produtos, categorias, searchTerm]);
 
+  // Função para verificar se deve usar o modal multi-item APENAS PARA ADIÇÃO
+  const shouldUseMultiItemModal = (produto: ProdutoResponse): boolean => {
+    const categoria = categorias.find((c) => c.id === produto.id_categoria);
+
+    if (!categoria) return false;
+    if (categoria.tipo_visualizacao !== 1) return false;
+
+    // Pizza meio a meio NÃO pode usar MultiItemModal na sidebar (tem modal próprio)
+    // Mas pizza inteira SIM pode usar se atender as regras
+    // Como estamos na função de adicionar produto individual, pode usar
+
+    const hasMainAdicional = adicionais.some(
+      (a) => a.id_categoria === categoria.id && a.is_main === true
+    );
+
+    return hasMainAdicional;
+  };
+  // Função para ADICIONAR item - pode usar MultiItemModal se atender às regras
   const handleAddItem = (produto: ProdutoResponse) => {
-    setModalData({ produto });
-    setModalOpen(true);
+    if (shouldUseMultiItemModal(produto)) {
+      setMultiItemModalData({ produto });
+      setMultiItemModalOpen(true);
+    } else {
+      setModalData({ produto });
+      setModalOpen(true);
+    }
   };
 
   const handleAddPizzaMeia = (
@@ -457,22 +490,10 @@ function Vendas({
     setPizzaMeiaModalOpen(true);
   };
 
-  const handleSidebarItemClick = (item: SidebarItem) => {
-    if (item.type === "produto") {
-      handleAddItem(item.data as ProdutoResponse);
-    } else if (item.type === "pizza-meia") {
-      const { categoria, categoriaOpcao } = item.data as {
-        categoria: ICoreCategoria;
-        categoriaOpcao: ICategoriaOpcao;
-      };
-      handleAddPizzaMeia(categoria, categoriaOpcao);
-    }
-  };
-
+  // Função para EDITAR item - SEMPRE usa modais originais
   const handleEditItem = async (item: PedidoItemDTO, index: number) => {
-    // Verificar se é uma pizza meio a meio
     if (item.id_produto_2) {
-      // É uma pizza meio a meio
+      // Pizza meio a meio - usa PizzaMeiaModal
       const categoria = categorias.find((c) => c.id === item.id_categoria);
       const categoriaOpcao = categoria?.opcoes?.find(
         (o) => o.id === item.id_categoria_opcao
@@ -487,7 +508,7 @@ function Vendas({
       return;
     }
 
-    // É um produto normal
+    // Produto normal - SEMPRE usa ItemModal na edição
     let produto = produtos.find((p) => p.id === item.id_produto);
 
     if (!produto) {
@@ -497,15 +518,28 @@ function Vendas({
         );
         produto = resp.data;
       } catch {
-        toast.error(
-          "Não foi possível carregar os dados do produto. Verifique se o produto está cadastrado ou se foi deletado."
-        );
+        toast.error("Não foi possível carregar os dados do produto.");
         return;
       }
     }
 
+    // Na EDIÇÃO, sempre usar o modal original (ItemModal)
     setModalData({ produto, item, index });
     setModalOpen(true);
+  };
+
+  // Função modificada para click na sidebar
+  const handleSidebarItemClick = (item: SidebarItem) => {
+    if (item.type === "produto") {
+      const produto = item.data as ProdutoResponse;
+      handleAddItem(produto); // Já verifica internamente se deve usar multi-item
+    } else if (item.type === "pizza-meia") {
+      const { categoria, categoriaOpcao } = item.data as {
+        categoria: ICoreCategoria;
+        categoriaOpcao: ICategoriaOpcao;
+      };
+      handleAddPizzaMeia(categoria, categoriaOpcao);
+    }
   };
 
   const calculateItemTotal = (values: PedidoFormValues) => {
@@ -650,6 +684,41 @@ function Vendas({
         }}
       >
         {(formik: FormikProps<PedidoFormValues>) => {
+          // Função para salvar múltiplos itens
+          //const handleSaveMultiItems = (items: PedidoItemDTO[]) => {
+          //  if (multiItemModalData?.items?.length === 1) {
+          //    // Editando um item existente
+          //    const originalItem = multiItemModalData.items[0];
+          //    const itemIndex = formik.values.itens.findIndex(
+          //      (item) =>
+          //        item.id_produto === originalItem.id_produto &&
+          //        item.id_categoria_opcao === originalItem.id_categoria_opcao &&
+          //        item.observacao === originalItem.observacao
+          //    );
+          //
+          //    if (itemIndex !== -1) {
+          //      const newItens = [...formik.values.itens];
+          //      newItens[itemIndex] = items[0]; // Apenas o primeiro item para edição
+          //      formik.setFieldValue("itens", newItens);
+          //    }
+          //  } else {
+          //    // Adicionando novos itens
+          //    formik.setFieldValue("itens", [...formik.values.itens, ...items]);
+          //  }
+          //
+          //  setMultiItemModalOpen(false);
+          //  setMultiItemModalData(null);
+          //};
+
+          const handleSaveMultiItems = (items: PedidoItemDTO[]) => {
+            // MultiItemModal é APENAS para adição, nunca para edição
+            // Sempre adiciona novos itens
+            formik.setFieldValue("itens", [...formik.values.itens, ...items]);
+
+            setMultiItemModalOpen(false);
+            setMultiItemModalData(null);
+          };
+
           const handleAbrirDialogNovoCliente = () => {
             setClienteParaEdicao(null);
             setDialogClienteOpen(true);
@@ -1854,6 +1923,18 @@ function Vendas({
                     setPizzaMeiaModalOpen(false);
                     setPizzaMeiaModalData(null);
                   }}
+                />
+                {/* Novo modal multi-item */}
+                <MultiItemModal
+                  open={multiItemModalOpen}
+                  onClose={() => {
+                    setMultiItemModalOpen(false);
+                    setMultiItemModalData(null);
+                  }}
+                  modalData={multiItemModalData}
+                  adicionais={adicionais}
+                  categorias={categorias}
+                  onSave={handleSaveMultiItems}
                 />
               </Form>
               <DialogCliente

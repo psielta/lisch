@@ -68,6 +68,12 @@ export default function ClienteSearchDialog({
     { field: "nome_razao_social", headerName: "Nome", flex: 1, minWidth: 150 },
     { field: "telefone", headerName: "Telefone", width: 140 },
     { field: "celular", headerName: "Celular", width: 140 },
+    // incluir endereço
+    { field: "endereco", headerName: "Endereço", width: 140 },
+    { field: "bairro", headerName: "Bairro", width: 140 },
+    { field: "cidade", headerName: "Cidade", width: 140 },
+    { field: "uf", headerName: "UF", width: 140 },
+    { field: "cep", headerName: "CEP", width: 140 },
   ];
 
   return (

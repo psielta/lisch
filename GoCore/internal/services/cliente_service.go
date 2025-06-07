@@ -230,13 +230,13 @@ func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID 
 	offset := (page - 1) * pageSize
 
 	// Prepara parâmetros para a consulta de contagem
-	countParams := pgstore.CountClientesSmartSearchParams{
+	countParams := pgstore.CountClientesSmartSearchFuzzyParams{
 		TenantID: tenantID,
 		Column2:  searchTerm,
 	}
 
 	// Obtém o total de registros
-	total, err := cs.queries.CountClientesSmartSearch(ctx, countParams)
+	total, err := cs.queries.CountClientesSmartSearchFuzzy(ctx, countParams)
 	if err != nil {
 		return dto.PaginatedResponse[dto.ClienteResponse]{}, err
 	}

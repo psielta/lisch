@@ -65,11 +65,15 @@ export default function ClienteSearchDialog({
   };
 
   const columns: GridColDef[] = [
-    { field: "nome_razao_social", headerName: "Nome", flex: 1, minWidth: 150 },
-    { field: "telefone", headerName: "Telefone", width: 140 },
-    { field: "celular", headerName: "Celular", width: 140 },
-    // incluir endereço
-    { field: "endereco", headerName: "Endereço", width: 140 },
+    {
+      field: "nome_razao_social",
+      headerName: "Nome/Razão Social",
+      flex: 1,
+      minWidth: 200,
+    },
+    { field: "celular", headerName: "Celular ou Telefone", width: 140 },
+    { field: "logradouro", headerName: "Endereço", width: 140 },
+    { field: "numero", headerName: "Número", width: 140 },
     { field: "bairro", headerName: "Bairro", width: 140 },
     { field: "cidade", headerName: "Cidade", width: 140 },
     { field: "uf", headerName: "UF", width: 140 },
@@ -79,7 +83,7 @@ export default function ClienteSearchDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Buscar Cliente por Nome</DialogTitle>
-      <DialogContent sx={{ pt: 2 }}>
+      <DialogContent sx={{ pt: 3 }}>
         <TextField
           value={searchTerm}
           onChange={handleInputChange}
@@ -98,16 +102,18 @@ export default function ClienteSearchDialog({
               onClose();
             }}
             disableRowSelectionOnClick
-            localeText={{
-              noRowsLabel: hasSearched
-                ? "Nenhum cliente encontrado"
-                : "Digite pelo menos 3 caracteres para buscar",
-            }}
           />
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Fechar</Button>
+        <div className="flex gap-10 items-center justify-between">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Dê um duplo click no cliente para selecionar
+          </div>
+          <Button onClick={onClose} variant="outlined" color="primary">
+            Cancelar
+          </Button>
+        </div>
       </DialogActions>
     </Dialog>
   );

@@ -3,6 +3,7 @@ import { Print } from "@mui/icons-material";
 import { useAuth, User, Tenant } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import DialogCliente from "@/components/dialogs/DialogCliente";
+import ClienteSearchDialog from "@/components/dialogs/ClienteSearchDialog";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { ShoppingCart, Package, Menu, X, Search, Pizza } from "lucide-react";
@@ -29,15 +30,10 @@ import {
   Divider,
   TextField,
   Button,
-  Autocomplete,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -309,8 +305,6 @@ function Vendas({
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [shouldPrint, setShouldPrint] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoadingClientes, setIsLoadingClientes] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
 
   const [clienteOptions, setClienteOptions] = useState<PedidoClienteDTO[]>(
     defaultCliente && pedido?.cliente
@@ -683,36 +677,7 @@ function Vendas({
     dispatch(clearPedidoState());
   }, [dispatch]);
 
-  const clienteInicial =
-    pedido?.cliente?.nome_razao_social ??
-    defaultCliente?.nome_razao_social ??
-    "";
-  const [inputValue, setInputValue] = useState(clienteInicial);
-  const fetchClientes = useMemo(
-    () =>
-      debounce(async (query: string) => {
-        if (query.length < 3) {
-          setHasSearched(false);
-          return;
-        }
 
-        try {
-          setIsLoadingClientes(true);
-          const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
-            `/clientes/smartsearch?search=${query}&page_size=50`
-          );
-          setClienteOptions(resp.data.items);
-          setHasSearched(true);
-        } catch (error) {
-          console.error("Erro ao buscar clientes:", error);
-          setClienteOptions([]);
-          setHasSearched(true);
-        } finally {
-          setIsLoadingClientes(false);
-        }
-      }, 300),
-    []
-  );
 
   // Função para imprimir pedido com loading
   const handlePrintPedido = async (pedidoId: string) => {
@@ -899,8 +864,6 @@ function Vendas({
               "cliente_complemento",
               clienteSalvo.complemento || ""
             );
-            setInputValue(clienteSalvo.nome_razao_social);
-
             toast.success("Cliente salvo e selecionado com sucesso!");
           };
 
@@ -2304,94 +2267,31 @@ function Vendas({
                 cliente={clienteParaEdicao as ClienteResponse}
                 onClienteSaved={handleClienteSalvo}
               />
-              <Dialog
+              <ClienteSearchDialog
                 open={buscarNomeOpen}
                 onClose={() => setBuscarNomeOpen(false)}
-                maxWidth="md"
-                fullWidth
-              >
-                <DialogTitle>Buscar Cliente por Nome</DialogTitle>
-                <DialogContent sx={{ pt: 2 }}>
-                  <Autocomplete
-                    size="small"
-                    options={clienteOptions}
-                    value={
-                      clienteOptions.find(
-                        (c) => c.id === formik.values.id_cliente
-                      ) ?? null
-                    }
-                    filterOptions={(options) => options}
-                    inputValue={inputValue}
-                    getOptionKey={(option) => option.id}
-                    onInputChange={(_, newInput, reason) => {
-                      if (reason === "input") {
-                        setInputValue(newInput);
-                        if (newInput.length >= 3) {
-                          setHasSearched(false);
-                          fetchClientes(newInput);
-                        } else {
-                          setHasSearched(false);
-                          setIsLoadingClientes(false);
-                        }
-                      }
-                    }}
-                    onChange={(_, option) => {
-                      if (option) {
-                        formik.setFieldValue("id_cliente", option.id);
-                        formik.setFieldValue(
-                          "cliente_celular",
-                          onlyDigits(option.celular || "")
-                        );
-                        formik.setFieldValue(
-                          "cliente_nome_razao_social",
-                          option.nome_razao_social
-                        );
-                        formik.setFieldValue(
-                          "cliente_logradouro",
-                          option.logradouro || ""
-                        );
-                        formik.setFieldValue(
-                          "cliente_numero",
-                          option.numero || ""
-                        );
-                        formik.setFieldValue(
-                          "cliente_bairro",
-                          option.bairro || ""
-                        );
-                        formik.setFieldValue(
-                          "cliente_complemento",
-                          option.complemento || ""
-                        );
-                        setBuscarNomeOpen(false);
-                      }
-                    }}
-                    getOptionLabel={(opt) => {
-                      const telefone =
-                        opt.telefone?.match(/\d+/g)?.join("") || "";
-                      const celular =
-                        opt.celular?.match(/\d+/g)?.join("") || "";
-                      return `${opt.nome_razao_social} - ${telefone} - ${celular}`;
-                    }}
-                    isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                    loading={isLoadingClientes}
-                    noOptionsText={
-                      inputValue.length < 3
-                        ? "Digite pelo menos 3 caracteres para buscar"
-                        : hasSearched && !isLoadingClientes
-                        ? "Nenhum cliente encontrado"
-                        : "Digite para buscar clientes"
-                    }
-                    renderInput={(params) => (
-                      <TextField {...params} label="Cliente" fullWidth />
-                    )}
-                  />
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setBuscarNomeOpen(false)}>
-                    Fechar
-                  </Button>
-                </DialogActions>
-              </Dialog>
+                onSelect={(option) => {
+                  formik.setFieldValue("id_cliente", option.id);
+                  formik.setFieldValue(
+                    "cliente_celular",
+                    onlyDigits(option.celular || "")
+                  );
+                  formik.setFieldValue(
+                    "cliente_nome_razao_social",
+                    option.nome_razao_social
+                  );
+                  formik.setFieldValue(
+                    "cliente_logradouro",
+                    option.logradouro || ""
+                  );
+                  formik.setFieldValue("cliente_numero", option.numero || "");
+                  formik.setFieldValue("cliente_bairro", option.bairro || "");
+                  formik.setFieldValue(
+                    "cliente_complemento",
+                    option.complemento || ""
+                  );
+                }}
+              />
             </>
           );
         }}

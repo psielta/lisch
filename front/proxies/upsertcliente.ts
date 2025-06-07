@@ -16,6 +16,6 @@ export interface UpsertClienteDTO {
 export async function upsertCliente(
   cliente: UpsertClienteDTO
 ): Promise<ClienteResponse> {
-  const responseAxios = await api.post("/api/clientes", cliente);
+  const responseAxios = await api.post("/clientes/upsert", cliente);
   return responseAxios.data;
 }

@@ -232,18 +232,17 @@ function Vendas({
   console.log(tenant);
   let pedidoValidationSchema = Yup.object({
     id: Yup.string().optional().nullable(),
-    id_cliente: Yup.string()
-      .test(
-        "cliente-prazo-valido",
-        "Para venda a prazo, selecione um cliente diferente",
-        function (value) {
-          const categoria_pagamento = this.parent.categoria_pagamento;
-          if (categoria_pagamento === "Prazo" && defaultCliente?.id === value) {
-            return false;
-          }
-          return true;
+    id_cliente: Yup.string().test(
+      "cliente-prazo-valido",
+      "Para venda a prazo, selecione um cliente diferente",
+      function (value) {
+        const categoria_pagamento = this.parent.categoria_pagamento;
+        if (categoria_pagamento === "Prazo" && defaultCliente?.id === value) {
+          return false;
         }
-      ),
+        return true;
+      }
+    ),
     codigo_pedido: Yup.string().required("Código do pedido é obrigatório"),
     tipo_entrega: Yup.string()
       .oneOf(["Delivery", "Balcão", "Retirada"])
@@ -368,8 +367,9 @@ function Vendas({
     acrescimo: pedido?.acrescimo || "0.00",
     finalizado: pedido?.finalizado || false,
     quitado: pedido?.quitado || false,
-    cliente_celular:
-      onlyDigits(pedido?.cliente?.celular || defaultCliente?.celular || ""),
+    cliente_celular: onlyDigits(
+      pedido?.cliente?.celular || defaultCliente?.celular || ""
+    ),
     cliente_nome_razao_social:
       pedido?.cliente?.nome_razao_social ||
       defaultCliente?.nome_razao_social ||
@@ -838,12 +838,12 @@ function Vendas({
             );
 
             if (clienteExiste) {
-            setClienteOptions((prev) =>
-              prev.map((c) => (c.id === clienteSalvo.id ? clienteSalvo : c))
-            );
-          } else {
-            setClienteOptions((prev) => [...prev, clienteSalvo]);
-          }
+              setClienteOptions((prev) =>
+                prev.map((c) => (c.id === clienteSalvo.id ? clienteSalvo : c))
+              );
+            } else {
+              setClienteOptions((prev) => [...prev, clienteSalvo]);
+            }
 
             formik.setFieldValue("id_cliente", clienteSalvo.id);
             formik.setFieldValue(
@@ -854,7 +854,10 @@ function Vendas({
               "cliente_nome_razao_social",
               clienteSalvo.nome_razao_social
             );
-            formik.setFieldValue("cliente_logradouro", clienteSalvo.logradouro || "");
+            formik.setFieldValue(
+              "cliente_logradouro",
+              clienteSalvo.logradouro || ""
+            );
             formik.setFieldValue("cliente_numero", clienteSalvo.numero || "");
             formik.setFieldValue("cliente_bairro", clienteSalvo.bairro || "");
             formik.setFieldValue(
@@ -1416,14 +1419,24 @@ function Vendas({
                               }}
                             >
                               <Box sx={{ flex: 1 }}>
-                                {clienteStatus === "found" && (
-                                  <Badge color="green">Cliente encontrado com sucesso!</Badge>
-                                )}
-                                {clienteStatus === "not-found" && (
-                                  <Badge color="red">Cliente não encontrado</Badge>
-                                )}
+                                {clienteStatus === "found" &&
+                                  formik.values.quitado == false &&
+                                  formik.values.finalizado == false && (
+                                    <Badge color="green" className="mb-2">
+                                      Cliente encontrado com sucesso!
+                                    </Badge>
+                                  )}
+                                {clienteStatus === "not-found" &&
+                                  formik.values.quitado == false &&
+                                  formik.values.finalizado == false && (
+                                    <Badge color="red" className="mb-2">
+                                      Cliente não encontrado
+                                    </Badge>
+                                  )}
                                 {clienteStatus === "searching" && (
-                                  <Badge color="blue">Buscando cliente...</Badge>
+                                  <Badge color="blue" className="mb-2">
+                                    Buscando cliente...
+                                  </Badge>
                                 )}
                                 <TextField
                                   size="small"
@@ -1453,16 +1466,21 @@ function Vendas({
                                   fullWidth
                                   label="Nome"
                                   name="cliente_nome_razao_social"
-                                  value={formik.values.cliente_nome_razao_social}
+                                  value={
+                                    formik.values.cliente_nome_razao_social
+                                  }
                                   onChange={formik.handleChange}
                                   onBlur={formik.handleBlur}
                                   error={
                                     formik.touched.cliente_nome_razao_social &&
-                                    Boolean(formik.errors.cliente_nome_razao_social)
+                                    Boolean(
+                                      formik.errors.cliente_nome_razao_social
+                                    )
                                   }
                                   helperText={
                                     formik.touched.cliente_nome_razao_social &&
-                                    (formik.errors.cliente_nome_razao_social as any)
+                                    (formik.errors
+                                      .cliente_nome_razao_social as any)
                                   }
                                   disabled={isFormDisabled}
                                   sx={{ mt: 1 }}
@@ -1567,7 +1585,9 @@ function Vendas({
                                   sx={{
                                     backgroundColor: "primary.main",
                                     color: "white",
-                                    "&:hover": { backgroundColor: "primary.dark" },
+                                    "&:hover": {
+                                      backgroundColor: "primary.dark",
+                                    },
                                   }}
                                   disabled={isFormDisabled}
                                 >
@@ -1584,7 +1604,9 @@ function Vendas({
                                   sx={{
                                     backgroundColor: "secondary.main",
                                     color: "white",
-                                    "&:hover": { backgroundColor: "secondary.dark" },
+                                    "&:hover": {
+                                      backgroundColor: "secondary.dark",
+                                    },
                                     "&:disabled": {
                                       backgroundColor: "action.disabled",
                                       color: "action.disabled",
@@ -1596,28 +1618,6 @@ function Vendas({
                               </Box>
                             </Box>
                           </Grid>
-
-                          {/* Código do Pedido */}
-                          {/* <Grid size={12}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Código do Pedido"
-                              name="codigo_pedido"
-                              value={formik.values.codigo_pedido}
-                              disabled={isFormDisabled}
-                              onChange={formik.handleChange}
-                              error={
-                                formik.touched.codigo_pedido &&
-                                Boolean(formik.errors.codigo_pedido)
-                              }
-                              helperText={
-                                formik.touched.codigo_pedido &&
-                                formik.errors.codigo_pedido
-                              }
-                              required
-                            />
-                          </Grid> */}
 
                           {/* Tipo de Entrega */}
                           <Grid size={6}>
@@ -1895,7 +1895,9 @@ function Vendas({
                               disabled={
                                 !formik.isValid ||
                                 formik.values.itens.length === 0 ||
-                                isAnyLoading
+                                isAnyLoading ||
+                                formik.values.quitado == true ||
+                                formik.values.finalizado == true
                               }
                               onClick={() => setShouldPrint(false)}
                               startIcon={
@@ -1918,7 +1920,9 @@ function Vendas({
                               disabled={
                                 !formik.isValid ||
                                 formik.values.itens.length === 0 ||
-                                isAnyLoading
+                                isAnyLoading ||
+                                formik.values.quitado == true ||
+                                formik.values.finalizado == true
                               }
                               startIcon={
                                 isSubmitting && shouldPrint ? (
@@ -2121,15 +2125,19 @@ function Vendas({
                 cliente={clienteParaEdicao as ClienteResponse}
                 onClienteSaved={handleClienteSalvo}
               />
-              <Dialog open={buscarNomeOpen} onClose={() => setBuscarNomeOpen(false)}>
+              <Dialog
+                open={buscarNomeOpen}
+                onClose={() => setBuscarNomeOpen(false)}
+              >
                 <DialogTitle>Buscar Cliente por Nome</DialogTitle>
                 <DialogContent sx={{ pt: 2 }}>
                   <Autocomplete
                     size="small"
                     options={clienteOptions}
                     value={
-                      clienteOptions.find((c) => c.id === formik.values.id_cliente) ??
-                      null
+                      clienteOptions.find(
+                        (c) => c.id === formik.values.id_cliente
+                      ) ?? null
                     }
                     filterOptions={(options) => options}
                     inputValue={inputValue}
@@ -2161,8 +2169,14 @@ function Vendas({
                           "cliente_logradouro",
                           option.logradouro || ""
                         );
-                        formik.setFieldValue("cliente_numero", option.numero || "");
-                        formik.setFieldValue("cliente_bairro", option.bairro || "");
+                        formik.setFieldValue(
+                          "cliente_numero",
+                          option.numero || ""
+                        );
+                        formik.setFieldValue(
+                          "cliente_bairro",
+                          option.bairro || ""
+                        );
                         formik.setFieldValue(
                           "cliente_complemento",
                           option.complemento || ""
@@ -2171,8 +2185,10 @@ function Vendas({
                       }
                     }}
                     getOptionLabel={(opt) => {
-                      const telefone = opt.telefone?.match(/\d+/g)?.join("") || "";
-                      const celular = opt.celular?.match(/\d+/g)?.join("") || "";
+                      const telefone =
+                        opt.telefone?.match(/\d+/g)?.join("") || "";
+                      const celular =
+                        opt.celular?.match(/\d+/g)?.join("") || "";
                       return `${opt.nome_razao_social} - ${telefone} - ${celular}`;
                     }}
                     isOptionEqualToValue={(opt, val) => opt.id === val.id}
@@ -2190,7 +2206,9 @@ function Vendas({
                   />
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={() => setBuscarNomeOpen(false)}>Fechar</Button>
+                  <Button onClick={() => setBuscarNomeOpen(false)}>
+                    Fechar
+                  </Button>
                 </DialogActions>
               </Dialog>
             </>

@@ -84,36 +84,31 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 }
 
 const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
-/*───────────────────────────────────────────────────────────*
- *  CONTAGEM TOTAL PARA PAGINAÇÃO                            *
- *───────────────────────────────────────────────────────────*/
-WITH p AS (
-    SELECT
-        $2::text                                   AS term,
-        regexp_replace($2, '[^0-9]', '', 'g')      AS digits,
-        lower(unaccent($2))                        AS norm
-)
 SELECT COUNT(*)
-FROM   public.clientes c
-CROSS  JOIN p
-WHERE  c.tenant_id  = $1
-  AND  c.deleted_at IS NULL
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
-        (p.digits <> '' AND (
-             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
-          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
-        ))
-     OR (p.digits = '' AND (
-             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
-          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
-        ))
-     OR p.term = ''
-      )
+    -- Se não há termo de busca, conta todos
+    $2 = '' OR 
+    
+    -- Busca em nomes (apenas se o termo não é puramente numérico)
+    (NOT ($2 ~ '^[0-9\s\-\(\)\+\.]+$') AND (
+        unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($2)) || '%' OR
+        unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER($2)) || '%'
+    )) OR
+    
+    -- Busca em telefones (apenas se contém números e tem pelo menos 3 dígitos)
+    ($2 ~ '[0-9]' AND LENGTH(regexp_replace($2, '[^0-9]', '', 'g')) >= 3 AND (
+        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
+        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%'
+    ))
+  )
 `
 
 type CountClientesSmartSearchParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	Column2  string    `json:"column_2"`
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Column2  interface{} `json:"column_2"`
 }
 
 func (q *Queries) CountClientesSmartSearch(ctx context.Context, arg CountClientesSmartSearchParams) (int64, error) {
@@ -561,52 +556,57 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 }
 
 const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
-/*───────────────────────────────────────────────────────────*
- *  LISTA COM PAGINAÇÃO + RANKING                            *
- *───────────────────────────────────────────────────────────*/
-WITH p AS (
-    SELECT
-        $3::text                                   AS term,
-        regexp_replace($3, '[^0-9]', '', 'g')      AS digits,
-        lower(unaccent($3))                        AS norm
-)
 SELECT
     c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
-    /*── ranking simples: 3 para razão social, 2 para fantasia, 1 para fone ──*/
+    -- Score para ordenar por relevância
     CASE
-        WHEN p.digits <> '' THEN 1
-        WHEN lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%' THEN 3
-        WHEN lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%' THEN 2
+        WHEN $3 = '' THEN 0
+        -- Busca exata em nome/razão social (maior pontuação)
+        WHEN LOWER(c.nome_razao_social) = LOWER($3) THEN 10
+        WHEN LOWER(c.nome_fantasia) = LOWER($3) THEN 9
+        -- Busca que começa com o termo
+        WHEN LOWER(c.nome_razao_social) LIKE LOWER($3) || '%' THEN 8
+        WHEN LOWER(c.nome_fantasia) LIKE LOWER($3) || '%' THEN 7
+        -- Busca contém o termo (case insensitive, sem acentos)
+        WHEN unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($3)) || '%' THEN 6
+        WHEN unaccent(LOWER(c.nome_fantasia)) LIKE '%' || unaccent(LOWER($3)) || '%' THEN 5
+        -- Busca em telefones (apenas se o termo de busca contém números)
+        WHEN $3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND 
+             regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 4
+        WHEN $3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND 
+             regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 3
         ELSE 0
-    END AS relevance_score
-FROM   public.clientes c
-CROSS  JOIN p
-WHERE  c.tenant_id  = $1
-  AND  c.deleted_at IS NULL
+    END as relevance_score
+FROM public.clientes c
+WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
-        /*── pesquisa numérica ──*/
-        (p.digits <> '' AND (
-             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
-          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
-        ))
-        /*── pesquisa textual ──*/
-     OR (p.digits = '' AND (
-             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
-          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
-        ))
-     OR p.term = ''          -- devolve todos se termo vazio
-      )
-ORDER BY relevance_score DESC,
-         c.nome_razao_social
-LIMIT  $2
-OFFSET $4
+    -- Se não há termo de busca, retorna todos
+    $3 = '' OR 
+    
+    -- Busca em nomes (apenas se o termo não é puramente numérico)
+    (NOT ($3 ~ '^[0-9\s\-\(\)\+\.]+$') AND (
+        unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($3)) || '%' OR
+        unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER($3)) || '%'
+    )) OR
+    
+    -- Busca em telefones (apenas se contém números e tem pelo menos 3 dígitos)
+    ($3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND (
+        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
+        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%'
+    ))
+  )
+ORDER BY
+    relevance_score DESC,
+    c.nome_razao_social ASC
+LIMIT $2 OFFSET $4
 `
 
 type ListClientesSmartSearchParams struct {
-	TenantID uuid.UUID `json:"tenant_id"`
-	Limit    int32     `json:"limit"`
-	Column3  string    `json:"column_3"`
-	Offset   int32     `json:"offset"`
+	TenantID uuid.UUID   `json:"tenant_id"`
+	Limit    int32       `json:"limit"`
+	Column3  interface{} `json:"column_3"`
+	Offset   int32       `json:"offset"`
 }
 
 type ListClientesSmartSearchRow struct {

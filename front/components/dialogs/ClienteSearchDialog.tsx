@@ -12,8 +12,9 @@ import {
   Box,
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { PedidoClienteDTO, PaginatedResponse } from "@/rxjs/pedido/pedido.model";
+import { PedidoClienteDTO } from "@/rxjs/pedido/pedido.model";
 import api from "@/lib/api";
+import { PaginatedResponse } from "@/rxjs/clientes/cliente.model";
 
 interface ClienteSearchDialogProps {
   open: boolean;

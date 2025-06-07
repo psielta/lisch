@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import debounce from "lodash.debounce";
 import {
   Dialog,
@@ -66,6 +66,8 @@ export default function ClienteSearchDialog({
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const listRef = useRef<HTMLUListElement>(null);
+  const selectedItemRef = useRef<HTMLLIElement>(null);
 
   const fetchClientes = useMemo(
     () =>
@@ -103,6 +105,14 @@ export default function ClienteSearchDialog({
         }
       }, 400),
     []
+  );
+
+  const handleSelectCliente = useCallback(
+    (cliente: PedidoClienteDTO) => {
+      onSelect(cliente);
+      onClose();
+    },
+    [onSelect, onClose]
   );
 
   const handleInputChange = useCallback(
@@ -143,16 +153,31 @@ export default function ClienteSearchDialog({
           break;
       }
     },
-    [clientes, selectedIndex, onClose]
+    [clientes, selectedIndex, onClose, handleSelectCliente]
   );
 
-  const handleSelectCliente = useCallback(
-    (cliente: PedidoClienteDTO) => {
-      onSelect(cliente);
-      onClose();
-    },
-    [onSelect, onClose]
-  );
+  // Scroll automático quando o índice selecionado muda
+  useEffect(() => {
+    if (selectedIndex >= 0 && selectedItemRef.current && listRef.current) {
+      const selectedElement = selectedItemRef.current;
+      const listElement = listRef.current;
+
+      const listRect = listElement.getBoundingClientRect();
+      const selectedRect = selectedElement.getBoundingClientRect();
+
+      // Verificar se o item está visível
+      const isVisible =
+        selectedRect.top >= listRect.top &&
+        selectedRect.bottom <= listRect.bottom;
+
+      if (!isVisible) {
+        selectedElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }
+  }, [selectedIndex]);
 
   const handleClearSearch = useCallback(() => {
     setSearchTerm("");
@@ -384,9 +409,16 @@ export default function ClienteSearchDialog({
                   </Typography>
                 </Box>
 
-                <List sx={{ p: 0, maxHeight: 320, overflow: "auto" }}>
+                <List
+                  ref={listRef}
+                  sx={{ p: 0, maxHeight: 320, overflow: "auto" }}
+                >
                   {clientes.map((cliente, index) => (
-                    <ListItem key={cliente.id} disablePadding>
+                    <ListItem
+                      key={cliente.id}
+                      disablePadding
+                      ref={index === selectedIndex ? selectedItemRef : null}
+                    >
                       <ListItemButton
                         onClick={() => handleSelectCliente(cliente)}
                         selected={index === selectedIndex}
@@ -435,14 +467,6 @@ export default function ClienteSearchDialog({
                                 spacing={2}
                                 flexWrap="wrap"
                               >
-                                {/* {cliente.telefone && (
-                                  <Chip
-                                    icon={<Phone sx={{ fontSize: 16 }} />}
-                                    label={formatPhone(cliente.telefone)}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                )} */}
                                 {cliente.celular && (
                                   <Chip
                                     icon={<Phone sx={{ fontSize: 16 }} />}

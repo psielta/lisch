@@ -17,6 +17,7 @@ const countClientesByTenant = `-- name: CountClientesByTenant :one
 SELECT COUNT(*)
 FROM public.clientes
 WHERE tenant_id = $1
+  AND deleted_at IS NULL
 `
 
 func (q *Queries) CountClientesByTenant(ctx context.Context, tenantID uuid.UUID) (int64, error) {
@@ -30,6 +31,7 @@ const countClientesPaginated = `-- name: CountClientesPaginated :one
 SELECT COUNT(*) 
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   -- Filtro geral
   AND ($2 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR 
@@ -85,6 +87,7 @@ const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
 SELECT COUNT(*)
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $2 = '' OR
         -- Busca em nome/razão social
@@ -138,7 +141,7 @@ INSERT INTO public.clientes (
    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
 )
 RETURNING
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 `
 
 type CreateClienteParams struct {
@@ -215,14 +218,17 @@ func (q *Queries) CreateCliente(ctx context.Context, arg CreateClienteParams) (C
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const deleteCliente = `-- name: DeleteCliente :exec
-DELETE FROM public.clientes
+UPDATE public.clientes
+SET deleted_at = now()
 WHERE id = $1
   AND tenant_id = $2
+  AND deleted_at IS NULL
 `
 
 type DeleteClienteParams struct {
@@ -237,9 +243,10 @@ func (q *Queries) DeleteCliente(ctx context.Context, arg DeleteClienteParams) er
 
 const getCliente = `-- name: GetCliente :one
 SELECT
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 FROM public.clientes
 WHERE id = $1
+  AND deleted_at IS NULL
 `
 
 func (q *Queries) GetCliente(ctx context.Context, id uuid.UUID) (Cliente, error) {
@@ -269,16 +276,18 @@ func (q *Queries) GetCliente(ctx context.Context, id uuid.UUID) (Cliente, error)
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getClienteByCNPJ = `-- name: GetClienteByCNPJ :one
 SELECT
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 FROM public.clientes
 WHERE cnpj = $1
   AND tenant_id = $2
+  AND deleted_at IS NULL
 `
 
 type GetClienteByCNPJParams struct {
@@ -313,16 +322,18 @@ func (q *Queries) GetClienteByCNPJ(ctx context.Context, arg GetClienteByCNPJPara
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getClienteByCPF = `-- name: GetClienteByCPF :one
 SELECT
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 FROM public.clientes
 WHERE cpf = $1
   AND tenant_id = $2
+  AND deleted_at IS NULL
 `
 
 type GetClienteByCPFParams struct {
@@ -357,15 +368,17 @@ func (q *Queries) GetClienteByCPF(ctx context.Context, arg GetClienteByCPFParams
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const listClientesByTenant = `-- name: ListClientesByTenant :many
 SELECT
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 FROM public.clientes
 WHERE tenant_id = $1
+  AND deleted_at IS NULL
 ORDER BY nome_razao_social
 LIMIT  $2 OFFSET $3
 `
@@ -409,6 +422,7 @@ func (q *Queries) ListClientesByTenant(ctx context.Context, arg ListClientesByTe
 			&i.Uf,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -422,9 +436,10 @@ func (q *Queries) ListClientesByTenant(ctx context.Context, arg ListClientesByTe
 
 const listClientesPaginated = `-- name: ListClientesPaginated :many
 SELECT
-  c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at
+  c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   -- Filtro geral (pesquisa em nome/razão social, nome fantasia, cpf, cnpj)
   AND ($5 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($5)) || '%' OR 
@@ -523,6 +538,7 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 			&i.Uf,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -536,7 +552,7 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 
 const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
 SELECT
-    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at,
+    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
     -- Score para ordenar por relevância (opcional)
     CASE
         WHEN $3 = '' THEN 0
@@ -548,6 +564,7 @@ SELECT
         END as relevance_score
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $3 = '' OR
         -- Busca em nome/razão social (maior prioridade)
@@ -574,30 +591,31 @@ type ListClientesSmartSearchParams struct {
 }
 
 type ListClientesSmartSearchRow struct {
-	ID              uuid.UUID   `json:"id"`
-	TenantID        uuid.UUID   `json:"tenant_id"`
-	TipoPessoa      string      `json:"tipo_pessoa"`
-	NomeRazaoSocial string      `json:"nome_razao_social"`
-	NomeFantasia    pgtype.Text `json:"nome_fantasia"`
-	Cpf             pgtype.Text `json:"cpf"`
-	Cnpj            pgtype.Text `json:"cnpj"`
-	Rg              pgtype.Text `json:"rg"`
-	Ie              pgtype.Text `json:"ie"`
-	Im              pgtype.Text `json:"im"`
-	DataNascimento  pgtype.Date `json:"data_nascimento"`
-	Email           pgtype.Text `json:"email"`
-	Telefone        pgtype.Text `json:"telefone"`
-	Celular         pgtype.Text `json:"celular"`
-	Cep             pgtype.Text `json:"cep"`
-	Logradouro      pgtype.Text `json:"logradouro"`
-	Numero          pgtype.Text `json:"numero"`
-	Complemento     pgtype.Text `json:"complemento"`
-	Bairro          pgtype.Text `json:"bairro"`
-	Cidade          pgtype.Text `json:"cidade"`
-	Uf              pgtype.Text `json:"uf"`
-	CreatedAt       time.Time   `json:"created_at"`
-	UpdatedAt       time.Time   `json:"updated_at"`
-	RelevanceScore  int32       `json:"relevance_score"`
+	ID              uuid.UUID          `json:"id"`
+	TenantID        uuid.UUID          `json:"tenant_id"`
+	TipoPessoa      string             `json:"tipo_pessoa"`
+	NomeRazaoSocial string             `json:"nome_razao_social"`
+	NomeFantasia    pgtype.Text        `json:"nome_fantasia"`
+	Cpf             pgtype.Text        `json:"cpf"`
+	Cnpj            pgtype.Text        `json:"cnpj"`
+	Rg              pgtype.Text        `json:"rg"`
+	Ie              pgtype.Text        `json:"ie"`
+	Im              pgtype.Text        `json:"im"`
+	DataNascimento  pgtype.Date        `json:"data_nascimento"`
+	Email           pgtype.Text        `json:"email"`
+	Telefone        pgtype.Text        `json:"telefone"`
+	Celular         pgtype.Text        `json:"celular"`
+	Cep             pgtype.Text        `json:"cep"`
+	Logradouro      pgtype.Text        `json:"logradouro"`
+	Numero          pgtype.Text        `json:"numero"`
+	Complemento     pgtype.Text        `json:"complemento"`
+	Bairro          pgtype.Text        `json:"bairro"`
+	Cidade          pgtype.Text        `json:"cidade"`
+	Uf              pgtype.Text        `json:"uf"`
+	CreatedAt       time.Time          `json:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	RelevanceScore  int32              `json:"relevance_score"`
 }
 
 func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesSmartSearchParams) ([]ListClientesSmartSearchRow, error) {
@@ -638,6 +656,7 @@ func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesS
 			&i.Uf,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 			&i.RelevanceScore,
 		); err != nil {
 			return nil, err
@@ -652,7 +671,7 @@ func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesS
 
 const listClientesSmartSearchFuzzy = `-- name: ListClientesSmartSearchFuzzy :many
 SELECT
-    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at,
+    c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
     -- Score de relevância mais sofisticado
     CASE
         WHEN $3 = '' THEN 0
@@ -671,6 +690,7 @@ SELECT
         END as relevance_score
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $3 = '' OR
         -- Busca em nomes (com e sem acentos)
@@ -697,30 +717,31 @@ type ListClientesSmartSearchFuzzyParams struct {
 }
 
 type ListClientesSmartSearchFuzzyRow struct {
-	ID              uuid.UUID   `json:"id"`
-	TenantID        uuid.UUID   `json:"tenant_id"`
-	TipoPessoa      string      `json:"tipo_pessoa"`
-	NomeRazaoSocial string      `json:"nome_razao_social"`
-	NomeFantasia    pgtype.Text `json:"nome_fantasia"`
-	Cpf             pgtype.Text `json:"cpf"`
-	Cnpj            pgtype.Text `json:"cnpj"`
-	Rg              pgtype.Text `json:"rg"`
-	Ie              pgtype.Text `json:"ie"`
-	Im              pgtype.Text `json:"im"`
-	DataNascimento  pgtype.Date `json:"data_nascimento"`
-	Email           pgtype.Text `json:"email"`
-	Telefone        pgtype.Text `json:"telefone"`
-	Celular         pgtype.Text `json:"celular"`
-	Cep             pgtype.Text `json:"cep"`
-	Logradouro      pgtype.Text `json:"logradouro"`
-	Numero          pgtype.Text `json:"numero"`
-	Complemento     pgtype.Text `json:"complemento"`
-	Bairro          pgtype.Text `json:"bairro"`
-	Cidade          pgtype.Text `json:"cidade"`
-	Uf              pgtype.Text `json:"uf"`
-	CreatedAt       time.Time   `json:"created_at"`
-	UpdatedAt       time.Time   `json:"updated_at"`
-	RelevanceScore  int32       `json:"relevance_score"`
+	ID              uuid.UUID          `json:"id"`
+	TenantID        uuid.UUID          `json:"tenant_id"`
+	TipoPessoa      string             `json:"tipo_pessoa"`
+	NomeRazaoSocial string             `json:"nome_razao_social"`
+	NomeFantasia    pgtype.Text        `json:"nome_fantasia"`
+	Cpf             pgtype.Text        `json:"cpf"`
+	Cnpj            pgtype.Text        `json:"cnpj"`
+	Rg              pgtype.Text        `json:"rg"`
+	Ie              pgtype.Text        `json:"ie"`
+	Im              pgtype.Text        `json:"im"`
+	DataNascimento  pgtype.Date        `json:"data_nascimento"`
+	Email           pgtype.Text        `json:"email"`
+	Telefone        pgtype.Text        `json:"telefone"`
+	Celular         pgtype.Text        `json:"celular"`
+	Cep             pgtype.Text        `json:"cep"`
+	Logradouro      pgtype.Text        `json:"logradouro"`
+	Numero          pgtype.Text        `json:"numero"`
+	Complemento     pgtype.Text        `json:"complemento"`
+	Bairro          pgtype.Text        `json:"bairro"`
+	Cidade          pgtype.Text        `json:"cidade"`
+	Uf              pgtype.Text        `json:"uf"`
+	CreatedAt       time.Time          `json:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	RelevanceScore  int32              `json:"relevance_score"`
 }
 
 func (q *Queries) ListClientesSmartSearchFuzzy(ctx context.Context, arg ListClientesSmartSearchFuzzyParams) ([]ListClientesSmartSearchFuzzyRow, error) {
@@ -761,6 +782,7 @@ func (q *Queries) ListClientesSmartSearchFuzzy(ctx context.Context, arg ListClie
 			&i.Uf,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 			&i.RelevanceScore,
 		); err != nil {
 			return nil, err
@@ -798,8 +820,9 @@ SET
     updated_at         = now()
 WHERE id        = $1   -- id do cliente
   AND tenant_id = $2   -- segurança multitenant
+  AND deleted_at IS NULL
 RETURNING
-    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+    id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 `
 
 type UpdateClienteParams struct {
@@ -875,6 +898,7 @@ func (q *Queries) UpdateCliente(ctx context.Context, arg UpdateClienteParams) (C
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -913,7 +937,8 @@ SET
     tipo_pessoa = $9,
     updated_at = now()
 WHERE clientes.tenant_id = $2
-RETURNING id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+  AND clientes.deleted_at IS NULL
+RETURNING id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at, deleted_at
 `
 
 type UpsertClienteParams struct {
@@ -965,6 +990,7 @@ func (q *Queries) UpsertCliente(ctx context.Context, arg UpsertClienteParams) (C
 		&i.Uf,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

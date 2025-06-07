@@ -35,27 +35,31 @@ RETURNING
 SELECT
     *
 FROM public.clientes
-WHERE id = $1;
+WHERE id = $1
+  AND deleted_at IS NULL;
 
 -- name: GetClienteByCPF :one
 SELECT
     *
 FROM public.clientes
 WHERE cpf = $1
-  AND tenant_id = $2;
+  AND tenant_id = $2
+  AND deleted_at IS NULL;
 
 -- name: GetClienteByCNPJ :one
 SELECT
     *
 FROM public.clientes
 WHERE cnpj = $1
-  AND tenant_id = $2;
+  AND tenant_id = $2
+  AND deleted_at IS NULL;
 
 -- name: ListClientesByTenant :many
 SELECT
     *
 FROM public.clientes
 WHERE tenant_id = $1
+  AND deleted_at IS NULL
 ORDER BY nome_razao_social
 LIMIT  $2 OFFSET $3;
 
@@ -84,6 +88,7 @@ SET
     updated_at         = now()
 WHERE id        = $1   -- id do cliente
   AND tenant_id = $2   -- segurança multitenant
+  AND deleted_at IS NULL
 RETURNING
     *;
 
@@ -121,24 +126,28 @@ SET
     tipo_pessoa = $9,
     updated_at = now()
 WHERE clientes.tenant_id = $2
+  AND clientes.deleted_at IS NULL
 RETURNING *;
 
-
 -- name: DeleteCliente :exec
-DELETE FROM public.clientes
+UPDATE public.clientes
+SET deleted_at = now()
 WHERE id = $1
-  AND tenant_id = $2;
+  AND tenant_id = $2
+  AND deleted_at IS NULL;
 
 -- name: CountClientesByTenant :one
 SELECT COUNT(*)
 FROM public.clientes
-WHERE tenant_id = $1;
+WHERE tenant_id = $1
+  AND deleted_at IS NULL;
 
 -- name: ListClientesPaginated :many
 SELECT
   c.*
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   -- Filtro geral (pesquisa em nome/razão social, nome fantasia, cpf, cnpj)
   AND ($5 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($5)) || '%' OR 
@@ -173,6 +182,7 @@ LIMIT $2 OFFSET $15;
 SELECT COUNT(*) 
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   -- Filtro geral
   AND ($2 = '' OR 
        LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR 
@@ -204,6 +214,7 @@ SELECT
         END as relevance_score
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $3 = '' OR
         -- Busca em nome/razão social (maior prioridade)
@@ -225,6 +236,7 @@ ORDER BY
 SELECT COUNT(*)
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $2 = '' OR
         -- Busca em nome/razão social
@@ -258,6 +270,7 @@ SELECT
         END as relevance_score
 FROM public.clientes c
 WHERE c.tenant_id = $1
+  AND c.deleted_at IS NULL
   AND (
     $3 = '' OR
         -- Busca em nomes (com e sem acentos)

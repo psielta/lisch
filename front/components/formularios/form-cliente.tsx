@@ -580,7 +580,7 @@ function FormCliente({
 
                 {/* Telefones */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
+                  <div className="hidden">
                     <label
                       htmlFor="telefone"
                       className="block text-sm text-muted-foreground mb-1"
@@ -615,7 +615,7 @@ function FormCliente({
                       htmlFor="celular"
                       className="block text-sm text-muted-foreground mb-1"
                     >
-                      Celular
+                      Celular ou Telefone
                     </label>
                     <Controller
                       name="celular"

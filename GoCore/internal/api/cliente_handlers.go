@@ -35,17 +35,13 @@ func (api *Api) handleCreateCliente(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		api.Logger.Error("erro ao criar cliente", zap.Error(err))
 
-		// Verificar erros específicos (duplicação de CPF/CNPJ)
-		errStr := err.Error()
-		if contains(errStr, "clientes_cpf_unq") {
+		// Verificar erros específicos (duplicação de CPF/CNPJ/Telefones)
+		if err.Error() == "CPF já cadastrado" ||
+			err.Error() == "CNPJ já cadastrado" ||
+			err.Error() == "Telefone já cadastrado" ||
+			err.Error() == "Celular já cadastrado" {
 			jsonutils.EncodeJson(w, r, http.StatusConflict, map[string]any{
-				"error": "CPF já cadastrado",
-			})
-			return
-		}
-		if contains(errStr, "clientes_cnpj_unq") {
-			jsonutils.EncodeJson(w, r, http.StatusConflict, map[string]any{
-				"error": "CNPJ já cadastrado",
+				"error": err.Error(),
 			})
 			return
 		}
@@ -93,22 +89,18 @@ func (api *Api) handleUpdateCliente(w http.ResponseWriter, r *http.Request) {
 		api.Logger.Error("erro ao atualizar cliente", zap.Error(err))
 
 		// Verificar erros específicos
-		errStr := err.Error()
-		if contains(errStr, "no rows") {
+		if err.Error() == "cliente not found" {
 			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{
 				"error": "cliente not found",
 			})
 			return
 		}
-		if contains(errStr, "clientes_cpf_unq") {
+		if err.Error() == "CPF já cadastrado" ||
+			err.Error() == "CNPJ já cadastrado" ||
+			err.Error() == "Telefone já cadastrado" ||
+			err.Error() == "Celular já cadastrado" {
 			jsonutils.EncodeJson(w, r, http.StatusConflict, map[string]any{
-				"error": "CPF já cadastrado",
-			})
-			return
-		}
-		if contains(errStr, "clientes_cnpj_unq") {
-			jsonutils.EncodeJson(w, r, http.StatusConflict, map[string]any{
-				"error": "CNPJ já cadastrado",
+				"error": err.Error(),
 			})
 			return
 		}
@@ -144,6 +136,12 @@ func (api *Api) handleDeleteCliente(w http.ResponseWriter, r *http.Request) {
 	err = api.ClienteService.DeleteCliente(r.Context(), clienteID, tenantID)
 	if err != nil {
 		api.Logger.Error("erro ao deletar cliente", zap.Error(err))
+		if err.Error() == "cliente not found" {
+			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{
+				"error": "cliente not found",
+			})
+			return
+		}
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
 			"error": "unexpected internal server error",
 		})
@@ -167,7 +165,7 @@ func (api *Api) handleGetCliente(w http.ResponseWriter, r *http.Request) {
 
 	cliente, err := api.ClienteService.GetClienteById(r.Context(), clienteID)
 	if err != nil {
-		if contains(err.Error(), "no rows") {
+		if err.Error() == "cliente not found" {
 			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{
 				"error": "cliente not found",
 			})
@@ -204,7 +202,7 @@ func (api *Api) handleGetClienteByCPF(w http.ResponseWriter, r *http.Request) {
 
 	cliente, err := api.ClienteService.GetClienteByCPF(r.Context(), cpf, tenantID)
 	if err != nil {
-		if contains(err.Error(), "no rows") {
+		if err.Error() == "cliente not found" {
 			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{
 				"error": "cliente not found",
 			})
@@ -241,7 +239,7 @@ func (api *Api) handleGetClienteByCNPJ(w http.ResponseWriter, r *http.Request) {
 
 	cliente, err := api.ClienteService.GetClienteByCNPJ(r.Context(), cnpj, tenantID)
 	if err != nil {
-		if contains(err.Error(), "no rows") {
+		if err.Error() == "cliente not found" {
 			jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{
 				"error": "cliente not found",
 			})
@@ -486,6 +484,15 @@ func (api *Api) handleUpsertCliente(w http.ResponseWriter, r *http.Request) {
 	cliente, err := api.ClienteService.UpsertCliente(r.Context(), data)
 	if err != nil {
 		api.Logger.Error("erro ao upsertar cliente", zap.Error(err))
+		if err.Error() == "CPF já cadastrado" ||
+			err.Error() == "CNPJ já cadastrado" ||
+			err.Error() == "Telefone já cadastrado" ||
+			err.Error() == "Celular já cadastrado" {
+			jsonutils.EncodeJson(w, r, http.StatusConflict, map[string]any{
+				"error": err.Error(),
+			})
+			return
+		}
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
 			"error": "unexpected internal server error",
 		})

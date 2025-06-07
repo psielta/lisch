@@ -2,10 +2,13 @@ package services
 
 import (
 	"context"
+	"errors"
 	"gobid/internal/dto"
 	"gobid/internal/store/pgstore"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,8 +30,22 @@ func (cs *ClienteService) CreateCliente(ctx context.Context, cliente dto.CreateC
 	if err != nil {
 		return dto.ClienteResponse{}, err
 	}
+
 	clienteDB, err := cs.queries.CreateCliente(ctx, clienteParams)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.ConstraintName {
+			case "clientes_cpf_unq":
+				return dto.ClienteResponse{}, errors.New("CPF já cadastrado")
+			case "clientes_cnpj_unq":
+				return dto.ClienteResponse{}, errors.New("CNPJ já cadastrado")
+			case "clientes_telefone_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Telefone já cadastrado")
+			case "clientes_celular_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Celular já cadastrado")
+			}
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(clienteDB), nil
@@ -41,6 +58,19 @@ func (cs *ClienteService) UpdateCliente(ctx context.Context, cliente dto.UpdateC
 	}
 	clienteDB, err := cs.queries.UpdateCliente(ctx, clienteParams)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.ConstraintName {
+			case "clientes_cpf_unq":
+				return dto.ClienteResponse{}, errors.New("CPF já cadastrado")
+			case "clientes_cnpj_unq":
+				return dto.ClienteResponse{}, errors.New("CNPJ já cadastrado")
+			case "clientes_telefone_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Telefone já cadastrado")
+			case "clientes_celular_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Celular já cadastrado")
+			}
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(clienteDB), nil
@@ -60,6 +90,9 @@ func (cs *ClienteService) DeleteCliente(ctx context.Context, id uuid.UUID, tenan
 func (cs *ClienteService) GetClienteById(ctx context.Context, id uuid.UUID) (dto.ClienteResponse, error) {
 	cliente, err := cs.queries.GetCliente(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dto.ClienteResponse{}, errors.New("cliente não encontrado")
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(cliente), nil
@@ -71,6 +104,9 @@ func (cs *ClienteService) GetClienteByCPF(ctx context.Context, cpf string, tenan
 		TenantID: tenantID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dto.ClienteResponse{}, errors.New("cliente não encontrado")
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(cliente), nil
@@ -82,6 +118,9 @@ func (cs *ClienteService) GetClienteByCNPJ(ctx context.Context, cnpj string, ten
 		TenantID: tenantID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dto.ClienteResponse{}, errors.New("cliente não encontrado")
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(cliente), nil
@@ -190,8 +229,20 @@ func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID 
 	// Calcula o offset baseado na página atual
 	offset := (page - 1) * pageSize
 
+	// Prepara parâmetros para a consulta de contagem
+	countParams := pgstore.CountClientesSmartSearchParams{
+		TenantID: tenantID,
+		Column2:  searchTerm,
+	}
+
+	// Obtém o total de registros
+	total, err := cs.queries.CountClientesSmartSearch(ctx, countParams)
+	if err != nil {
+		return dto.PaginatedResponse[dto.ClienteResponse]{}, err
+	}
+
 	// Prepara parâmetros para a consulta
-	params := pgstore.ListClientesSmartSearchParams{
+	params := pgstore.ListClientesSmartSearchFuzzyParams{
 		TenantID: tenantID,
 		Limit:    int32(pageSize),
 		Column3:  searchTerm,
@@ -199,7 +250,7 @@ func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID 
 	}
 
 	// Obtém os registros
-	clientes, err := cs.queries.ListClientesSmartSearch(ctx, params)
+	clientes, err := cs.queries.ListClientesSmartSearchFuzzy(ctx, params)
 	if err != nil {
 		return dto.PaginatedResponse[dto.ClienteResponse]{}, err
 	}
@@ -231,11 +282,12 @@ func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID 
 			Uf:              cliente.Uf,
 			CreatedAt:       cliente.CreatedAt,
 			UpdatedAt:       cliente.UpdatedAt,
+			DeletedAt:       cliente.DeletedAt,
 		})
 	}
 
 	// Retorna a resposta paginada
-	return dto.NewPaginated(clientesResponse, page, pageSize, int64(len(clientesResponse))), nil
+	return dto.NewPaginated(clientesResponse, page, pageSize, total), nil
 }
 
 func (cs *ClienteService) UpsertCliente(ctx context.Context, cliente dto.UpsertClienteDTO) (dto.ClienteResponse, error) {
@@ -251,6 +303,19 @@ func (cs *ClienteService) UpsertCliente(ctx context.Context, cliente dto.UpsertC
 		TipoPessoa:      cliente.TipoPessoa,
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.ConstraintName {
+			case "clientes_cpf_unq":
+				return dto.ClienteResponse{}, errors.New("CPF já cadastrado")
+			case "clientes_cnpj_unq":
+				return dto.ClienteResponse{}, errors.New("CNPJ já cadastrado")
+			case "clientes_telefone_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Telefone já cadastrado")
+			case "clientes_celular_digits_unq":
+				return dto.ClienteResponse{}, errors.New("Celular já cadastrado")
+			}
+		}
 		return dto.ClienteResponse{}, err
 	}
 	return dto.ClienteToResponse(clienteDB), nil

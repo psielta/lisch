@@ -560,7 +560,7 @@ function DialogCliente({
             </Grid>
 
             {/* Telefone */}
-            <Grid size={6}>
+            <Grid size={6} className="hidden">
               <Controller
                 name="telefone"
                 control={control}
@@ -590,7 +590,7 @@ function DialogCliente({
                     {...field}
                     fullWidth
                     size="small"
-                    label="Celular"
+                    label="Celular ou Telefone"
                     error={Boolean(errors.celular)}
                     helperText={errors.celular?.message}
                     onChange={(e) =>

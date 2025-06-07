@@ -47,6 +47,7 @@ type Cliente struct {
 	Uf              null.String `boil:"uf" json:"uf,omitempty" toml:"uf" yaml:"uf,omitempty"`
 	CreatedAt       time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt       time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	DeletedAt       null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *clienteR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L clienteL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -76,6 +77,7 @@ var ClienteColumns = struct {
 	Uf              string
 	CreatedAt       string
 	UpdatedAt       string
+	DeletedAt       string
 }{
 	ID:              "id",
 	TenantID:        "tenant_id",
@@ -100,6 +102,7 @@ var ClienteColumns = struct {
 	Uf:              "uf",
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
+	DeletedAt:       "deleted_at",
 }
 
 var ClienteTableColumns = struct {
@@ -126,6 +129,7 @@ var ClienteTableColumns = struct {
 	Uf              string
 	CreatedAt       string
 	UpdatedAt       string
+	DeletedAt       string
 }{
 	ID:              "clientes.id",
 	TenantID:        "clientes.tenant_id",
@@ -150,6 +154,7 @@ var ClienteTableColumns = struct {
 	Uf:              "clientes.uf",
 	CreatedAt:       "clientes.created_at",
 	UpdatedAt:       "clientes.updated_at",
+	DeletedAt:       "clientes.deleted_at",
 }
 
 // Generated where
@@ -178,6 +183,7 @@ var ClienteWhere = struct {
 	Uf              whereHelpernull_String
 	CreatedAt       whereHelpertime_Time
 	UpdatedAt       whereHelpertime_Time
+	DeletedAt       whereHelpernull_Time
 }{
 	ID:              whereHelperstring{field: "\"clientes\".\"id\""},
 	TenantID:        whereHelperstring{field: "\"clientes\".\"tenant_id\""},
@@ -202,6 +208,7 @@ var ClienteWhere = struct {
 	Uf:              whereHelpernull_String{field: "\"clientes\".\"uf\""},
 	CreatedAt:       whereHelpertime_Time{field: "\"clientes\".\"created_at\""},
 	UpdatedAt:       whereHelpertime_Time{field: "\"clientes\".\"updated_at\""},
+	DeletedAt:       whereHelpernull_Time{field: "\"clientes\".\"deleted_at\""},
 }
 
 // ClienteRels is where relationship names are stored.
@@ -252,9 +259,9 @@ func (r *clienteR) GetIDClientePadraoTenants() TenantSlice {
 type clienteL struct{}
 
 var (
-	clienteAllColumns            = []string{"id", "tenant_id", "tipo_pessoa", "nome_razao_social", "nome_fantasia", "cpf", "cnpj", "rg", "ie", "im", "data_nascimento", "email", "telefone", "celular", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "created_at", "updated_at"}
+	clienteAllColumns            = []string{"id", "tenant_id", "tipo_pessoa", "nome_razao_social", "nome_fantasia", "cpf", "cnpj", "rg", "ie", "im", "data_nascimento", "email", "telefone", "celular", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "created_at", "updated_at", "deleted_at"}
 	clienteColumnsWithoutDefault = []string{"tenant_id", "tipo_pessoa", "nome_razao_social"}
-	clienteColumnsWithDefault    = []string{"id", "nome_fantasia", "cpf", "cnpj", "rg", "ie", "im", "data_nascimento", "email", "telefone", "celular", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "created_at", "updated_at"}
+	clienteColumnsWithDefault    = []string{"id", "nome_fantasia", "cpf", "cnpj", "rg", "ie", "im", "data_nascimento", "email", "telefone", "celular", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "created_at", "updated_at", "deleted_at"}
 	clientePrimaryKeyColumns     = []string{"id"}
 	clienteGeneratedColumns      = []string{}
 )

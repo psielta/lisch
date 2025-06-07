@@ -233,7 +233,6 @@ function Vendas({
   let pedidoValidationSchema = Yup.object({
     id: Yup.string().optional().nullable(),
     id_cliente: Yup.string()
-      .required("Cliente é obrigatório")
       .test(
         "cliente-prazo-valido",
         "Para venda a prazo, selecione um cliente diferente",

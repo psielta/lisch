@@ -98,6 +98,7 @@ import { PizzaMeiaModal } from "./PizzaMeiaModal";
 import { getClientesPorCelular } from "@/proxies/getclientesporcelular";
 import { upsertCliente, UpsertClienteDTO } from "@/proxies/upsertcliente";
 import { onlyDigits } from "@/utils/onlyDigits";
+import { isUuid } from "@/lib/utils";
 
 // Interfaces
 interface PedidoFormValues {
@@ -677,8 +678,6 @@ function Vendas({
     dispatch(clearPedidoState());
   }, [dispatch]);
 
-
-
   // Função para imprimir pedido com loading
   const handlePrintPedido = async (pedidoId: string) => {
     if (!pedidoId) {
@@ -721,6 +720,7 @@ function Vendas({
         onSubmit={async (values) => {
           try {
             setIsSubmitting(true);
+            debugger;
 
             const clientePayload: UpsertClienteDTO = {
               id: values.id_cliente || null,
@@ -733,9 +733,18 @@ function Vendas({
               complemento: values.cliente_complemento,
               tipo_pessoa: "F",
             };
+            // so deve fazer upsert se o cliente for diferente do default cliente
+            let savedCliente: PedidoClienteDTO | null | undefined =
+              defaultCliente;
 
-            const savedCliente = await upsertCliente(clientePayload);
-            values.id_cliente = savedCliente.id;
+            if (values.id_cliente !== defaultCliente?.id) {
+              savedCliente = await upsertCliente(clientePayload);
+            }
+            values.id_cliente = savedCliente?.id || "";
+
+            if (!values.id_cliente || !isUuid(values.id_cliente)) {
+              throw new Error("Cliente inválido");
+            }
 
             if (values.id) {
               dispatch(

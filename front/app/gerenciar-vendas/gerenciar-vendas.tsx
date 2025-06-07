@@ -877,7 +877,10 @@ export default function GerenciarVendas({
                               : ""
                           }`}
                           <br />
-                          {`${selectedPedido.cliente.bairro}, ${selectedPedido.cliente.cidade} - ${selectedPedido.cliente.uf}`}
+                          {selectedPedido.cliente.cidade &&
+                          selectedPedido.cliente.uf
+                            ? `${selectedPedido.cliente.bairro}, ${selectedPedido.cliente.cidade} - ${selectedPedido.cliente.uf}`
+                            : selectedPedido.cliente.bairro}
                           {selectedPedido.cliente.cep &&
                             ` • ${selectedPedido.cliente.cep}`}
                         </Typography>

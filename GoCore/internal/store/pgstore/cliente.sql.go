@@ -86,19 +86,22 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
 SELECT COUNT(*)
 FROM public.clientes c
-WHERE c.tenant_id = $1
+WHERE c.tenant_id  = $1
   AND c.deleted_at IS NULL
   AND (
-    $2 = '' OR
-        -- Busca em nome/razão social
-    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
-        -- Busca em nome fantasia
-    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($2)) || '%' OR
-        -- Busca em telefone (apenas números)
-    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
-        -- Busca em celular (apenas números)
-    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%'
-    )
+        $2 = ''
+        OR LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($2))||'%'
+        OR LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($2))||'%'
+        OR (
+             regexp_replace($2, '[^0-9]', '', 'g') <> ''
+             AND (
+                    regexp_replace(c.telefone, '[^0-9]', '', 'g')
+                        LIKE '%'||regexp_replace($2, '[^0-9]', '', 'g')||'%'
+                 OR regexp_replace(c.celular,  '[^0-9]', '', 'g')
+                        LIKE '%'||regexp_replace($2, '[^0-9]', '', 'g')||'%'
+                )
+           )
+      )
 `
 
 type CountClientesSmartSearchParams struct {
@@ -553,34 +556,46 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
 SELECT
     c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
-    -- Score para ordenar por relevância (opcional)
+
+    /* ────────── Ranking de relevância ────────── */
     CASE
-        WHEN $3 = '' THEN 0
-        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 3
-        WHEN LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' THEN 2
-        WHEN regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
-        WHEN regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 1
+        WHEN $3 = '' THEN 0                                                 /* pesquisa vazia → sem score            */
+        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($3))||'%'   THEN 3
+        WHEN LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($3))||'%'   THEN 2
+        /* telefones só contam se o termo tiver dígitos                         */
+        WHEN regexp_replace($3, '[^0-9]', '', 'g') <> ''
+             AND regexp_replace(c.telefone, '[^0-9]', '', 'g')
+                 LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'                 THEN 1
+        WHEN regexp_replace($3, '[^0-9]', '', 'g') <> ''
+             AND regexp_replace(c.celular,  '[^0-9]', '', 'g')
+                 LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'                 THEN 1
         ELSE 0
-        END as relevance_score
+    END AS relevance_score
+
 FROM public.clientes c
-WHERE c.tenant_id = $1
+WHERE c.tenant_id  = $1
   AND c.deleted_at IS NULL
   AND (
-    $3 = '' OR
-        -- Busca em nome/razão social (maior prioridade)
-    LOWER(unaccent(c.nome_razao_social)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
-        -- Busca em nome fantasia
-    LOWER(unaccent(c.nome_fantasia)) LIKE '%' || LOWER(unaccent($3)) || '%' OR
-        -- Busca em telefone (apenas números)
-    regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
-        -- Busca em celular (apenas números)
-    regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%'
-    )
+        /* pesquisa vazia devolve todos                                          */
+        $3 = ''
+        OR LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($3))||'%'
+        OR LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($3))||'%'
+        /* telefones/celulares somente se houver dígitos no termo                */
+        OR (
+             regexp_replace($3, '[^0-9]', '', 'g') <> ''
+             AND (
+                    regexp_replace(c.telefone, '[^0-9]', '', 'g')
+                        LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'
+                 OR regexp_replace(c.celular,  '[^0-9]', '', 'g')
+                        LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'
+                )
+           )
+      )
 ORDER BY
-    -- Ordena por relevância primeiro, depois por nome
     relevance_score DESC,
     c.nome_razao_social ASC
-    LIMIT $2 OFFSET $4
+LIMIT  $2
+OFFSET $4
 `
 
 type ListClientesSmartSearchParams struct {

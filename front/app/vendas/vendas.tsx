@@ -430,6 +430,15 @@ function Vendas({
           const res = await getClientesPorCelular(cel);
           const cliente = res.items[0];
           if (cliente) {
+            setClienteOptions((prev) => {
+              const idx = prev.findIndex((c) => c.id === cliente.id);
+              if (idx >= 0) {
+                const clone = [...prev];
+                clone[idx] = cliente;
+                return clone;
+              }
+              return [...prev, cliente];
+            });
             formikRef?.current?.setFieldValue("id_cliente", cliente.id);
             formikRef?.current?.setFieldValue(
               "cliente_nome_razao_social",
@@ -825,10 +834,31 @@ function Vendas({
             setDialogClienteOpen(true);
           };
 
-          const handleAbrirDialogEditarCliente = () => {
-            const clienteSelecionado = clienteOptions.find(
+          const handleAbrirDialogEditarCliente = async () => {
+            let clienteSelecionado = clienteOptions.find(
               (c) => c.id === formik.values.id_cliente
             );
+
+            if (!clienteSelecionado && formik.values.id_cliente) {
+              try {
+                const resp = await api.get<ClienteResponse>(
+                  `/clientes/${formik.values.id_cliente}`
+                );
+                clienteSelecionado = resp.data;
+                setClienteOptions((prev) => {
+                  const idx = prev.findIndex((c) => c.id === resp.data.id);
+                  if (idx >= 0) {
+                    const clone = [...prev];
+                    clone[idx] = resp.data;
+                    return clone;
+                  }
+                  return [...prev, resp.data];
+                });
+              } catch (err) {
+                console.error(err);
+              }
+            }
+
             if (clienteSelecionado) {
               setClienteParaEdicao(clienteSelecionado);
               setDialogClienteOpen(true);

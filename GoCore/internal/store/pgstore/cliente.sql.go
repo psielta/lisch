@@ -878,3 +878,93 @@ func (q *Queries) UpdateCliente(ctx context.Context, arg UpdateClienteParams) (C
 	)
 	return i, err
 }
+
+const upsertCliente = `-- name: UpsertCliente :one
+INSERT INTO public.clientes (
+    id,
+    tenant_id,
+    nome_razao_social,
+    celular,
+    logradouro,
+    numero,
+    complemento,
+    bairro,
+    tipo_pessoa
+)
+VALUES (
+    COALESCE($1, gen_random_uuid()),
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9
+)
+ON CONFLICT (id) DO UPDATE
+SET
+    nome_razao_social = $3,
+    celular = $4,
+    logradouro = $5,
+    numero = $6,
+    complemento = $7,
+    bairro = $8,
+    tipo_pessoa = $9,
+    updated_at = now()
+WHERE clientes.tenant_id = $2
+RETURNING id, tenant_id, tipo_pessoa, nome_razao_social, nome_fantasia, cpf, cnpj, rg, ie, im, data_nascimento, email, telefone, celular, cep, logradouro, numero, complemento, bairro, cidade, uf, created_at, updated_at
+`
+
+type UpsertClienteParams struct {
+	Column1         interface{} `json:"column_1"`
+	TenantID        uuid.UUID   `json:"tenant_id"`
+	NomeRazaoSocial string      `json:"nome_razao_social"`
+	Celular         pgtype.Text `json:"celular"`
+	Logradouro      pgtype.Text `json:"logradouro"`
+	Numero          pgtype.Text `json:"numero"`
+	Complemento     pgtype.Text `json:"complemento"`
+	Bairro          pgtype.Text `json:"bairro"`
+	TipoPessoa      string      `json:"tipo_pessoa"`
+}
+
+func (q *Queries) UpsertCliente(ctx context.Context, arg UpsertClienteParams) (Cliente, error) {
+	row := q.db.QueryRow(ctx, upsertCliente,
+		arg.Column1,
+		arg.TenantID,
+		arg.NomeRazaoSocial,
+		arg.Celular,
+		arg.Logradouro,
+		arg.Numero,
+		arg.Complemento,
+		arg.Bairro,
+		arg.TipoPessoa,
+	)
+	var i Cliente
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.TipoPessoa,
+		&i.NomeRazaoSocial,
+		&i.NomeFantasia,
+		&i.Cpf,
+		&i.Cnpj,
+		&i.Rg,
+		&i.Ie,
+		&i.Im,
+		&i.DataNascimento,
+		&i.Email,
+		&i.Telefone,
+		&i.Celular,
+		&i.Cep,
+		&i.Logradouro,
+		&i.Numero,
+		&i.Complemento,
+		&i.Bairro,
+		&i.Cidade,
+		&i.Uf,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

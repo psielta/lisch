@@ -87,6 +87,43 @@ WHERE id        = $1   -- id do cliente
 RETURNING
     *;
 
+-- name: UpsertCliente :one
+INSERT INTO public.clientes (
+    id,
+    tenant_id,
+    nome_razao_social,
+    celular,
+    logradouro,
+    numero,
+    complemento,
+    bairro,
+    tipo_pessoa
+)
+VALUES (
+    COALESCE($1, gen_random_uuid()),
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9
+)
+ON CONFLICT (id) DO UPDATE
+SET
+    nome_razao_social = $3,
+    celular = $4,
+    logradouro = $5,
+    numero = $6,
+    complemento = $7,
+    bairro = $8,
+    tipo_pessoa = $9,
+    updated_at = now()
+WHERE clientes.tenant_id = $2
+RETURNING *;
+
+
 -- name: DeleteCliente :exec
 DELETE FROM public.clientes
 WHERE id = $1

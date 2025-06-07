@@ -151,6 +151,8 @@ func (api *Api) BindRoutes() {
 					// Busca por documento
 					r.Get("/cpf/{cpf}", api.handleGetClienteByCPF)    // GET /api/v1/clientes/cpf/{cpf}
 					r.Get("/cnpj/{cnpj}", api.handleGetClienteByCNPJ) // GET /api/v1/clientes/cnpj/{cnpj}
+
+					r.Post("/upsert", api.handleUpsertCliente) // POST /api/v1/clientes/upsert
 				})
 			})
 

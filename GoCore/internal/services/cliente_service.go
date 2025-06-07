@@ -237,3 +237,28 @@ func (cs *ClienteService) ListClientesSmartSearch(ctx context.Context, tenantID 
 	// Retorna a resposta paginada
 	return dto.NewPaginated(clientesResponse, page, pageSize, int64(len(clientesResponse))), nil
 }
+
+func (cs *ClienteService) UpsertCliente(ctx context.Context, cliente dto.UpsertClienteDTO) (dto.ClienteResponse, error) {
+	clienteDB, err := cs.queries.UpsertCliente(ctx, pgstore.UpsertClienteParams{
+		Column1:         toPgTypeText(cliente.ID),
+		TenantID:        cliente.TenantID,
+		NomeRazaoSocial: cliente.NomeRazaoSocial,
+		Celular:         pgtype.Text{String: cliente.Celular, Valid: true},
+		Logradouro:      pgtype.Text{String: cliente.Logradouro, Valid: true},
+		Numero:          pgtype.Text{String: cliente.Numero, Valid: true},
+		Complemento:     pgtype.Text{String: cliente.Complemento, Valid: true},
+		Bairro:          pgtype.Text{String: cliente.Bairro, Valid: true},
+		TipoPessoa:      cliente.TipoPessoa,
+	})
+	if err != nil {
+		return dto.ClienteResponse{}, err
+	}
+	return dto.ClienteToResponse(clienteDB), nil
+}
+
+func toPgTypeText(s *string) pgtype.Text {
+	if s == nil {
+		return pgtype.Text{Valid: false}
+	}
+	return pgtype.Text{String: *s, Valid: true}
+}

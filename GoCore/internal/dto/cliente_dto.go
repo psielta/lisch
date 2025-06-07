@@ -32,6 +32,18 @@ type CreateClienteDTO struct {
 	UF              string    `json:"uf,omitempty" validate:"omitempty,len=2,uppercase"`
 }
 
+type UpsertClienteDTO struct {
+	ID              *string   `json:"id,omitempty"`
+	TenantID        uuid.UUID `json:"tenant_id" validate:"required"`
+	NomeRazaoSocial string    `json:"nome_razao_social" validate:"required,min=2,max=200"`
+	Celular         string    `json:"celular,omitempty" validate:"omitempty,max=30"`
+	Logradouro      string    `json:"logradouro,omitempty" validate:"omitempty,max=200"`
+	Numero          string    `json:"numero,omitempty" validate:"omitempty,max=10"`
+	Complemento     string    `json:"complemento,omitempty" validate:"omitempty,max=200"`
+	Bairro          string    `json:"bairro,omitempty" validate:"omitempty,max=100"`
+	TipoPessoa      string    `json:"tipo_pessoa" validate:"required,oneof=F J"`
+}
+
 // UpdateClienteDTO representa os dados para atualização de um cliente
 type UpdateClienteDTO struct {
 	ID              uuid.UUID `json:"id" validate:"required"`

@@ -475,3 +475,22 @@ func contains(s, substr string) bool {
 				return false
 			}())))
 }
+
+func (api *Api) handleUpsertCliente(w http.ResponseWriter, r *http.Request) {
+	data, problems, err := jsonutils.DecodeValidJsonV10[dto.UpsertClienteDTO](r)
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, problems)
+		return
+	}
+
+	cliente, err := api.ClienteService.UpsertCliente(r.Context(), data)
+	if err != nil {
+		api.Logger.Error("erro ao upsertar cliente", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
+			"error": "unexpected internal server error",
+		})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, cliente)
+}

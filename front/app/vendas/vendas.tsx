@@ -229,7 +229,6 @@ function Vendas({
   defaultCliente: PedidoClienteDTO | null | undefined;
   tenant: Tenant;
 }) {
-  console.log(tenant);
   let pedidoValidationSchema = Yup.object({
     id: Yup.string().optional().nullable(),
     id_cliente: Yup.string().test(
@@ -266,7 +265,13 @@ function Vendas({
     cliente_celular: Yup.string()
       .transform((v) => onlyDigits(v || ""))
       .min(8, "Celular inválido")
-      .required("Celular é obrigatório"),
+      .test("celular-required", "Celular é obrigatório", function (value) {
+        const id_cliente = this.parent.id_cliente;
+        if (id_cliente === defaultCliente?.id) {
+          return true;
+        }
+        return Boolean(value);
+      }),
     cliente_nome_razao_social: Yup.string().required("Nome é obrigatório"),
     cliente_logradouro: Yup.string().optional(),
     cliente_numero: Yup.string().optional(),
@@ -685,7 +690,7 @@ function Vendas({
         try {
           setIsLoadingClientes(true);
           const resp = await api.get<PaginatedResponse<PedidoClienteDTO>>(
-            `/clientes/smartsearch?search=${query}&page_size=250`
+            `/clientes/smartsearch?search=${query}&page_size=50`
           );
           setClienteOptions(resp.data.items);
           setHasSearched(true);
@@ -2272,6 +2277,8 @@ function Vendas({
               <Dialog
                 open={buscarNomeOpen}
                 onClose={() => setBuscarNomeOpen(false)}
+                maxWidth="md"
+                fullWidth
               >
                 <DialogTitle>Buscar Cliente por Nome</DialogTitle>
                 <DialogContent sx={{ pt: 2 }}>

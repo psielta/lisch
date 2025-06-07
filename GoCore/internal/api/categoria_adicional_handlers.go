@@ -980,7 +980,6 @@ func (api *Api) handleCategoriaAdicionalOpcoes_Put(w http.ResponseWriter, r *htt
 // handleCategoriaAdicionalOpcoes_Post adiciona uma nova opção a um adicional existente
 func (api *Api) handleCategoriaAdicionalOpcoes_Post(w http.ResponseWriter, r *http.Request) {
 	api.Logger.Info("handleCategoriaAdicionalOpcoes_Post")
-
 	// Obter ID do adicional da URL
 	adicionalID := chi.URLParam(r, "id")
 	if adicionalID == "" {

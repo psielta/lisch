@@ -435,14 +435,14 @@ export default function ClienteSearchDialog({
                                 spacing={2}
                                 flexWrap="wrap"
                               >
-                                {cliente.telefone && (
+                                {/* {cliente.telefone && (
                                   <Chip
                                     icon={<Phone sx={{ fontSize: 16 }} />}
                                     label={formatPhone(cliente.telefone)}
                                     size="small"
                                     variant="outlined"
                                   />
-                                )}
+                                )} */}
                                 {cliente.celular && (
                                   <Chip
                                     icon={<Phone sx={{ fontSize: 16 }} />}

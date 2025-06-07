@@ -200,85 +200,74 @@ WHERE c.tenant_id = $1
   AND ($10 = '' OR regexp_replace(c.telefone, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($10, '[^0-9]', '', 'g') || '%')
   AND ($11 = '' OR regexp_replace(c.celular, '[^0-9]', '', 'g') LIKE '%' || regexp_replace($11, '[^0-9]', '', 'g') || '%');
 
-------------------------------------------------------------
+/*───────────────────────────────────────────────────────────*
+ *  LISTA COM PAGINAÇÃO + RANKING                            *
+ *───────────────────────────────────────────────────────────*/
 -- name: ListClientesSmartSearch :many
-------------------------------------------------------------
 WITH p AS (
     SELECT
-        $3::text                                  AS q_raw,
-        regexp_replace($3, '\s+', ' ', 'g')::text AS q_trim,
-        regexp_replace($3, '[^0-9]', '', 'g')     AS q_digits,
-        plainto_tsquery('simple', unaccent($3))   AS q_ts
+        $3::text                                   AS term,
+        regexp_replace($3, '[^0-9]', '', 'g')      AS digits,
+        lower(unaccent($3))                        AS norm
 )
 SELECT
     c.*,
-
-    /* ── Score para ordenação ── */
+    /*── ranking simples: 3 para razão social, 2 para fantasia, 1 para fone ──*/
     CASE
-        /* telefone/celular ⇒ score fixo 1                                           */
-        WHEN p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-        THEN 1
-
-        /* nome/razão social (peso 3) + nome fantasia (peso 2)                        */
-        ELSE 3 * ts_rank_cd(to_tsvector('simple', unaccent(c.nome_razao_social)), p.q_ts)
-           + 2 * ts_rank_cd(to_tsvector('simple', unaccent(coalesce(c.nome_fantasia,''))), p.q_ts)
+        WHEN p.digits <> '' THEN 1
+        WHEN lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%' THEN 3
+        WHEN lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%' THEN 2
+        ELSE 0
     END AS relevance_score
-
-FROM public.clientes c
-CROSS JOIN p
-WHERE c.tenant_id = $1
-  AND c.deleted_at IS NULL
+FROM   public.clientes c
+CROSS  JOIN p
+WHERE  c.tenant_id  = $1
+  AND  c.deleted_at IS NULL
   AND (
-        /* pesquisa vazia devolve todos os registros                                  */
-        p.q_trim = ''
-
-        /* → pesquisa numérica só em fones                                             */
-        OR ( p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-           )
-
-        /* → pesquisa textual só em nome/fantasia usando full-text                    */
-        OR ( p.q_digits = ''
-             AND to_tsvector('simple',
-                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
-                 @@ p.q_ts
-           )
+        /*── pesquisa numérica ──*/
+        (p.digits <> '' AND (
+             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+        ))
+        /*── pesquisa textual ──*/
+     OR (p.digits = '' AND (
+             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
+          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
+        ))
+     OR p.term = ''          -- devolve todos se termo vazio
       )
-ORDER BY
-    relevance_score DESC NULLS LAST,
-    c.nome_razao_social
+ORDER BY relevance_score DESC,
+         c.nome_razao_social
 LIMIT  $2
 OFFSET $4;
 
-------------------------------------------------------------
+
+
+/*───────────────────────────────────────────────────────────*
+ *  CONTAGEM TOTAL PARA PAGINAÇÃO                            *
+ *───────────────────────────────────────────────────────────*/
 -- name: CountClientesSmartSearch :one
-------------------------------------------------------------
 WITH p AS (
     SELECT
-        $2::text                                  AS q_raw,
-        regexp_replace($2, '\s+', ' ', 'g')::text AS q_trim,
-        regexp_replace($2, '[^0-9]', '', 'g')     AS q_digits,
-        plainto_tsquery('simple', unaccent($2))   AS q_ts
+        $2::text                                   AS term,
+        regexp_replace($2, '[^0-9]', '', 'g')      AS digits,
+        lower(unaccent($2))                        AS norm
 )
 SELECT COUNT(*)
-FROM public.clientes c
-CROSS JOIN p
-WHERE c.tenant_id = $1
-  AND c.deleted_at IS NULL
+FROM   public.clientes c
+CROSS  JOIN p
+WHERE  c.tenant_id  = $1
+  AND  c.deleted_at IS NULL
   AND (
-        p.q_trim = ''
-        OR ( p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-           )
-        OR ( p.q_digits = ''
-             AND to_tsvector('simple',
-                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
-                 @@ p.q_ts
-           )
+        (p.digits <> '' AND (
+             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+        ))
+     OR (p.digits = '' AND (
+             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
+          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
+        ))
+     OR p.term = ''
       );
 
 

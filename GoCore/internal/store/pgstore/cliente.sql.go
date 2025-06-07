@@ -84,29 +84,30 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 }
 
 const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
+/*───────────────────────────────────────────────────────────*
+ *  CONTAGEM TOTAL PARA PAGINAÇÃO                            *
+ *───────────────────────────────────────────────────────────*/
 WITH p AS (
     SELECT
-        $2::text                                  AS q_raw,
-        regexp_replace($2, '\s+', ' ', 'g')::text AS q_trim,
-        regexp_replace($2, '[^0-9]', '', 'g')     AS q_digits,
-        plainto_tsquery('simple', unaccent($2))   AS q_ts
+        $2::text                                   AS term,
+        regexp_replace($2, '[^0-9]', '', 'g')      AS digits,
+        lower(unaccent($2))                        AS norm
 )
 SELECT COUNT(*)
-FROM public.clientes c
-CROSS JOIN p
-WHERE c.tenant_id = $1
-  AND c.deleted_at IS NULL
+FROM   public.clientes c
+CROSS  JOIN p
+WHERE  c.tenant_id  = $1
+  AND  c.deleted_at IS NULL
   AND (
-        p.q_trim = ''
-        OR ( p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-           )
-        OR ( p.q_digits = ''
-             AND to_tsvector('simple',
-                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
-                 @@ p.q_ts
-           )
+        (p.digits <> '' AND (
+             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+        ))
+     OR (p.digits = '' AND (
+             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
+          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
+        ))
+     OR p.term = ''
       )
 `
 
@@ -115,8 +116,6 @@ type CountClientesSmartSearchParams struct {
 	Column2  string    `json:"column_2"`
 }
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
 func (q *Queries) CountClientesSmartSearch(ctx context.Context, arg CountClientesSmartSearchParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countClientesSmartSearch, arg.TenantID, arg.Column2)
 	var count int64
@@ -562,53 +561,43 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 }
 
 const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
+/*───────────────────────────────────────────────────────────*
+ *  LISTA COM PAGINAÇÃO + RANKING                            *
+ *───────────────────────────────────────────────────────────*/
 WITH p AS (
     SELECT
-        $3::text                                  AS q_raw,
-        regexp_replace($3, '\s+', ' ', 'g')::text AS q_trim,
-        regexp_replace($3, '[^0-9]', '', 'g')     AS q_digits,
-        plainto_tsquery('simple', unaccent($3))   AS q_ts
+        $3::text                                   AS term,
+        regexp_replace($3, '[^0-9]', '', 'g')      AS digits,
+        lower(unaccent($3))                        AS norm
 )
 SELECT
     c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
-
-    /* ── Score para ordenação ── */
+    /*── ranking simples: 3 para razão social, 2 para fantasia, 1 para fone ──*/
     CASE
-        /* telefone/celular ⇒ score fixo 1                                           */
-        WHEN p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-        THEN 1
-
-        /* nome/razão social (peso 3) + nome fantasia (peso 2)                        */
-        ELSE 3 * ts_rank_cd(to_tsvector('simple', unaccent(c.nome_razao_social)), p.q_ts)
-           + 2 * ts_rank_cd(to_tsvector('simple', unaccent(coalesce(c.nome_fantasia,''))), p.q_ts)
+        WHEN p.digits <> '' THEN 1
+        WHEN lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%' THEN 3
+        WHEN lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%' THEN 2
+        ELSE 0
     END AS relevance_score
-
-FROM public.clientes c
-CROSS JOIN p
-WHERE c.tenant_id = $1
-  AND c.deleted_at IS NULL
+FROM   public.clientes c
+CROSS  JOIN p
+WHERE  c.tenant_id  = $1
+  AND  c.deleted_at IS NULL
   AND (
-        /* pesquisa vazia devolve todos os registros                                  */
-        p.q_trim = ''
-
-        /* → pesquisa numérica só em fones                                             */
-        OR ( p.q_digits <> ''
-             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
-                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
-           )
-
-        /* → pesquisa textual só em nome/fantasia usando full-text                    */
-        OR ( p.q_digits = ''
-             AND to_tsvector('simple',
-                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
-                 @@ p.q_ts
-           )
+        /*── pesquisa numérica ──*/
+        (p.digits <> '' AND (
+             regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+          OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.digits||'%'
+        ))
+        /*── pesquisa textual ──*/
+     OR (p.digits = '' AND (
+             lower(unaccent(c.nome_razao_social)) LIKE '%'||p.norm||'%'
+          OR lower(unaccent(coalesce(c.nome_fantasia,''))) LIKE '%'||p.norm||'%'
+        ))
+     OR p.term = ''          -- devolve todos se termo vazio
       )
-ORDER BY
-    relevance_score DESC NULLS LAST,
-    c.nome_razao_social
+ORDER BY relevance_score DESC,
+         c.nome_razao_social
 LIMIT  $2
 OFFSET $4
 `
@@ -645,11 +634,9 @@ type ListClientesSmartSearchRow struct {
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
-	RelevanceScore  interface{}        `json:"relevance_score"`
+	RelevanceScore  int32              `json:"relevance_score"`
 }
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
 func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesSmartSearchParams) ([]ListClientesSmartSearchRow, error) {
 	rows, err := q.db.Query(ctx, listClientesSmartSearch,
 		arg.TenantID,

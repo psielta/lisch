@@ -203,42 +203,29 @@ WHERE c.tenant_id = $1
 -- name: ListClientesSmartSearch :many
 SELECT
     c.*,
-    -- Score para ordenar por relevância
     CASE
-        WHEN $3 = '' THEN 0
-        -- Busca exata em nome/razão social (maior pontuação)
-        WHEN LOWER(c.nome_razao_social) = LOWER($3) THEN 10
-        WHEN LOWER(c.nome_fantasia) = LOWER($3) THEN 9
-        -- Busca que começa com o termo
-        WHEN LOWER(c.nome_razao_social) LIKE LOWER($3) || '%' THEN 8
-        WHEN LOWER(c.nome_fantasia) LIKE LOWER($3) || '%' THEN 7
-        -- Busca contém o termo (case insensitive, sem acentos)
-        WHEN unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($3)) || '%' THEN 6
-        WHEN unaccent(LOWER(c.nome_fantasia)) LIKE '%' || unaccent(LOWER($3)) || '%' THEN 5
-        -- Busca em telefones (apenas se o termo de busca contém números)
-        WHEN $3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND 
-             regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 4
-        WHEN $3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND 
-             regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' THEN 3
+        WHEN $3 = '' OR TRIM($3) = '' THEN 0
+        WHEN unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER(TRIM($3))) || '%' THEN 5
+        WHEN unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER(TRIM($3))) || '%' THEN 4
+        -- CORREÇÃO: só busca em telefone se o termo tem pelo menos 3 dígitos
+        WHEN LENGTH(regexp_replace(TRIM($3), '[^0-9]', '', 'g')) >= 3 AND
+             regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($3), '[^0-9]', '', 'g') || '%' THEN 2
+        WHEN LENGTH(regexp_replace(TRIM($3), '[^0-9]', '', 'g')) >= 3 AND
+             regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($3), '[^0-9]', '', 'g') || '%' THEN 1
         ELSE 0
     END as relevance_score
 FROM public.clientes c
 WHERE c.tenant_id = $1
   AND c.deleted_at IS NULL
   AND (
-    -- Se não há termo de busca, retorna todos
-    $3 = '' OR 
-    
-    -- Busca em nomes (apenas se o termo não é puramente numérico)
-    (NOT ($3 ~ '^[0-9\s\-\(\)\+\.]+$') AND (
-        unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($3)) || '%' OR
-        unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER($3)) || '%'
-    )) OR
-    
-    -- Busca em telefones (apenas se contém números e tem pelo menos 3 dígitos)
-    ($3 ~ '[0-9]' AND LENGTH(regexp_replace($3, '[^0-9]', '', 'g')) >= 3 AND (
-        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%' OR
-        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($3, '[^0-9]', '', 'g') || '%'
+    $3 = '' OR
+    -- Busca por nome (sempre executa para termos não vazios)
+    unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER(TRIM($3))) || '%' OR
+    unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER(TRIM($3))) || '%' OR
+    -- CORREÇÃO: só busca telefone se o termo tem pelo menos 3 dígitos
+    (LENGTH(regexp_replace(TRIM($3), '[^0-9]', '', 'g')) >= 3 AND (
+        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($3), '[^0-9]', '', 'g') || '%' OR
+        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($3), '[^0-9]', '', 'g') || '%'
     ))
   )
 ORDER BY
@@ -252,19 +239,14 @@ FROM public.clientes c
 WHERE c.tenant_id = $1
   AND c.deleted_at IS NULL
   AND (
-    -- Se não há termo de busca, conta todos
-    $2 = '' OR 
-    
-    -- Busca em nomes (apenas se o termo não é puramente numérico)
-    (NOT ($2 ~ '^[0-9\s\-\(\)\+\.]+$') AND (
-        unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER($2)) || '%' OR
-        unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER($2)) || '%'
-    )) OR
-    
-    -- Busca em telefones (apenas se contém números e tem pelo menos 3 dígitos)
-    ($2 ~ '[0-9]' AND LENGTH(regexp_replace($2, '[^0-9]', '', 'g')) >= 3 AND (
-        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%' OR
-        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace($2, '[^0-9]', '', 'g') || '%'
+    $2 = '' OR
+    -- Busca por nome
+    unaccent(LOWER(c.nome_razao_social)) LIKE '%' || unaccent(LOWER(TRIM($2))) || '%' OR
+    unaccent(LOWER(COALESCE(c.nome_fantasia, ''))) LIKE '%' || unaccent(LOWER(TRIM($2))) || '%' OR
+    -- CORREÇÃO: só busca telefone se o termo tem pelo menos 3 dígitos
+    (LENGTH(regexp_replace(TRIM($2), '[^0-9]', '', 'g')) >= 3 AND (
+        regexp_replace(COALESCE(c.telefone, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($2), '[^0-9]', '', 'g') || '%' OR
+        regexp_replace(COALESCE(c.celular, ''), '[^0-9]', '', 'g') LIKE '%' || regexp_replace(TRIM($2), '[^0-9]', '', 'g') || '%'
     ))
   );
 

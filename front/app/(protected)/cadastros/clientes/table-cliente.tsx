@@ -297,12 +297,12 @@ function TableCliente({
       header: "E-mail",
       cell: (info) => info.getValue() || "-",
     }),
-    columnHelper.accessor("telefone", {
-      header: "Telefone",
-      cell: (info) => info.getValue() || "-",
-    }),
+    // columnHelper.accessor("telefone", {
+    //   header: "Telefone",
+    //   cell: (info) => info.getValue() || "-",
+    // }),
     columnHelper.accessor("celular", {
-      header: "Celular",
+      header: "Celular ou Telefone",
       cell: (info) => info.getValue() || "-",
     }),
     columnHelper.accessor("cidade", {

@@ -1546,159 +1546,157 @@ function Vendas({
                           }}
                         >
                           <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                            <div className="flex items-center gap-2 mb-3">
-                              <Person className="h-4 w-4 text-primary" />
-                              <Typography
-                                variant="subtitle1"
-                                className="font-semibold"
-                              >
-                                Dados do Cliente
-                              </Typography>
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                              <div className="flex items-center gap-2">
+                                <Person className="h-4 w-4 text-primary" />
+                                <Typography
+                                  variant="subtitle1"
+                                  className="font-semibold"
+                                >
+                                  Dados do Cliente
+                                </Typography>
 
-                              {/* Status do Cliente */}
-                              {clienteStatus !== "idle" &&
-                                !formik.values.quitado &&
-                                !formik.values.finalizado && (
-                                  <div>
-                                    {clienteStatus === "found" && (
-                                      <Badge color="green">Encontrado</Badge>
-                                    )}
-                                    {clienteStatus === "not-found" && (
-                                      <Badge color="red">Não encontrado</Badge>
-                                    )}
-                                    {clienteStatus === "searching" && (
-                                      <Badge color="blue">Buscando...</Badge>
-                                    )}
-                                  </div>
-                                )}
+                                {/* Status do Cliente */}
+                                {clienteStatus !== "idle" &&
+                                  !formik.values.quitado &&
+                                  !formik.values.finalizado && (
+                                    <div>
+                                      {clienteStatus === "found" && (
+                                        <Badge color="green">Encontrado</Badge>
+                                      )}
+                                      {clienteStatus === "not-found" && (
+                                        <Badge color="red">
+                                          Não encontrado
+                                        </Badge>
+                                      )}
+                                      {clienteStatus === "searching" && (
+                                        <Badge color="blue">Buscando...</Badge>
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
+
+                              {/* Botões de ação do cliente */}
+                              <div className="flex gap-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setBuscarNomeOpen(true)}
+                                  title="Buscar por nome"
+                                  disabled={isFormDisabled}
+                                  sx={{
+                                    bgcolor: "info.main",
+                                    color: "white",
+                                    "&:hover": { bgcolor: "info.dark" },
+                                    "&:disabled": {
+                                      bgcolor: "action.disabled",
+                                    },
+                                  }}
+                                >
+                                  <Search className="h-5 w-6" />
+                                </IconButton>
+
+                                <IconButton
+                                  size="small"
+                                  onClick={handleAbrirDialogNovoCliente}
+                                  title="Novo Cliente"
+                                  disabled={isFormDisabled}
+                                  sx={{
+                                    bgcolor: "success.main",
+                                    color: "white",
+                                    "&:hover": { bgcolor: "success.dark" },
+                                    "&:disabled": {
+                                      bgcolor: "action.disabled",
+                                    },
+                                  }}
+                                >
+                                  <PersonAdd className="h-5 w-6" />
+                                </IconButton>
+
+                                <IconButton
+                                  size="small"
+                                  onClick={handleAbrirDialogEditarCliente}
+                                  title="Editar Cliente"
+                                  disabled={
+                                    !formik.values.id_cliente || isFormDisabled
+                                  }
+                                  sx={{
+                                    bgcolor: "warning.main",
+                                    color: "white",
+                                    "&:hover": { bgcolor: "warning.dark" },
+                                    "&:disabled": {
+                                      bgcolor: "action.disabled",
+                                    },
+                                  }}
+                                >
+                                  <Edit className="h-5 w-6" />
+                                </IconButton>
+                              </div>
                             </div>
 
                             <div className="space-y-3">
-                              {/* Linha 1: Celular e Nome com botões */}
-                              <div className="flex gap-2">
-                                <div className="flex-1 space-y-2">
-                                  <TextField
-                                    size="small"
-                                    fullWidth
-                                    label="Celular"
-                                    name="cliente_celular"
-                                    value={formik.values.cliente_celular}
-                                    onChange={(e) =>
-                                      formik.setFieldValue(
-                                        "cliente_celular",
-                                        onlyDigits(e.target.value)
-                                      )
-                                    }
-                                    onBlur={formik.handleBlur}
-                                    error={
-                                      formik.touched.cliente_celular &&
-                                      Boolean(formik.errors.cliente_celular)
-                                    }
-                                    helperText={
-                                      formik.touched.cliente_celular &&
-                                      (formik.errors.cliente_celular as any)
-                                    }
-                                    disabled={isFormDisabled}
-                                    InputProps={{
-                                      startAdornment: (
-                                        <InputAdornment position="start">
-                                          <Phone className="h-4 w-4" />
-                                        </InputAdornment>
-                                      ),
-                                    }}
-                                  />
-                                  <div className="mt-5" />
+                              {/* Linha 1: Celular e Nome */}
+                              <div className="flex flex-col gap-3">
+                                <TextField
+                                  size="small"
+                                  fullWidth
+                                  label="Celular"
+                                  name="cliente_celular"
+                                  value={formik.values.cliente_celular}
+                                  onChange={(e) =>
+                                    formik.setFieldValue(
+                                      "cliente_celular",
+                                      onlyDigits(e.target.value)
+                                    )
+                                  }
+                                  onBlur={formik.handleBlur}
+                                  error={
+                                    formik.touched.cliente_celular &&
+                                    Boolean(formik.errors.cliente_celular)
+                                  }
+                                  helperText={
+                                    formik.touched.cliente_celular &&
+                                    (formik.errors.cliente_celular as any)
+                                  }
+                                  disabled={isFormDisabled}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <Phone className="h-4 w-4" />
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
 
-                                  <TextField
-                                    size="small"
-                                    fullWidth
-                                    label="Nome completo"
-                                    name="cliente_nome_razao_social"
-                                    value={
-                                      formik.values.cliente_nome_razao_social
-                                    }
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    error={
-                                      formik.touched
-                                        .cliente_nome_razao_social &&
-                                      Boolean(
-                                        formik.errors.cliente_nome_razao_social
-                                      )
-                                    }
-                                    helperText={
-                                      formik.touched
-                                        .cliente_nome_razao_social &&
-                                      (formik.errors
-                                        .cliente_nome_razao_social as any)
-                                    }
-                                    disabled={isFormDisabled}
-                                    InputProps={{
-                                      startAdornment: (
-                                        <InputAdornment position="start">
-                                          <Person className="h-4 w-4" />
-                                        </InputAdornment>
-                                      ),
-                                    }}
-                                  />
-                                </div>
-
-                                {/* Botões de ação do cliente */}
-                                <div className="flex flex-col gap-1 pt-1">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => setBuscarNomeOpen(true)}
-                                    title="Buscar por nome"
-                                    disabled={isFormDisabled}
-                                    sx={{
-                                      bgcolor: "info.main",
-                                      color: "white",
-                                      "&:hover": { bgcolor: "info.dark" },
-                                      "&:disabled": {
-                                        bgcolor: "action.disabled",
-                                      },
-                                    }}
-                                  >
-                                    <Search className="h-4 w-4" />
-                                  </IconButton>
-
-                                  <IconButton
-                                    size="small"
-                                    onClick={handleAbrirDialogNovoCliente}
-                                    title="Novo Cliente"
-                                    disabled={isFormDisabled}
-                                    sx={{
-                                      bgcolor: "success.main",
-                                      color: "white",
-                                      "&:hover": { bgcolor: "success.dark" },
-                                      "&:disabled": {
-                                        bgcolor: "action.disabled",
-                                      },
-                                    }}
-                                  >
-                                    <PersonAdd className="h-4 w-4" />
-                                  </IconButton>
-
-                                  <IconButton
-                                    size="small"
-                                    onClick={handleAbrirDialogEditarCliente}
-                                    title="Editar Cliente"
-                                    disabled={
-                                      !formik.values.id_cliente ||
-                                      isFormDisabled
-                                    }
-                                    sx={{
-                                      bgcolor: "warning.main",
-                                      color: "white",
-                                      "&:hover": { bgcolor: "warning.dark" },
-                                      "&:disabled": {
-                                        bgcolor: "action.disabled",
-                                      },
-                                    }}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </IconButton>
-                                </div>
+                                <TextField
+                                  size="small"
+                                  fullWidth
+                                  label="Nome completo"
+                                  name="cliente_nome_razao_social"
+                                  value={
+                                    formik.values.cliente_nome_razao_social
+                                  }
+                                  onChange={formik.handleChange}
+                                  onBlur={formik.handleBlur}
+                                  error={
+                                    formik.touched.cliente_nome_razao_social &&
+                                    Boolean(
+                                      formik.errors.cliente_nome_razao_social
+                                    )
+                                  }
+                                  helperText={
+                                    formik.touched.cliente_nome_razao_social &&
+                                    (formik.errors
+                                      .cliente_nome_razao_social as any)
+                                  }
+                                  disabled={isFormDisabled}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <Person className="h-4 w-4" />
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
                               </div>
 
                               {/* Linha 2: Endereço */}

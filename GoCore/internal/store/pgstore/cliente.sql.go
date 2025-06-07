@@ -84,31 +84,39 @@ func (q *Queries) CountClientesPaginated(ctx context.Context, arg CountClientesP
 }
 
 const countClientesSmartSearch = `-- name: CountClientesSmartSearch :one
+WITH p AS (
+    SELECT
+        $2::text                                  AS q_raw,
+        regexp_replace($2, '\s+', ' ', 'g')::text AS q_trim,
+        regexp_replace($2, '[^0-9]', '', 'g')     AS q_digits,
+        plainto_tsquery('simple', unaccent($2))   AS q_ts
+)
 SELECT COUNT(*)
 FROM public.clientes c
-WHERE c.tenant_id  = $1
+CROSS JOIN p
+WHERE c.tenant_id = $1
   AND c.deleted_at IS NULL
   AND (
-        $2 = ''
-        OR LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($2))||'%'
-        OR LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($2))||'%'
-        OR (
-             regexp_replace($2, '[^0-9]', '', 'g') <> ''
-             AND (
-                    regexp_replace(c.telefone, '[^0-9]', '', 'g')
-                        LIKE '%'||regexp_replace($2, '[^0-9]', '', 'g')||'%'
-                 OR regexp_replace(c.celular,  '[^0-9]', '', 'g')
-                        LIKE '%'||regexp_replace($2, '[^0-9]', '', 'g')||'%'
-                )
+        p.q_trim = ''
+        OR ( p.q_digits <> ''
+             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
+                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
+           )
+        OR ( p.q_digits = ''
+             AND to_tsvector('simple',
+                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
+                 @@ p.q_ts
            )
       )
 `
 
 type CountClientesSmartSearchParams struct {
-	TenantID uuid.UUID   `json:"tenant_id"`
-	Column2  interface{} `json:"column_2"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Column2  string    `json:"column_2"`
 }
 
+// ----------------------------------------------------------
+// ----------------------------------------------------------
 func (q *Queries) CountClientesSmartSearch(ctx context.Context, arg CountClientesSmartSearchParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countClientesSmartSearch, arg.TenantID, arg.Column2)
 	var count int64
@@ -554,55 +562,62 @@ func (q *Queries) ListClientesPaginated(ctx context.Context, arg ListClientesPag
 }
 
 const listClientesSmartSearch = `-- name: ListClientesSmartSearch :many
+WITH p AS (
+    SELECT
+        $3::text                                  AS q_raw,
+        regexp_replace($3, '\s+', ' ', 'g')::text AS q_trim,
+        regexp_replace($3, '[^0-9]', '', 'g')     AS q_digits,
+        plainto_tsquery('simple', unaccent($3))   AS q_ts
+)
 SELECT
     c.id, c.tenant_id, c.tipo_pessoa, c.nome_razao_social, c.nome_fantasia, c.cpf, c.cnpj, c.rg, c.ie, c.im, c.data_nascimento, c.email, c.telefone, c.celular, c.cep, c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.uf, c.created_at, c.updated_at, c.deleted_at,
 
-    /* ────────── Ranking de relevância ────────── */
+    /* ── Score para ordenação ── */
     CASE
-        WHEN $3 = '' THEN 0                                                 /* pesquisa vazia → sem score            */
-        WHEN LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($3))||'%'   THEN 3
-        WHEN LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($3))||'%'   THEN 2
-        /* telefones só contam se o termo tiver dígitos                         */
-        WHEN regexp_replace($3, '[^0-9]', '', 'g') <> ''
-             AND regexp_replace(c.telefone, '[^0-9]', '', 'g')
-                 LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'                 THEN 1
-        WHEN regexp_replace($3, '[^0-9]', '', 'g') <> ''
-             AND regexp_replace(c.celular,  '[^0-9]', '', 'g')
-                 LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'                 THEN 1
-        ELSE 0
+        /* telefone/celular ⇒ score fixo 1                                           */
+        WHEN p.q_digits <> ''
+             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
+                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
+        THEN 1
+
+        /* nome/razão social (peso 3) + nome fantasia (peso 2)                        */
+        ELSE 3 * ts_rank_cd(to_tsvector('simple', unaccent(c.nome_razao_social)), p.q_ts)
+           + 2 * ts_rank_cd(to_tsvector('simple', unaccent(coalesce(c.nome_fantasia,''))), p.q_ts)
     END AS relevance_score
 
 FROM public.clientes c
-WHERE c.tenant_id  = $1
+CROSS JOIN p
+WHERE c.tenant_id = $1
   AND c.deleted_at IS NULL
   AND (
-        /* pesquisa vazia devolve todos                                          */
-        $3 = ''
-        OR LOWER(unaccent(c.nome_razao_social)) LIKE '%'||LOWER(unaccent($3))||'%'
-        OR LOWER(unaccent(c.nome_fantasia))     LIKE '%'||LOWER(unaccent($3))||'%'
-        /* telefones/celulares somente se houver dígitos no termo                */
-        OR (
-             regexp_replace($3, '[^0-9]', '', 'g') <> ''
-             AND (
-                    regexp_replace(c.telefone, '[^0-9]', '', 'g')
-                        LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'
-                 OR regexp_replace(c.celular,  '[^0-9]', '', 'g')
-                        LIKE '%'||regexp_replace($3, '[^0-9]', '', 'g')||'%'
-                )
+        /* pesquisa vazia devolve todos os registros                                  */
+        p.q_trim = ''
+
+        /* → pesquisa numérica só em fones                                             */
+        OR ( p.q_digits <> ''
+             AND ( regexp_replace(c.telefone,'[^0-9]','','g') LIKE '%'||p.q_digits||'%'
+                OR regexp_replace(c.celular ,'[^0-9]','','g') LIKE '%'||p.q_digits||'%')
+           )
+
+        /* → pesquisa textual só em nome/fantasia usando full-text                    */
+        OR ( p.q_digits = ''
+             AND to_tsvector('simple',
+                    unaccent(c.nome_razao_social||' '||coalesce(c.nome_fantasia,'')))
+                 @@ p.q_ts
            )
       )
 ORDER BY
-    relevance_score DESC,
-    c.nome_razao_social ASC
+    relevance_score DESC NULLS LAST,
+    c.nome_razao_social
 LIMIT  $2
 OFFSET $4
 `
 
 type ListClientesSmartSearchParams struct {
-	TenantID uuid.UUID   `json:"tenant_id"`
-	Limit    int32       `json:"limit"`
-	Column3  interface{} `json:"column_3"`
-	Offset   int32       `json:"offset"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Limit    int32     `json:"limit"`
+	Column3  string    `json:"column_3"`
+	Offset   int32     `json:"offset"`
 }
 
 type ListClientesSmartSearchRow struct {
@@ -630,9 +645,11 @@ type ListClientesSmartSearchRow struct {
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
-	RelevanceScore  int32              `json:"relevance_score"`
+	RelevanceScore  interface{}        `json:"relevance_score"`
 }
 
+// ----------------------------------------------------------
+// ----------------------------------------------------------
 func (q *Queries) ListClientesSmartSearch(ctx context.Context, arg ListClientesSmartSearchParams) ([]ListClientesSmartSearchRow, error) {
 	rows, err := q.db.Query(ctx, listClientesSmartSearch,
 		arg.TenantID,

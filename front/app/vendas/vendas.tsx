@@ -1367,146 +1367,374 @@ function Vendas({
                 </aside>
 
                 {/* Main Content - Formulário */}
+                {/* Main Content - Formulário */}
                 <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-                  <main className="flex-1 overflow-auto p-4 md:p-6">
-                    <Card
-                      elevation={0}
-                      sx={{
-                        border: "none",
-                        backgroundColor: "background.paper",
-                      }}
-                    >
-                      <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                        <Grid container spacing={{ xs: 2, md: 3 }}>
-                          {/* Cliente */}
+                  <main className="flex-1 overflow-auto p-2 md:p-4">
+                    <div className="max-w-full mx-auto">
+                      {/* Header Section */}
+                      <div>
+                        <div className="flex items-center justify-between">
+                          {/* <div className="flex items-center gap-2">
+                            <Receipt className="h-5 w-5 text-primary" />
+                            <Typography variant="h6" className="font-semibold">
+                              {formik.values.id
+                                ? "Editar Pedido"
+                                : "Novo Pedido"}
+                            </Typography>
+                            {formik.values.codigo_pedido && (
+                              <Chip
+                                label={`#${formik.values.codigo_pedido}`}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
+                            )}
+                          </div> */}
+
                           {(formik.values.finalizado === true ||
                             formik.values.quitado === true) && (
-                            <Grid size={12}>
-                              <div className="flex items-center justify-between gap-2">
-                                <Badge color="green">Pedido finalizado</Badge>
-                                <Badge color="orange">
-                                  Não pode ser alterado
-                                </Badge>
-                              </div>
-                            </Grid>
+                            <div className="flex items-center gap-2">
+                              <Badge color="green">Finalizado</Badge>
+                              <Badge color="orange">Não Editável</Badge>
+                            </div>
                           )}
+                        </div>
 
-                          {/* Loading indicator quando há operações em andamento */}
-                          {isAnyLoading && (
-                            <Grid size={12}>
-                              <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-md">
-                                <CircularProgress size={20} />
-                                <Typography variant="body2" color="primary">
-                                  {isPrintLoading && "Gerando comprovante..."}
-                                  {isSubmitting &&
-                                    !isPrintLoading &&
-                                    "Salvando pedido..."}
-                                  {isReduxLoading &&
-                                    !isSubmitting &&
-                                    "Processando..."}
-                                  {isNavigating && "Redirecionando..."}
-                                </Typography>
-                              </div>
-                            </Grid>
-                          )}
-
-                          <Grid size={12}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                gap: 1,
-                                alignItems: "flex-start",
-                              }}
+                        {/* Loading indicator */}
+                        {isAnyLoading && (
+                          <div className="flex items-center justify-center mb-3 gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <CircularProgress size={18} />
+                            <Typography
+                              variant="body2"
+                              color="primary"
+                              className="font-medium"
                             >
-                              <Box sx={{ flex: 1 }}>
-                                {clienteStatus === "found" &&
-                                  formik.values.quitado == false &&
-                                  formik.values.finalizado == false && (
-                                    <Badge color="green" className="mb-2">
-                                      Cliente encontrado com sucesso!
-                                    </Badge>
-                                  )}
-                                {clienteStatus === "not-found" &&
-                                  formik.values.quitado == false &&
-                                  formik.values.finalizado == false && (
-                                    <Badge color="red" className="mb-2">
-                                      Cliente não encontrado
-                                    </Badge>
-                                  )}
-                                {clienteStatus === "searching" && (
-                                  <Badge color="blue" className="mb-2">
-                                    Buscando cliente...
-                                  </Badge>
+                              {isPrintLoading && "Gerando comprovante..."}
+                              {isSubmitting &&
+                                !isPrintLoading &&
+                                "Salvando pedido..."}
+                              {isReduxLoading &&
+                                !isSubmitting &&
+                                "Processando..."}
+                              {isNavigating && "Redirecionando..."}
+                            </Typography>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Form Content */}
+                      <div className="space-y-4">
+                        {/* Actions Section */}
+                        <Card
+                          elevation={0}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            backgroundColor: "background.paper",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                            <div className="flex flex-col gap-3">
+                              {/* Print Button */}
+                              {formik.values.id && (
+                                <div className="w-full">
+                                  <Button
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    startIcon={
+                                      isPrintLoading ? (
+                                        <CircularProgress size={16} />
+                                      ) : (
+                                        <Print />
+                                      )
+                                    }
+                                    onClick={() =>
+                                      handlePrintPedido(formik.values.id || "")
+                                    }
+                                    disabled={isPrintLoading || isAnyLoading}
+                                  >
+                                    {isPrintLoading
+                                      ? "Imprimindo..."
+                                      : "Reimprimir"}
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* Main Action Buttons */}
+                              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  fullWidth
+                                  onClick={() =>
+                                    router.push("/gerenciar-vendas")
+                                  }
+                                  disabled={isAnyLoading}
+                                >
+                                  Voltar
+                                </Button>
+
+                                <Button
+                                  type="submit"
+                                  variant="contained"
+                                  size="small"
+                                  fullWidth
+                                  disabled={
+                                    !formik.isValid ||
+                                    formik.values.itens.length === 0 ||
+                                    isAnyLoading ||
+                                    formik.values.quitado == true ||
+                                    formik.values.finalizado == true
+                                  }
+                                  onClick={() => setShouldPrint(false)}
+                                  startIcon={
+                                    isSubmitting && !shouldPrint ? (
+                                      <CircularProgress size={16} />
+                                    ) : null
+                                  }
+                                >
+                                  {isSubmitting && !shouldPrint
+                                    ? "Salvando..."
+                                    : pedido
+                                    ? "Atualizar"
+                                    : "Criar Pedido"}
+                                </Button>
+
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  color="secondary"
+                                  fullWidth
+                                  disabled={
+                                    !formik.isValid ||
+                                    formik.values.itens.length === 0 ||
+                                    isAnyLoading ||
+                                    formik.values.quitado == true ||
+                                    formik.values.finalizado == true
+                                  }
+                                  startIcon={
+                                    isSubmitting && shouldPrint ? (
+                                      <CircularProgress size={16} />
+                                    ) : (
+                                      <Print />
+                                    )
+                                  }
+                                  onClick={() => {
+                                    setShouldPrint(true);
+                                    formik.handleSubmit();
+                                  }}
+                                >
+                                  {isSubmitting && shouldPrint
+                                    ? "Salvando..."
+                                    : "Salvar e Imprimir"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Cliente Section */}
+                        <Card
+                          elevation={0}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            backgroundColor: "background.paper",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Person className="h-4 w-4 text-primary" />
+                              <Typography
+                                variant="subtitle1"
+                                className="font-semibold"
+                              >
+                                Dados do Cliente
+                              </Typography>
+
+                              {/* Status do Cliente */}
+                              {clienteStatus !== "idle" &&
+                                !formik.values.quitado &&
+                                !formik.values.finalizado && (
+                                  <div>
+                                    {clienteStatus === "found" && (
+                                      <Badge color="green">Encontrado</Badge>
+                                    )}
+                                    {clienteStatus === "not-found" && (
+                                      <Badge color="red">Não encontrado</Badge>
+                                    )}
+                                    {clienteStatus === "searching" && (
+                                      <Badge color="blue">Buscando...</Badge>
+                                    )}
+                                  </div>
                                 )}
-                                <TextField
-                                  size="small"
-                                  fullWidth
-                                  label="Celular"
-                                  name="cliente_celular"
-                                  value={formik.values.cliente_celular}
-                                  onChange={(e) =>
-                                    formik.setFieldValue(
-                                      "cliente_celular",
-                                      onlyDigits(e.target.value)
-                                    )
-                                  }
-                                  onBlur={formik.handleBlur}
-                                  error={
-                                    formik.touched.cliente_celular &&
-                                    Boolean(formik.errors.cliente_celular)
-                                  }
-                                  helperText={
-                                    formik.touched.cliente_celular &&
-                                    (formik.errors.cliente_celular as any)
-                                  }
-                                  disabled={isFormDisabled}
-                                />
-                                <TextField
-                                  size="small"
-                                  fullWidth
-                                  label="Nome"
-                                  name="cliente_nome_razao_social"
-                                  value={
-                                    formik.values.cliente_nome_razao_social
-                                  }
-                                  onChange={formik.handleChange}
-                                  onBlur={formik.handleBlur}
-                                  error={
-                                    formik.touched.cliente_nome_razao_social &&
-                                    Boolean(
-                                      formik.errors.cliente_nome_razao_social
-                                    )
-                                  }
-                                  helperText={
-                                    formik.touched.cliente_nome_razao_social &&
-                                    (formik.errors
-                                      .cliente_nome_razao_social as any)
-                                  }
-                                  disabled={isFormDisabled}
-                                  sx={{ mt: 1 }}
-                                />
-                                <TextField
-                                  size="small"
-                                  fullWidth
-                                  label="Logradouro"
-                                  name="cliente_logradouro"
-                                  value={formik.values.cliente_logradouro}
-                                  onChange={formik.handleChange}
-                                  onBlur={formik.handleBlur}
-                                  error={
-                                    formik.touched.cliente_logradouro &&
-                                    Boolean(formik.errors.cliente_logradouro)
-                                  }
-                                  helperText={
-                                    formik.touched.cliente_logradouro &&
-                                    (formik.errors.cliente_logradouro as any)
-                                  }
-                                  disabled={isFormDisabled}
-                                  sx={{ mt: 1 }}
-                                />
-                                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                            </div>
+
+                            <div className="space-y-3">
+                              {/* Linha 1: Celular e Nome com botões */}
+                              <div className="flex gap-2">
+                                <div className="flex-1 space-y-2">
                                   <TextField
                                     size="small"
+                                    fullWidth
+                                    label="Celular"
+                                    name="cliente_celular"
+                                    value={formik.values.cliente_celular}
+                                    onChange={(e) =>
+                                      formik.setFieldValue(
+                                        "cliente_celular",
+                                        onlyDigits(e.target.value)
+                                      )
+                                    }
+                                    onBlur={formik.handleBlur}
+                                    error={
+                                      formik.touched.cliente_celular &&
+                                      Boolean(formik.errors.cliente_celular)
+                                    }
+                                    helperText={
+                                      formik.touched.cliente_celular &&
+                                      (formik.errors.cliente_celular as any)
+                                    }
+                                    disabled={isFormDisabled}
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <Phone className="h-4 w-4" />
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+                                  <div className="mt-5" />
+
+                                  <TextField
+                                    size="small"
+                                    fullWidth
+                                    label="Nome completo"
+                                    name="cliente_nome_razao_social"
+                                    value={
+                                      formik.values.cliente_nome_razao_social
+                                    }
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    error={
+                                      formik.touched
+                                        .cliente_nome_razao_social &&
+                                      Boolean(
+                                        formik.errors.cliente_nome_razao_social
+                                      )
+                                    }
+                                    helperText={
+                                      formik.touched
+                                        .cliente_nome_razao_social &&
+                                      (formik.errors
+                                        .cliente_nome_razao_social as any)
+                                    }
+                                    disabled={isFormDisabled}
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <Person className="h-4 w-4" />
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+                                </div>
+
+                                {/* Botões de ação do cliente */}
+                                <div className="flex flex-col gap-1 pt-1">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => setBuscarNomeOpen(true)}
+                                    title="Buscar por nome"
+                                    disabled={isFormDisabled}
+                                    sx={{
+                                      bgcolor: "info.main",
+                                      color: "white",
+                                      "&:hover": { bgcolor: "info.dark" },
+                                      "&:disabled": {
+                                        bgcolor: "action.disabled",
+                                      },
+                                    }}
+                                  >
+                                    <Search className="h-4 w-4" />
+                                  </IconButton>
+
+                                  <IconButton
+                                    size="small"
+                                    onClick={handleAbrirDialogNovoCliente}
+                                    title="Novo Cliente"
+                                    disabled={isFormDisabled}
+                                    sx={{
+                                      bgcolor: "success.main",
+                                      color: "white",
+                                      "&:hover": { bgcolor: "success.dark" },
+                                      "&:disabled": {
+                                        bgcolor: "action.disabled",
+                                      },
+                                    }}
+                                  >
+                                    <PersonAdd className="h-4 w-4" />
+                                  </IconButton>
+
+                                  <IconButton
+                                    size="small"
+                                    onClick={handleAbrirDialogEditarCliente}
+                                    title="Editar Cliente"
+                                    disabled={
+                                      !formik.values.id_cliente ||
+                                      isFormDisabled
+                                    }
+                                    sx={{
+                                      bgcolor: "warning.main",
+                                      color: "white",
+                                      "&:hover": { bgcolor: "warning.dark" },
+                                      "&:disabled": {
+                                        bgcolor: "action.disabled",
+                                      },
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </IconButton>
+                                </div>
+                              </div>
+
+                              {/* Linha 2: Endereço */}
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                                <div className="md:col-span-7">
+                                  <TextField
+                                    size="small"
+                                    fullWidth
+                                    label="Logradouro"
+                                    name="cliente_logradouro"
+                                    value={formik.values.cliente_logradouro}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    error={
+                                      formik.touched.cliente_logradouro &&
+                                      Boolean(formik.errors.cliente_logradouro)
+                                    }
+                                    helperText={
+                                      formik.touched.cliente_logradouro &&
+                                      (formik.errors.cliente_logradouro as any)
+                                    }
+                                    disabled={isFormDisabled}
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          <LocationOn className="h-4 w-4" />
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+                                </div>
+
+                                <div className="md:col-span-2">
+                                  <TextField
+                                    size="small"
+                                    fullWidth
                                     label="Número"
                                     name="cliente_numero"
                                     value={formik.values.cliente_numero}
@@ -1521,10 +1749,13 @@ function Vendas({
                                       (formik.errors.cliente_numero as any)
                                     }
                                     disabled={isFormDisabled}
-                                    sx={{ flex: 1 }}
                                   />
+                                </div>
+
+                                <div className="md:col-span-3">
                                   <TextField
                                     size="small"
+                                    fullWidth
                                     label="Bairro"
                                     name="cliente_bairro"
                                     value={formik.values.cliente_bairro}
@@ -1539,414 +1770,329 @@ function Vendas({
                                       (formik.errors.cliente_bairro as any)
                                     }
                                     disabled={isFormDisabled}
-                                    sx={{ flex: 2 }}
                                   />
-                                </Box>
+                                </div>
+                              </div>
+
+                              {/* Linha 3: Complemento */}
+                              <TextField
+                                size="small"
+                                fullWidth
+                                label="Complemento"
+                                name="cliente_complemento"
+                                value={formik.values.cliente_complemento}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={
+                                  formik.touched.cliente_complemento &&
+                                  Boolean(formik.errors.cliente_complemento)
+                                }
+                                helperText={
+                                  formik.touched.cliente_complemento &&
+                                  (formik.errors.cliente_complemento as any)
+                                }
+                                disabled={isFormDisabled}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Entrega e Pagamento Section */}
+                        <Card
+                          elevation={0}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            backgroundColor: "background.paper",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <LocalShipping className="h-4 w-4 text-primary" />
+                              <Typography
+                                variant="subtitle1"
+                                className="font-semibold"
+                              >
+                                Entrega e Pagamento
+                              </Typography>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {/* Tipo de Entrega */}
+                              <FormControl fullWidth required size="small">
+                                <InputLabel>Tipo de Entrega</InputLabel>
+                                <Select
+                                  name="tipo_entrega"
+                                  value={formik.values.tipo_entrega}
+                                  onChange={(e) => {
+                                    formik.handleChange(e);
+                                    if (e.target.value !== "Delivery") {
+                                      formik.setFieldValue(
+                                        "taxa_entrega",
+                                        "0.00"
+                                      );
+                                    } else if (
+                                      (tenant?.taxa_entrega_padrao ?? 0) > 0
+                                    ) {
+                                      formik.setFieldValue(
+                                        "taxa_entrega",
+                                        (
+                                          tenant?.taxa_entrega_padrao ?? 0
+                                        ).toFixed(2)
+                                      );
+                                    }
+                                  }}
+                                  label="Tipo de Entrega"
+                                  disabled={isFormDisabled}
+                                >
+                                  <MenuItem value="Balcão">
+                                    <div className="flex items-center gap-2">
+                                      <Restaurant
+                                        className="h-4 w-4"
+                                        color="secondary"
+                                      />
+                                      Balcão
+                                    </div>
+                                  </MenuItem>
+                                  <MenuItem value="Delivery">
+                                    <div className="flex items-center gap-2">
+                                      <LocalShipping
+                                        className="h-4 w-4"
+                                        color="secondary"
+                                      />
+                                      Delivery
+                                    </div>
+                                  </MenuItem>
+                                  <MenuItem value="Retirada">
+                                    <div className="flex items-center gap-2">
+                                      <Storefront
+                                        className="h-4 w-4"
+                                        color="secondary"
+                                      />
+                                      Retirada
+                                    </div>
+                                  </MenuItem>
+                                </Select>
+                              </FormControl>
+
+                              {/* Categoria de Pagamento */}
+                              <FormControl fullWidth size="small">
+                                <InputLabel>Categoria de Pagamento</InputLabel>
+                                <Select
+                                  name="categoria_pagamento"
+                                  value={formik.values.categoria_pagamento}
+                                  onChange={(e) => {
+                                    formik.handleChange(e);
+                                    if (e.target.value !== "Dinheiro") {
+                                      formik.setFieldValue(
+                                        "troco_para",
+                                        "0.00"
+                                      );
+                                    }
+                                  }}
+                                  label="Categoria de Pagamento"
+                                  disabled={isFormDisabled}
+                                >
+                                  <MenuItem value="Cartão">Cartão</MenuItem>
+                                  <MenuItem value="Dinheiro">Dinheiro</MenuItem>
+                                  <MenuItem value="Pix">Pix</MenuItem>
+                                  <MenuItem value="Prazo">Prazo</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Valores Section */}
+                        <Card
+                          elevation={0}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            backgroundColor: "background.paper",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Receipt className="h-4 w-4 text-primary" />
+                              <Typography
+                                variant="subtitle1"
+                                className="font-semibold"
+                              >
+                                Valores e Taxas
+                              </Typography>
+                            </div>
+
+                            <div className="space-y-3">
+                              {/* Taxa de Entrega e Nome */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <TextField
                                   size="small"
                                   fullWidth
-                                  label="Complemento"
-                                  name="cliente_complemento"
-                                  value={formik.values.cliente_complemento}
+                                  label="Taxa de Entrega"
+                                  name="taxa_entrega"
+                                  type="number"
+                                  value={formik.values.taxa_entrega}
                                   onChange={formik.handleChange}
-                                  onBlur={formik.handleBlur}
                                   error={
-                                    formik.touched.cliente_complemento &&
-                                    Boolean(formik.errors.cliente_complemento)
+                                    formik.touched.taxa_entrega &&
+                                    Boolean(formik.errors.taxa_entrega)
                                   }
                                   helperText={
-                                    formik.touched.cliente_complemento &&
-                                    (formik.errors.cliente_complemento as any)
+                                    formik.touched.taxa_entrega &&
+                                    formik.errors.taxa_entrega
                                   }
-                                  disabled={isFormDisabled}
-                                  sx={{ mt: 1 }}
-                                />
-                              </Box>
-
-                              <Box sx={{ display: "flex", gap: 0.5, mt: 0.5 }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => setBuscarNomeOpen(true)}
-                                  title="Buscar por nome"
-                                  sx={{
-                                    backgroundColor: "info.main",
-                                    color: "white",
-                                    "&:hover": { backgroundColor: "info.dark" },
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        R$
+                                      </InputAdornment>
+                                    ),
                                   }}
-                                  disabled={isFormDisabled}
-                                >
-                                  <Search className="h-4 w-4" />
-                                </IconButton>
-
-                                <IconButton
-                                  size="small"
-                                  onClick={handleAbrirDialogNovoCliente}
-                                  title="Novo Cliente"
-                                  sx={{
-                                    backgroundColor: "primary.main",
-                                    color: "white",
-                                    "&:hover": {
-                                      backgroundColor: "primary.dark",
-                                    },
-                                  }}
-                                  disabled={isFormDisabled}
-                                >
-                                  <PersonAdd fontSize="small" />
-                                </IconButton>
-
-                                <IconButton
-                                  size="small"
-                                  onClick={handleAbrirDialogEditarCliente}
-                                  title="Editar Cliente"
                                   disabled={
-                                    !formik.values.id_cliente || isFormDisabled
+                                    formik.values.tipo_entrega !== "Delivery" ||
+                                    isFormDisabled
                                   }
-                                  sx={{
-                                    backgroundColor: "secondary.main",
-                                    color: "white",
-                                    "&:hover": {
-                                      backgroundColor: "secondary.dark",
-                                    },
-                                    "&:disabled": {
-                                      backgroundColor: "action.disabled",
-                                      color: "action.disabled",
-                                    },
+                                />
+
+                                <TextField
+                                  size="small"
+                                  fullWidth
+                                  label="Nome da Taxa de Entrega"
+                                  name="nome_taxa_entrega"
+                                  value={formik.values.nome_taxa_entrega}
+                                  onChange={formik.handleChange}
+                                  disabled={
+                                    formik.values.tipo_entrega !== "Delivery" ||
+                                    isFormDisabled
+                                  }
+                                />
+                              </div>
+
+                              {/* Desconto e Acréscimo */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <TextField
+                                  size="small"
+                                  fullWidth
+                                  label="Desconto"
+                                  name="desconto"
+                                  type="number"
+                                  value={formik.values.desconto}
+                                  onChange={formik.handleChange}
+                                  disabled={isFormDisabled}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        R$
+                                      </InputAdornment>
+                                    ),
                                   }}
-                                >
-                                  <Edit fontSize="small" />
-                                </IconButton>
-                              </Box>
-                            </Box>
-                          </Grid>
+                                />
 
-                          {/* Tipo de Entrega */}
-                          <Grid size={6}>
-                            <FormControl fullWidth required>
-                              <InputLabel>Tipo de Entrega</InputLabel>
-                              <Select
-                                name="tipo_entrega"
-                                value={formik.values.tipo_entrega}
-                                onChange={(e) => {
-                                  formik.handleChange(e);
-                                  if (e.target.value !== "Delivery") {
-                                    formik.setFieldValue(
-                                      "taxa_entrega",
-                                      "0.00"
-                                    );
-                                  } else if (
-                                    (tenant?.taxa_entrega_padrao ?? 0) > 0
-                                  ) {
-                                    formik.setFieldValue(
-                                      "taxa_entrega",
-                                      (
-                                        tenant?.taxa_entrega_padrao ?? 0
-                                      ).toFixed(2)
-                                    );
-                                  }
-                                }}
-                                label="Tipo de Entrega"
-                                disabled={isFormDisabled}
+                                <TextField
+                                  size="small"
+                                  fullWidth
+                                  label="Acréscimo"
+                                  name="acrescimo"
+                                  type="number"
+                                  value={formik.values.acrescimo}
+                                  onChange={formik.handleChange}
+                                  disabled={isFormDisabled}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        R$
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
+                              </div>
+
+                              {/* Troco */}
+                              {formik.values.categoria_pagamento ===
+                                "Dinheiro" && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                  <TextField
+                                    size="small"
+                                    fullWidth
+                                    label="Troco Para"
+                                    name="troco_para"
+                                    type="number"
+                                    value={formik.values.troco_para}
+                                    onChange={formik.handleChange}
+                                    disabled={isFormDisabled}
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          R$
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+
+                                  <TextField
+                                    size="small"
+                                    fullWidth
+                                    label="Valor do Troco"
+                                    disabled
+                                    value={(
+                                      parseFloat(
+                                        formik.values.troco_para || "0"
+                                      ) - calculateItemTotal(formik.values)
+                                    ).toFixed(2)}
+                                    InputProps={{
+                                      startAdornment: (
+                                        <InputAdornment position="start">
+                                          R$
+                                        </InputAdornment>
+                                      ),
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Observações Section */}
+                        <Card
+                          elevation={0}
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            backgroundColor: "background.paper",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Edit className="h-4 w-4 text-primary" />
+                              <Typography
+                                variant="subtitle1"
+                                className="font-semibold"
                               >
-                                <MenuItem value="Balcão">Balcão</MenuItem>
-                                <MenuItem value="Delivery">Delivery</MenuItem>
-                                <MenuItem value="Retirada">Retirada</MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
+                                Observações
+                              </Typography>
+                            </div>
 
-                          {/* Categoria de Pagamento */}
-                          <Grid size={6}>
-                            <FormControl fullWidth>
-                              <InputLabel>Categoria de Pagamento</InputLabel>
-                              <Select
-                                name="categoria_pagamento"
-                                value={formik.values.categoria_pagamento}
-                                onChange={(e) => {
-                                  formik.handleChange(e);
-                                  if (e.target.value !== "Dinheiro") {
-                                    formik.setFieldValue("troco_para", "0.00");
-                                  }
-                                }}
-                                label="Categoria de Pagamento"
-                                disabled={isFormDisabled}
-                              >
-                                <MenuItem value="Cartão">Cartão</MenuItem>
-                                <MenuItem value="Dinheiro">Dinheiro</MenuItem>
-                                <MenuItem value="Pix">Pix</MenuItem>
-                                <MenuItem value="Prazo">Prazo</MenuItem>
-                              </Select>
-                            </FormControl>
-                          </Grid>
-
-                          {/* Forma de Pagamento */}
-                          <Grid size={12} className="hidden">
                             <TextField
                               size="small"
                               fullWidth
-                              label="Forma de Pagamento"
-                              name="forma_pagamento"
-                              value={formik.values.forma_pagamento}
-                              onChange={formik.handleChange}
-                              disabled={isFormDisabled}
-                            />
-                          </Grid>
-
-                          {/* Troco Para e Valor do Troco */}
-                          <Grid size={12}>
-                            <Box sx={{ display: "flex", gap: 2 }}>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                label="Troco Para"
-                                name="troco_para"
-                                type="number"
-                                disabled={
-                                  formik.values.categoria_pagamento !==
-                                    "Dinheiro" || isFormDisabled
-                                }
-                                value={formik.values.troco_para}
-                                onChange={formik.handleChange}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      R$
-                                    </InputAdornment>
-                                  ),
-                                }}
-                              />
-                              <TextField
-                                size="small"
-                                fullWidth
-                                label="Valor do Troco"
-                                disabled
-                                value={
-                                  formik.values.categoria_pagamento ===
-                                  "Dinheiro"
-                                    ? (
-                                        parseFloat(
-                                          formik.values.troco_para || "0"
-                                        ) - calculateItemTotal(formik.values)
-                                      ).toFixed(2)
-                                    : "0.00"
-                                }
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">
-                                      R$
-                                    </InputAdornment>
-                                  ),
-                                }}
-                              />
-                            </Box>
-                          </Grid>
-
-                          <Grid size={6}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Taxa de Entrega"
-                              name="taxa_entrega"
-                              type="number"
-                              value={formik.values.taxa_entrega}
-                              onChange={formik.handleChange}
-                              error={
-                                formik.touched.taxa_entrega &&
-                                Boolean(formik.errors.taxa_entrega)
-                              }
-                              helperText={
-                                formik.touched.taxa_entrega &&
-                                formik.errors.taxa_entrega
-                              }
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    R$
-                                  </InputAdornment>
-                                ),
-                              }}
-                              disabled={
-                                formik.values.tipo_entrega !== "Delivery" ||
-                                isFormDisabled
-                              }
-                            />
-                          </Grid>
-
-                          {/* Nome da Taxa de Entrega */}
-                          <Grid size={6}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Nome da Taxa de Entrega"
-                              name="nome_taxa_entrega"
-                              value={formik.values.nome_taxa_entrega}
-                              onChange={formik.handleChange}
-                              disabled={
-                                formik.values.tipo_entrega !== "Delivery" ||
-                                isFormDisabled
-                              }
-                            />
-                          </Grid>
-
-                          {/* Desconto */}
-                          <Grid size={6}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Desconto"
-                              name="desconto"
-                              type="number"
-                              value={formik.values.desconto}
-                              onChange={formik.handleChange}
-                              disabled={isFormDisabled}
-                            />
-                          </Grid>
-
-                          {/* Acréscimo */}
-                          <Grid size={6}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Acréscimo"
-                              name="acrescimo"
-                              type="number"
-                              value={formik.values.acrescimo}
-                              onChange={formik.handleChange}
-                              disabled={isFormDisabled}
-                            />
-                          </Grid>
-
-                          {/* Observação */}
-                          <Grid size={12}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              label="Observação"
+                              label="Observações do pedido"
                               name="observacao"
                               multiline
                               rows={3}
                               value={formik.values.observacao}
                               onChange={formik.handleChange}
                               disabled={isFormDisabled}
+                              placeholder="Digite observações especiais para este pedido..."
                             />
-                          </Grid>
-                        </Grid>
-
-                        {/* Submit Button */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            mt: { xs: 1 },
-                            flexDirection: { xs: "column", sm: "row" },
-                            justifyContent: {
-                              xs: "center",
-                              sm: "space-between",
-                            },
-                            alignItems: { xs: "center", sm: "flex-start" },
-                            gap: { xs: 1, sm: 2 },
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <Box sx={{ mb: { xs: 1, sm: 0 } }}>
-                            {formik.values.id && (
-                              <Button
-                                variant="outlined"
-                                size="medium"
-                                startIcon={
-                                  isPrintLoading ? (
-                                    <CircularProgress size={16} />
-                                  ) : (
-                                    <Print />
-                                  )
-                                }
-                                onClick={() =>
-                                  handlePrintPedido(formik.values.id || "")
-                                }
-                                disabled={isPrintLoading || isAnyLoading}
-                                sx={{ minWidth: { xs: "120px", sm: "140px" } }}
-                              >
-                                {isPrintLoading
-                                  ? "Imprimindo..."
-                                  : "Reimprimir"}
-                              </Button>
-                            )}
-                          </Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexDirection: { xs: "column", sm: "row" },
-                              gap: { xs: 1, sm: 2 },
-                              alignItems: { xs: "center", sm: "flex-start" },
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <Button
-                              variant="outlined"
-                              size="medium"
-                              onClick={() => router.push("/gerenciar-vendas")}
-                              disabled={isAnyLoading}
-                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
-                            >
-                              Voltar
-                            </Button>
-                            <Button
-                              type="submit"
-                              variant="contained"
-                              size="medium"
-                              disabled={
-                                !formik.isValid ||
-                                formik.values.itens.length === 0 ||
-                                isAnyLoading ||
-                                formik.values.quitado == true ||
-                                formik.values.finalizado == true
-                              }
-                              onClick={() => setShouldPrint(false)}
-                              startIcon={
-                                isSubmitting && !shouldPrint ? (
-                                  <CircularProgress size={16} />
-                                ) : null
-                              }
-                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
-                            >
-                              {isSubmitting && !shouldPrint
-                                ? "Salvando..."
-                                : pedido
-                                ? "Atualizar Pedido"
-                                : "Criar Pedido"}
-                            </Button>
-                            <Button
-                              variant="contained"
-                              size="medium"
-                              color="secondary"
-                              disabled={
-                                !formik.isValid ||
-                                formik.values.itens.length === 0 ||
-                                isAnyLoading ||
-                                formik.values.quitado == true ||
-                                formik.values.finalizado == true
-                              }
-                              startIcon={
-                                isSubmitting && shouldPrint ? (
-                                  <CircularProgress size={16} />
-                                ) : (
-                                  <Print />
-                                )
-                              }
-                              onClick={() => {
-                                setShouldPrint(true);
-                                formik.handleSubmit();
-                              }}
-                              sx={{ minWidth: { xs: "120px", sm: "140px" } }}
-                            >
-                              {isSubmitting && shouldPrint
-                                ? "Salvando..."
-                                : pedido
-                                ? "Atualizar Pedido e Imprimir"
-                                : "Criar Pedido e Imprimir"}
-                            </Button>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
                   </main>
                 </div>
 

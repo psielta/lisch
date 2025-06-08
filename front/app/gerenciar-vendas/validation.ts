@@ -21,9 +21,9 @@ function ctx(this: TestContext): ValCtx {
 
 /* ───────── Schema de cada pagamento à vista ───────── */
 export const pagamentoVistaSchema = Yup.object({
-  categoria_pagamento: Yup.mixed<"Cartão" | "Dinheiro" | "Pix">()
+  categoria_pagamento: Yup.mixed<"Cartão" | "Dinheiro" | "Pix" | "Prazo">()
     .oneOf(
-      ["Cartão", "Dinheiro", "Pix"],
+      ["Cartão", "Dinheiro", "Pix", "Prazo"],
       "Categoria deve ser Cartão, Dinheiro ou Pix"
     )
     .required("Informe a categoria de pagamento"),
@@ -285,8 +285,8 @@ export const baixarParcelaSchema = (valorRestante: number) =>
       )
       .required("Valor recebido é obrigatório"),
 
-    categoria_pagamento: Yup.mixed<"Cartão" | "Dinheiro" | "Pix">()
-      .oneOf(["Cartão", "Dinheiro", "Pix"], "Categoria inválida")
+    categoria_pagamento: Yup.mixed<"Cartão" | "Dinheiro" | "Pix" | "Prazo">()
+      .oneOf(["Cartão", "Dinheiro", "Pix", "Prazo"], "Categoria inválida")
       .required("Categoria é obrigatória"),
 
     forma_pagamento: Yup.string()
@@ -356,10 +356,10 @@ export const validarFormaPagamento = (
       "Vale Alimentação",
       "Vale Refeição",
     ],
-    Dinheiro: ["Dinheiro", "Boleto Bancário", "Cheque", "Crediário"],
+    Dinheiro: ["Dinheiro"],
     Pix: ["PIX", "Transferência Bancária"],
+    Prazo: ["Boleto Bancário", "Cheque", "Crediário"],
   } as const;
-
   return forma.trim().length >= 2; // Validação básica - permite formas customizadas
 };
 

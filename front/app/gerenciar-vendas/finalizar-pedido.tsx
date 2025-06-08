@@ -88,7 +88,7 @@ interface Props {
 }
 
 interface PagamentoVista {
-  categoria_pagamento: "Cartão" | "Dinheiro" | "Pix";
+  categoria_pagamento: "Cartão" | "Dinheiro" | "Pix" | "Prazo";
   forma_pagamento: string;
   valor_pago: number;
   troco?: number;
@@ -108,7 +108,7 @@ interface FormValues {
 
 interface BaixarParcelaData {
   valor_recebido: number;
-  categoria_pagamento: "Cartão" | "Dinheiro" | "Pix";
+  categoria_pagamento: "Cartão" | "Dinheiro" | "Pix" | "Prazo";
   forma_pagamento: string;
   desconto?: number;
   observacao?: string;
@@ -223,7 +223,7 @@ function BaixarParcelaDialog({
 
   const initialBaixarValues = {
     valor_recebido: valorRestante,
-    categoria_pagamento: "Dinheiro" as const,
+    categoria_pagamento: "Dinheiro" as "Cartão" | "Dinheiro" | "Pix",
     forma_pagamento: "Dinheiro",
     observacao: "",
     troco: 0,
@@ -334,14 +334,18 @@ function BaixarParcelaDialog({
                         value={values.categoria_pagamento}
                         onChange={(e) => {
                           handleChange(e);
-                          const formas = {
+                          const categoria = e.target.value as
+                            | "Cartão"
+                            | "Dinheiro"
+                            | "Pix";
+                          const formasPadrao = {
                             Cartão: "Cartão de Débito",
                             Dinheiro: "Dinheiro",
                             Pix: "PIX",
-                          } as const;
+                          };
                           setFieldValue(
                             "forma_pagamento",
-                            formas[e.target.value as keyof typeof formas]
+                            formasPadrao[categoria]
                           );
                         }}
                         label="Categoria"
@@ -374,11 +378,33 @@ function BaixarParcelaDialog({
                           touched.forma_pagamento && !!errors.forma_pagamento
                         }
                       >
-                        {FORMAS_PAGAMENTO.map((f) => (
-                          <MenuItem key={f} value={f}>
-                            {f}
-                          </MenuItem>
-                        ))}
+                        {values.categoria_pagamento === "Cartão" && [
+                          <MenuItem key="debito" value="Cartão de Débito">
+                            Cartão de Débito
+                          </MenuItem>,
+                          <MenuItem key="credito" value="Cartão de Crédito">
+                            Cartão de Crédito
+                          </MenuItem>,
+                          <MenuItem key="va" value="Vale Alimentação">
+                            Vale Alimentação
+                          </MenuItem>,
+                          <MenuItem key="vr" value="Vale Refeição">
+                            Vale Refeição
+                          </MenuItem>,
+                        ]}
+                        {values.categoria_pagamento === "Dinheiro" && [
+                          <MenuItem key="dinheiro" value="Dinheiro">
+                            Dinheiro
+                          </MenuItem>,
+                        ]}
+                        {values.categoria_pagamento === "Pix" && [
+                          <MenuItem key="pix" value="PIX">
+                            PIX
+                          </MenuItem>,
+                          <MenuItem key="transf" value="Transferência Bancária">
+                            Transferência Bancária
+                          </MenuItem>,
+                        ]}
                       </Select>
                       {touched.forma_pagamento && errors.forma_pagamento && (
                         <Typography variant="caption" color="error">
@@ -1523,7 +1549,8 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               const pagamento = {
                                                 categoria_pagamento:
                                                   "Cartão" as const,
-                                                forma_pagamento: "Cartão de Débito",
+                                                forma_pagamento:
+                                                  "Cartão de Débito",
                                                 valor_pago: valorRestante,
                                                 troco: 0,
                                                 observacao: "Pagamento total",
@@ -1541,7 +1568,49 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               }
                                             }}
                                           >
-                                            Total em Cartão (
+                                            Total em Cartão de Débito (
+                                            {formatarMoeda(faltaPagar)})
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<CreditCard size={16} />}
+                                            onClick={() => {
+                                              const valorRestante = Math.max(
+                                                0,
+                                                faltaPagar
+                                              );
+                                              if (valorRestante <= 0) {
+                                                toast.warning(
+                                                  "Não há valor restante para pagar"
+                                                );
+                                                return;
+                                              }
+
+                                              const pagamento = {
+                                                categoria_pagamento:
+                                                  "Cartão" as const,
+                                                forma_pagamento:
+                                                  "Cartão de Crédito",
+                                                valor_pago: valorRestante,
+                                                troco: 0,
+                                                observacao: "Pagamento total",
+                                              };
+
+                                              if (
+                                                adicionarPagamentoComValidacao(
+                                                  pagamento
+                                                )
+                                              ) {
+                                                setActiveStep(2);
+                                                toast.success(
+                                                  "Pagamento em cartão adicionado"
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            Total em Cartão de Crédito (
                                             {formatarMoeda(faltaPagar)})
                                           </Button>
                                           <Button
@@ -1583,6 +1652,48 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                             }}
                                           >
                                             Total em Pix (
+                                            {formatarMoeda(faltaPagar)})
+                                          </Button>
+                                          <Button
+                                            size="small"
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<Receipt size={16} />}
+                                            onClick={() => {
+                                              const valorRestante = Math.max(
+                                                0,
+                                                faltaPagar
+                                              );
+                                              if (valorRestante <= 0) {
+                                                toast.warning(
+                                                  "Não há valor restante para pagar"
+                                                );
+                                                return;
+                                              }
+
+                                              const pagamento = {
+                                                categoria_pagamento:
+                                                  "Cartão" as const,
+                                                forma_pagamento:
+                                                  "Vale alimentação",
+                                                valor_pago: valorRestante,
+                                                troco: 0,
+                                                observacao: "Pagamento total",
+                                              };
+
+                                              if (
+                                                adicionarPagamentoComValidacao(
+                                                  pagamento
+                                                )
+                                              ) {
+                                                setActiveStep(2);
+                                                toast.success(
+                                                  "Pagamento em Vale alimentação adicionado"
+                                                );
+                                              }
+                                            }}
+                                          >
+                                            Total em Vale alimentação (
                                             {formatarMoeda(faltaPagar)})
                                           </Button>
                                         </Box>
@@ -1798,7 +1909,8 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                       .value as
                                                       | "Cartão"
                                                       | "Dinheiro"
-                                                      | "Pix";
+                                                      | "Pix"
+                                                      | "Prazo";
 
                                                     // 1) grava a categoria no Formik
                                                     setFieldValue(
@@ -1806,15 +1918,18 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                       cat
                                                     );
 
-                                                    // 2) (opcional) define uma forma padrão coerente
-                                                    const formas = {
-                                                      Cartão: "Cartão de Débito",
+                                                    // 2) define uma forma padrão da categoria
+                                                    const formasValidas = {
+                                                      Cartão:
+                                                        "Cartão de Débito",
                                                       Dinheiro: "Dinheiro",
                                                       Pix: "PIX",
+                                                      Prazo: "Boleto Bancário",
                                                     } as const;
+
                                                     setFieldValue(
                                                       `pagamentos_vista.${index}.forma_pagamento`,
-                                                      formas[cat]
+                                                      formasValidas[cat]
                                                     );
                                                   }}
                                                   error={
@@ -1839,6 +1954,9 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                   <MenuItem value="Pix">
                                                     Pix
                                                   </MenuItem>
+                                                  <MenuItem value="Prazo">
+                                                    Prazo
+                                                  </MenuItem>
                                                 </Select>
                                                 {formaTouch ||
                                                   (formaError && (
@@ -1854,11 +1972,18 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
 
                                             {/* Forma de Pagamento */}
                                             <Grid size={4}>
-                                              <FormControl fullWidth size="small">
-                                                <InputLabel>Forma/Bandeira *</InputLabel>
+                                              <FormControl
+                                                fullWidth
+                                                size="small"
+                                              >
+                                                <InputLabel>
+                                                  Forma/Bandeira *
+                                                </InputLabel>
                                                 <Select
                                                   label="Forma/Bandeira *"
-                                                  value={pagamento.forma_pagamento}
+                                                  value={
+                                                    pagamento.forma_pagamento
+                                                  }
                                                   onChange={(e) => {
                                                     setFieldValue(
                                                       `pagamentos_vista.${index}.forma_pagamento`,
@@ -1875,16 +2000,65 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                                       true
                                                     );
                                                   }}
-                                                  error={!!(formaTouch || formaError)}
+                                                  error={
+                                                    !!(formaTouch || formaError)
+                                                  }
                                                 >
-                                                  {FORMAS_PAGAMENTO.map((f) => (
-                                                    <MenuItem key={f} value={f}>
-                                                      {f}
+                                                  {/* Opções de forma de pagamento baseadas na categoria */}
+                                                  {pagamento.categoria_pagamento ===
+                                                    "Cartão" &&
+                                                    [
+                                                      "Cartão de Débito",
+                                                      "Cartão de Crédito",
+                                                      "Vale Alimentação",
+                                                      "Vale Refeição",
+                                                    ].map((forma) => (
+                                                      <MenuItem
+                                                        key={forma}
+                                                        value={forma}
+                                                      >
+                                                        {forma}
+                                                      </MenuItem>
+                                                    ))}
+                                                  {pagamento.categoria_pagamento ===
+                                                    "Dinheiro" && (
+                                                    <MenuItem value="Dinheiro">
+                                                      Dinheiro
                                                     </MenuItem>
-                                                  ))}
+                                                  )}
+                                                  {pagamento.categoria_pagamento ===
+                                                    "Pix" &&
+                                                    [
+                                                      "PIX",
+                                                      "Transferência Bancária",
+                                                    ].map((forma) => (
+                                                      <MenuItem
+                                                        key={forma}
+                                                        value={forma}
+                                                      >
+                                                        {forma}
+                                                      </MenuItem>
+                                                    ))}
+                                                  {pagamento.categoria_pagamento ===
+                                                    "Prazo" &&
+                                                    [
+                                                      "Boleto Bancário",
+                                                      "Cheque",
+                                                      "Crediário",
+                                                    ].map((forma) => (
+                                                      <MenuItem
+                                                        key={forma}
+                                                        value={forma}
+                                                      >
+                                                        {forma}
+                                                      </MenuItem>
+                                                    ))}
                                                 </Select>
                                                 {formaError && (
-                                                  <Typography variant="caption" color="error">
+                                                  <Typography
+                                                    variant="caption"
+                                                    color="error"
+                                                  >
                                                     {formaError}
                                                   </Typography>
                                                 )}

@@ -68,6 +68,20 @@ import {
   validarDataVencimento,
 } from "./validation";
 
+// Formas de pagamento cadastradas na migration 049_caixa.sql
+const FORMAS_PAGAMENTO = [
+  "Dinheiro",
+  "Cartão de Débito",
+  "Cartão de Crédito",
+  "PIX",
+  "Vale Alimentação",
+  "Vale Refeição",
+  "Transferência Bancária",
+  "Boleto Bancário",
+  "Cheque",
+  "Crediário",
+] as const;
+
 interface Props {
   pedido: PedidoResponse;
   onFinished: () => void;
@@ -210,7 +224,7 @@ function BaixarParcelaDialog({
   const initialBaixarValues = {
     valor_recebido: valorRestante,
     categoria_pagamento: "Dinheiro" as const,
-    forma_pagamento: "Espécie",
+    forma_pagamento: "Dinheiro",
     observacao: "",
     troco: 0,
   };
@@ -321,10 +335,10 @@ function BaixarParcelaDialog({
                         onChange={(e) => {
                           handleChange(e);
                           const formas = {
-                            Cartão: "Débito",
-                            Dinheiro: "Espécie",
-                            Pix: "Pix",
-                          };
+                            Cartão: "Cartão de Débito",
+                            Dinheiro: "Dinheiro",
+                            Pix: "PIX",
+                          } as const;
                           setFieldValue(
                             "forma_pagamento",
                             formas[e.target.value as keyof typeof formas]
@@ -349,20 +363,29 @@ function BaixarParcelaDialog({
                     </FormControl>
                   </Grid>
                   <Grid size={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      name="forma_pagamento"
-                      label="Forma/Bandeira"
-                      value={values.forma_pagamento}
-                      onChange={handleChange}
-                      error={
-                        touched.forma_pagamento && !!errors.forma_pagamento
-                      }
-                      helperText={
-                        touched.forma_pagamento && errors.forma_pagamento
-                      }
-                    />
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Forma/Bandeira</InputLabel>
+                      <Select
+                        name="forma_pagamento"
+                        value={values.forma_pagamento}
+                        onChange={handleChange}
+                        label="Forma/Bandeira"
+                        error={
+                          touched.forma_pagamento && !!errors.forma_pagamento
+                        }
+                      >
+                        {FORMAS_PAGAMENTO.map((f) => (
+                          <MenuItem key={f} value={f}>
+                            {f}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {touched.forma_pagamento && errors.forma_pagamento && (
+                        <Typography variant="caption" color="error">
+                          {errors.forma_pagamento}
+                        </Typography>
+                      )}
+                    </FormControl>
                   </Grid>
                   <Grid size={6}>
                     <TextField
@@ -1456,7 +1479,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               const pagamento = {
                                                 categoria_pagamento:
                                                   "Dinheiro" as const,
-                                                forma_pagamento: "Espécie",
+                                                forma_pagamento: "Dinheiro",
                                                 valor_pago: valorRestante,
                                                 troco: calcularTrocoSeguro(
                                                   valorRestante,
@@ -1500,7 +1523,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               const pagamento = {
                                                 categoria_pagamento:
                                                   "Cartão" as const,
-                                                forma_pagamento: "Débito",
+                                                forma_pagamento: "Cartão de Débito",
                                                 valor_pago: valorRestante,
                                                 troco: 0,
                                                 observacao: "Pagamento total",
@@ -1677,7 +1700,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                               const pagamento = {
                                                 categoria_pagamento:
                                                   "Dinheiro" as const,
-                                                forma_pagamento: "Espécie",
+                                                forma_pagamento: "Dinheiro",
                                                 valor_pago: totalNotas,
                                                 troco: troco,
                                                 observacao: `Notas: ${notasSelecionadas.join(
@@ -1785,10 +1808,10 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
 
                                                     // 2) (opcional) define uma forma padrão coerente
                                                     const formas = {
-                                                      Cartão: "Débito",
-                                                      Dinheiro: "Espécie",
-                                                      Pix: "Pix",
-                                                    };
+                                                      Cartão: "Cartão de Débito",
+                                                      Dinheiro: "Dinheiro",
+                                                      Pix: "PIX",
+                                                    } as const;
                                                     setFieldValue(
                                                       `pagamentos_vista.${index}.forma_pagamento`,
                                                       formas[cat]
@@ -1831,43 +1854,41 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
 
                                             {/* Forma de Pagamento */}
                                             <Grid size={4}>
-                                              <TextField
-                                                fullWidth
-                                                size="small"
-                                                label="Forma/Bandeira *"
-                                                value={
-                                                  pagamento.forma_pagamento
-                                                }
-                                                onChange={(e) => {
-                                                  setFieldValue(
-                                                    `pagamentos_vista.${index}.forma_pagamento`,
-                                                    e.target.value
-                                                  );
-                                                  validarCampo(
-                                                    `pagamentos_vista.${index}.forma_pagamento`,
-                                                    e.target.value
-                                                  );
-                                                }}
-                                                onBlur={() => {
-                                                  setFieldTouched(
-                                                    `pagamentos_vista.${index}.forma_pagamento`,
-                                                    true
-                                                  );
-                                                }}
-                                                error={
-                                                  !!(formaTouch || formaError)
-                                                }
-                                                helperText={
-                                                  formaError && (
-                                                    <Typography
-                                                      variant="caption"
-                                                      color="error"
-                                                    >
-                                                      {formaError}
-                                                    </Typography>
-                                                  )
-                                                }
-                                              />
+                                              <FormControl fullWidth size="small">
+                                                <InputLabel>Forma/Bandeira *</InputLabel>
+                                                <Select
+                                                  label="Forma/Bandeira *"
+                                                  value={pagamento.forma_pagamento}
+                                                  onChange={(e) => {
+                                                    setFieldValue(
+                                                      `pagamentos_vista.${index}.forma_pagamento`,
+                                                      e.target.value
+                                                    );
+                                                    validarCampo(
+                                                      `pagamentos_vista.${index}.forma_pagamento`,
+                                                      e.target.value
+                                                    );
+                                                  }}
+                                                  onBlur={() => {
+                                                    setFieldTouched(
+                                                      `pagamentos_vista.${index}.forma_pagamento`,
+                                                      true
+                                                    );
+                                                  }}
+                                                  error={!!(formaTouch || formaError)}
+                                                >
+                                                  {FORMAS_PAGAMENTO.map((f) => (
+                                                    <MenuItem key={f} value={f}>
+                                                      {f}
+                                                    </MenuItem>
+                                                  ))}
+                                                </Select>
+                                                {formaError && (
+                                                  <Typography variant="caption" color="error">
+                                                    {formaError}
+                                                  </Typography>
+                                                )}
+                                              </FormControl>
                                             </Grid>
 
                                             {/* Valor Pago */}
@@ -2017,7 +2038,7 @@ export default function FinalizarPedido({ pedido, onFinished }: Props) {
                                   onClick={() => {
                                     const novoPagamento: PagamentoVista = {
                                       categoria_pagamento: "Cartão",
-                                      forma_pagamento: "Débito",
+                                      forma_pagamento: "Cartão de Débito",
                                       valor_pago: 0,
                                       troco: 0,
                                       observacao: "",

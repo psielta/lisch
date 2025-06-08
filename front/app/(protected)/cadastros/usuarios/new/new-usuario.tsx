@@ -126,7 +126,7 @@ function NewUsuario({ user }: { user: User }) {
 
       if (userResponse.status === 200) {
         // Pega o ID do usuário criado
-        const userId = userResponse.data.id;
+        const userId = userResponse.data.user_id;
 
         // Depois, cria/atualiza o operador de caixa
         const operadorCaixaData: UpsertOperadorCaixaDTO = {

@@ -56,6 +56,14 @@ func (api *Api) BindRoutes() {
 				r.Get("/get-ticket-medio-30-dias", api.handleDashboard_GetTicketMedio30Dias)
 			})
 
+			r.Route("/caixas", func(r chi.Router) {
+				r.Group(func(r chi.Router) {
+					r.Use(api.AuthMiddleware)
+					r.Post("/", api.handleCaixas_Post)
+					r.Get("/abertos", api.handleCaixas_List)
+				})
+			})
+
 			r.Route("/categorias", func(r chi.Router) {
 				r.Group(func(r chi.Router) {
 					r.Use(api.AuthMiddleware)

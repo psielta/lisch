@@ -27,6 +27,7 @@ type Api struct {
 	DashboardService     services.DashboardService
 	OutboxService        services.OutboxService
 	OperadorCaixaService services.OperadorCaixaService
+	CaixaService         services.CaixaService
 	Sessions             *scs.SessionManager
 	JWTSecret            []byte
 	tenantCache          sync.Map
@@ -56,6 +57,7 @@ func NewApi(router *chi.Mux,
 	dashboardService services.DashboardService,
 	outboxService services.OutboxService,
 	operadorCaixaService services.OperadorCaixaService,
+	caixaService services.CaixaService,
 	sessions *scs.SessionManager, jwtSecret []byte,
 	validate *validator.Validate,
 	pool *pgxpool.Pool,
@@ -68,6 +70,7 @@ func NewApi(router *chi.Mux,
 		DashboardService:     dashboardService,
 		OutboxService:        outboxService,
 		OperadorCaixaService: operadorCaixaService,
+		CaixaService:         caixaService,
 		Sessions:             sessions,
 		JWTSecret:            jwtSecret,
 		cacheExpiration:      15 * time.Minute, // Cache expira em 15 minutos

@@ -13,7 +13,7 @@ type UpsertOperadorCaixaDTO struct {
 	IDUsuario uuid.UUID `json:"id_usuario" validate:"required"`
 	Nome      string    `json:"nome" validate:"required"`
 	Codigo    *string   `json:"codigo,omitempty"`
-	Ativo     int16     `json:"ativo" validate:"required"`
+	Ativo     int16     `json:"ativo"`
 }
 
 type OperadorCaixaResponse struct {

@@ -84,6 +84,7 @@ func main() {
 		DashboardService:     services.NewDashboardService(pool),
 		OutboxService:        services.NewOutboxService(pool),
 		OperadorCaixaService: services.NewOperadorCaixaService(pool),
+		CaixaService:         services.NewCaixaService(pool),
 		Sessions:             s,
 		JWTSecret:            []byte(jwtSecret),
 		Validate:             validate,

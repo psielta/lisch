@@ -4,18 +4,24 @@
 package models_sql_boiler
 
 var ViewNames = struct {
+	CaixaMovimentacoesView       string
+	CaixasView                   string
 	CategoriaAdicionaisView      string
 	CategoriaAdicionalOpcoesView string
 	CategoriaOpcoesView          string
 	CategoriasView               string
+	OperadoresCaixaView          string
 	PedidoItemAdicionaisView     string
 	PedidoItensView              string
 	PedidosView                  string
 }{
+	CaixaMovimentacoesView:       "caixa_movimentacoes_view",
+	CaixasView:                   "caixas_view",
 	CategoriaAdicionaisView:      "categoria_adicionais_view",
 	CategoriaAdicionalOpcoesView: "categoria_adicional_opcoes_view",
 	CategoriaOpcoesView:          "categoria_opcoes_view",
 	CategoriasView:               "categorias_view",
+	OperadoresCaixaView:          "operadores_caixa_view",
 	PedidoItemAdicionaisView:     "pedido_item_adicionais_view",
 	PedidoItensView:              "pedido_itens_view",
 	PedidosView:                  "pedidos_view",

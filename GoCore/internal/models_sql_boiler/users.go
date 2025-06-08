@@ -143,20 +143,26 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	Tenant         string
-	OutboxEvents   string
-	SellerProducts string
+	Tenant                          string
+	AutorizadoPorCaixaMovimentacoes string
+	IDUsuarioOperadoresCaixas       string
+	OutboxEvents                    string
+	SellerProducts                  string
 }{
-	Tenant:         "Tenant",
-	OutboxEvents:   "OutboxEvents",
-	SellerProducts: "SellerProducts",
+	Tenant:                          "Tenant",
+	AutorizadoPorCaixaMovimentacoes: "AutorizadoPorCaixaMovimentacoes",
+	IDUsuarioOperadoresCaixas:       "IDUsuarioOperadoresCaixas",
+	OutboxEvents:                    "OutboxEvents",
+	SellerProducts:                  "SellerProducts",
 }
 
 // userR is where relationships are stored.
 type userR struct {
-	Tenant         *Tenant          `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
-	OutboxEvents   OutboxEventSlice `boil:"OutboxEvents" json:"OutboxEvents" toml:"OutboxEvents" yaml:"OutboxEvents"`
-	SellerProducts ProductSlice     `boil:"SellerProducts" json:"SellerProducts" toml:"SellerProducts" yaml:"SellerProducts"`
+	Tenant                          *Tenant                `boil:"Tenant" json:"Tenant" toml:"Tenant" yaml:"Tenant"`
+	AutorizadoPorCaixaMovimentacoes CaixaMovimentacaoSlice `boil:"AutorizadoPorCaixaMovimentacoes" json:"AutorizadoPorCaixaMovimentacoes" toml:"AutorizadoPorCaixaMovimentacoes" yaml:"AutorizadoPorCaixaMovimentacoes"`
+	IDUsuarioOperadoresCaixas       OperadorCaixaSlice     `boil:"IDUsuarioOperadoresCaixas" json:"IDUsuarioOperadoresCaixas" toml:"IDUsuarioOperadoresCaixas" yaml:"IDUsuarioOperadoresCaixas"`
+	OutboxEvents                    OutboxEventSlice       `boil:"OutboxEvents" json:"OutboxEvents" toml:"OutboxEvents" yaml:"OutboxEvents"`
+	SellerProducts                  ProductSlice           `boil:"SellerProducts" json:"SellerProducts" toml:"SellerProducts" yaml:"SellerProducts"`
 }
 
 // NewStruct creates a new relationship struct
@@ -169,6 +175,20 @@ func (r *userR) GetTenant() *Tenant {
 		return nil
 	}
 	return r.Tenant
+}
+
+func (r *userR) GetAutorizadoPorCaixaMovimentacoes() CaixaMovimentacaoSlice {
+	if r == nil {
+		return nil
+	}
+	return r.AutorizadoPorCaixaMovimentacoes
+}
+
+func (r *userR) GetIDUsuarioOperadoresCaixas() OperadorCaixaSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDUsuarioOperadoresCaixas
 }
 
 func (r *userR) GetOutboxEvents() OutboxEventSlice {
@@ -512,6 +532,34 @@ func (o *User) Tenant(mods ...qm.QueryMod) tenantQuery {
 	return Tenants(queryMods...)
 }
 
+// AutorizadoPorCaixaMovimentacoes retrieves all the caixa_movimentaco's CaixaMovimentacoes with an executor via autorizado_por column.
+func (o *User) AutorizadoPorCaixaMovimentacoes(mods ...qm.QueryMod) caixaMovimentacaoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"caixa_movimentacoes\".\"autorizado_por\"=?", o.ID),
+	)
+
+	return CaixaMovimentacoes(queryMods...)
+}
+
+// IDUsuarioOperadoresCaixas retrieves all the operadores_caixa's OperadoresCaixa with an executor via id_usuario column.
+func (o *User) IDUsuarioOperadoresCaixas(mods ...qm.QueryMod) operadorCaixaQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"operadores_caixa\".\"id_usuario\"=?", o.ID),
+	)
+
+	return OperadoresCaixa(queryMods...)
+}
+
 // OutboxEvents retrieves all the outbox_event's OutboxEvents with an executor.
 func (o *User) OutboxEvents(mods ...qm.QueryMod) outboxEventQuery {
 	var queryMods []qm.QueryMod
@@ -652,6 +700,232 @@ func (userL) LoadTenant(ctx context.Context, e boil.ContextExecutor, singular bo
 					foreign.R = &tenantR{}
 				}
 				foreign.R.Users = append(foreign.R.Users, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadAutorizadoPorCaixaMovimentacoes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadAutorizadoPorCaixaMovimentacoes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`caixa_movimentacoes`),
+		qm.WhereIn(`caixa_movimentacoes.autorizado_por in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load caixa_movimentacoes")
+	}
+
+	var resultSlice []*CaixaMovimentacao
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice caixa_movimentacoes")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on caixa_movimentacoes")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for caixa_movimentacoes")
+	}
+
+	if len(caixaMovimentacaoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.AutorizadoPorCaixaMovimentacoes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &caixaMovimentacaoR{}
+			}
+			foreign.R.AutorizadoPorUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.AutorizadoPor) {
+				local.R.AutorizadoPorCaixaMovimentacoes = append(local.R.AutorizadoPorCaixaMovimentacoes, foreign)
+				if foreign.R == nil {
+					foreign.R = &caixaMovimentacaoR{}
+				}
+				foreign.R.AutorizadoPorUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadIDUsuarioOperadoresCaixas allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadIDUsuarioOperadoresCaixas(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`operadores_caixa`),
+		qm.WhereIn(`operadores_caixa.id_usuario in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load operadores_caixa")
+	}
+
+	var resultSlice []*OperadorCaixa
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice operadores_caixa")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on operadores_caixa")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for operadores_caixa")
+	}
+
+	if len(operadorCaixaAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDUsuarioOperadoresCaixas = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &operadorCaixaR{}
+			}
+			foreign.R.IDUsuarioUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.IDUsuario {
+				local.R.IDUsuarioOperadoresCaixas = append(local.R.IDUsuarioOperadoresCaixas, foreign)
+				if foreign.R == nil {
+					foreign.R = &operadorCaixaR{}
+				}
+				foreign.R.IDUsuarioUser = local
 				break
 			}
 		}
@@ -930,6 +1204,186 @@ func (o *User) SetTenant(ctx context.Context, exec boil.ContextExecutor, insert 
 		related.R.Users = append(related.R.Users, o)
 	}
 
+	return nil
+}
+
+// AddAutorizadoPorCaixaMovimentacoes adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.AutorizadoPorCaixaMovimentacoes.
+// Sets related.R.AutorizadoPorUser appropriately.
+func (o *User) AddAutorizadoPorCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CaixaMovimentacao) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.AutorizadoPor, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"caixa_movimentacoes\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"autorizado_por"}),
+				strmangle.WhereClause("\"", "\"", 2, caixaMovimentacaoPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.AutorizadoPor, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			AutorizadoPorCaixaMovimentacoes: related,
+		}
+	} else {
+		o.R.AutorizadoPorCaixaMovimentacoes = append(o.R.AutorizadoPorCaixaMovimentacoes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &caixaMovimentacaoR{
+				AutorizadoPorUser: o,
+			}
+		} else {
+			rel.R.AutorizadoPorUser = o
+		}
+	}
+	return nil
+}
+
+// SetAutorizadoPorCaixaMovimentacoes removes all previously related items of the
+// user replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.AutorizadoPorUser's AutorizadoPorCaixaMovimentacoes accordingly.
+// Replaces o.R.AutorizadoPorCaixaMovimentacoes with related.
+// Sets related.R.AutorizadoPorUser's AutorizadoPorCaixaMovimentacoes accordingly.
+func (o *User) SetAutorizadoPorCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CaixaMovimentacao) error {
+	query := "update \"caixa_movimentacoes\" set \"autorizado_por\" = null where \"autorizado_por\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.AutorizadoPorCaixaMovimentacoes {
+			queries.SetScanner(&rel.AutorizadoPor, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.AutorizadoPorUser = nil
+		}
+		o.R.AutorizadoPorCaixaMovimentacoes = nil
+	}
+
+	return o.AddAutorizadoPorCaixaMovimentacoes(ctx, exec, insert, related...)
+}
+
+// RemoveAutorizadoPorCaixaMovimentacoes relationships from objects passed in.
+// Removes related items from R.AutorizadoPorCaixaMovimentacoes (uses pointer comparison, removal does not keep order)
+// Sets related.R.AutorizadoPorUser.
+func (o *User) RemoveAutorizadoPorCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, related ...*CaixaMovimentacao) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.AutorizadoPor, nil)
+		if rel.R != nil {
+			rel.R.AutorizadoPorUser = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("autorizado_por")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.AutorizadoPorCaixaMovimentacoes {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.AutorizadoPorCaixaMovimentacoes)
+			if ln > 1 && i < ln-1 {
+				o.R.AutorizadoPorCaixaMovimentacoes[i] = o.R.AutorizadoPorCaixaMovimentacoes[ln-1]
+			}
+			o.R.AutorizadoPorCaixaMovimentacoes = o.R.AutorizadoPorCaixaMovimentacoes[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+// AddIDUsuarioOperadoresCaixas adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.IDUsuarioOperadoresCaixas.
+// Sets related.R.IDUsuarioUser appropriately.
+func (o *User) AddIDUsuarioOperadoresCaixas(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*OperadorCaixa) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.IDUsuario = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"operadores_caixa\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_usuario"}),
+				strmangle.WhereClause("\"", "\"", 2, operadorCaixaPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.IDUsuario = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			IDUsuarioOperadoresCaixas: related,
+		}
+	} else {
+		o.R.IDUsuarioOperadoresCaixas = append(o.R.IDUsuarioOperadoresCaixas, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &operadorCaixaR{
+				IDUsuarioUser: o,
+			}
+		} else {
+			rel.R.IDUsuarioUser = o
+		}
+	}
 	return nil
 }
 

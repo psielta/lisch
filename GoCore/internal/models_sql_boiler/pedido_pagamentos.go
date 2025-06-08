@@ -137,17 +137,20 @@ var PedidoPagamentoWhere = struct {
 
 // PedidoPagamentoRels is where relationship names are stored.
 var PedidoPagamentoRels = struct {
-	IDContaReceberContasReceber string
-	IDPedidoPedido              string
+	IDContaReceberContasReceber   string
+	IDPedidoPedido                string
+	IDPagamentoCaixaMovimentacoes string
 }{
-	IDContaReceberContasReceber: "IDContaReceberContasReceber",
-	IDPedidoPedido:              "IDPedidoPedido",
+	IDContaReceberContasReceber:   "IDContaReceberContasReceber",
+	IDPedidoPedido:                "IDPedidoPedido",
+	IDPagamentoCaixaMovimentacoes: "IDPagamentoCaixaMovimentacoes",
 }
 
 // pedidoPagamentoR is where relationships are stored.
 type pedidoPagamentoR struct {
-	IDContaReceberContasReceber *ContasReceber `boil:"IDContaReceberContasReceber" json:"IDContaReceberContasReceber" toml:"IDContaReceberContasReceber" yaml:"IDContaReceberContasReceber"`
-	IDPedidoPedido              *Pedido        `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDContaReceberContasReceber   *ContasReceber         `boil:"IDContaReceberContasReceber" json:"IDContaReceberContasReceber" toml:"IDContaReceberContasReceber" yaml:"IDContaReceberContasReceber"`
+	IDPedidoPedido                *Pedido                `boil:"IDPedidoPedido" json:"IDPedidoPedido" toml:"IDPedidoPedido" yaml:"IDPedidoPedido"`
+	IDPagamentoCaixaMovimentacoes CaixaMovimentacaoSlice `boil:"IDPagamentoCaixaMovimentacoes" json:"IDPagamentoCaixaMovimentacoes" toml:"IDPagamentoCaixaMovimentacoes" yaml:"IDPagamentoCaixaMovimentacoes"`
 }
 
 // NewStruct creates a new relationship struct
@@ -167,6 +170,13 @@ func (r *pedidoPagamentoR) GetIDPedidoPedido() *Pedido {
 		return nil
 	}
 	return r.IDPedidoPedido
+}
+
+func (r *pedidoPagamentoR) GetIDPagamentoCaixaMovimentacoes() CaixaMovimentacaoSlice {
+	if r == nil {
+		return nil
+	}
+	return r.IDPagamentoCaixaMovimentacoes
 }
 
 // pedidoPagamentoL is where Load methods for each relationship are stored.
@@ -507,6 +517,20 @@ func (o *PedidoPagamento) IDPedidoPedido(mods ...qm.QueryMod) pedidoQuery {
 	return Pedidos(queryMods...)
 }
 
+// IDPagamentoCaixaMovimentacoes retrieves all the caixa_movimentaco's CaixaMovimentacoes with an executor via id_pagamento column.
+func (o *PedidoPagamento) IDPagamentoCaixaMovimentacoes(mods ...qm.QueryMod) caixaMovimentacaoQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"caixa_movimentacoes\".\"id_pagamento\"=?", o.ID),
+	)
+
+	return CaixaMovimentacoes(queryMods...)
+}
+
 // LoadIDContaReceberContasReceber allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (pedidoPagamentoL) LoadIDContaReceberContasReceber(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoPagamento interface{}, mods queries.Applicator) error {
@@ -751,6 +775,119 @@ func (pedidoPagamentoL) LoadIDPedidoPedido(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
+// LoadIDPagamentoCaixaMovimentacoes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (pedidoPagamentoL) LoadIDPagamentoCaixaMovimentacoes(ctx context.Context, e boil.ContextExecutor, singular bool, maybePedidoPagamento interface{}, mods queries.Applicator) error {
+	var slice []*PedidoPagamento
+	var object *PedidoPagamento
+
+	if singular {
+		var ok bool
+		object, ok = maybePedidoPagamento.(*PedidoPagamento)
+		if !ok {
+			object = new(PedidoPagamento)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybePedidoPagamento)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePedidoPagamento))
+			}
+		}
+	} else {
+		s, ok := maybePedidoPagamento.(*[]*PedidoPagamento)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybePedidoPagamento)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePedidoPagamento))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &pedidoPagamentoR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &pedidoPagamentoR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`caixa_movimentacoes`),
+		qm.WhereIn(`caixa_movimentacoes.id_pagamento in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load caixa_movimentacoes")
+	}
+
+	var resultSlice []*CaixaMovimentacao
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice caixa_movimentacoes")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on caixa_movimentacoes")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for caixa_movimentacoes")
+	}
+
+	if len(caixaMovimentacaoAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.IDPagamentoCaixaMovimentacoes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &caixaMovimentacaoR{}
+			}
+			foreign.R.IDPagamentoPedidoPagamento = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.IDPagamento) {
+				local.R.IDPagamentoCaixaMovimentacoes = append(local.R.IDPagamentoCaixaMovimentacoes, foreign)
+				if foreign.R == nil {
+					foreign.R = &caixaMovimentacaoR{}
+				}
+				foreign.R.IDPagamentoPedidoPagamento = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetIDContaReceberContasReceber of the pedidoPagamento to the related item.
 // Sets o.R.IDContaReceberContasReceber to related.
 // Adds o to related.R.IDContaReceberPedidoPagamentos.
@@ -873,6 +1010,133 @@ func (o *PedidoPagamento) SetIDPedidoPedido(ctx context.Context, exec boil.Conte
 		}
 	} else {
 		related.R.IDPedidoPedidoPagamentos = append(related.R.IDPedidoPedidoPagamentos, o)
+	}
+
+	return nil
+}
+
+// AddIDPagamentoCaixaMovimentacoes adds the given related objects to the existing relationships
+// of the pedido_pagamento, optionally inserting them as new records.
+// Appends related to o.R.IDPagamentoCaixaMovimentacoes.
+// Sets related.R.IDPagamentoPedidoPagamento appropriately.
+func (o *PedidoPagamento) AddIDPagamentoCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CaixaMovimentacao) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.IDPagamento, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"caixa_movimentacoes\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"id_pagamento"}),
+				strmangle.WhereClause("\"", "\"", 2, caixaMovimentacaoPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.IDPagamento, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &pedidoPagamentoR{
+			IDPagamentoCaixaMovimentacoes: related,
+		}
+	} else {
+		o.R.IDPagamentoCaixaMovimentacoes = append(o.R.IDPagamentoCaixaMovimentacoes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &caixaMovimentacaoR{
+				IDPagamentoPedidoPagamento: o,
+			}
+		} else {
+			rel.R.IDPagamentoPedidoPagamento = o
+		}
+	}
+	return nil
+}
+
+// SetIDPagamentoCaixaMovimentacoes removes all previously related items of the
+// pedido_pagamento replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.IDPagamentoPedidoPagamento's IDPagamentoCaixaMovimentacoes accordingly.
+// Replaces o.R.IDPagamentoCaixaMovimentacoes with related.
+// Sets related.R.IDPagamentoPedidoPagamento's IDPagamentoCaixaMovimentacoes accordingly.
+func (o *PedidoPagamento) SetIDPagamentoCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CaixaMovimentacao) error {
+	query := "update \"caixa_movimentacoes\" set \"id_pagamento\" = null where \"id_pagamento\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.IDPagamentoCaixaMovimentacoes {
+			queries.SetScanner(&rel.IDPagamento, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.IDPagamentoPedidoPagamento = nil
+		}
+		o.R.IDPagamentoCaixaMovimentacoes = nil
+	}
+
+	return o.AddIDPagamentoCaixaMovimentacoes(ctx, exec, insert, related...)
+}
+
+// RemoveIDPagamentoCaixaMovimentacoes relationships from objects passed in.
+// Removes related items from R.IDPagamentoCaixaMovimentacoes (uses pointer comparison, removal does not keep order)
+// Sets related.R.IDPagamentoPedidoPagamento.
+func (o *PedidoPagamento) RemoveIDPagamentoCaixaMovimentacoes(ctx context.Context, exec boil.ContextExecutor, related ...*CaixaMovimentacao) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.IDPagamento, nil)
+		if rel.R != nil {
+			rel.R.IDPagamentoPedidoPagamento = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("id_pagamento")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.IDPagamentoCaixaMovimentacoes {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.IDPagamentoCaixaMovimentacoes)
+			if ln > 1 && i < ln-1 {
+				o.R.IDPagamentoCaixaMovimentacoes[i] = o.R.IDPagamentoCaixaMovimentacoes[ln-1]
+			}
+			o.R.IDPagamentoCaixaMovimentacoes = o.R.IDPagamentoCaixaMovimentacoes[:ln-1]
+			break
+		}
 	}
 
 	return nil

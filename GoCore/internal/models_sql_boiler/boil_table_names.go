@@ -4,6 +4,9 @@
 package models_sql_boiler
 
 var TableNames = struct {
+	CaixaFechamentoFormas    string
+	CaixaMovimentacoes       string
+	Caixas                   string
 	CategoriaAdicionais      string
 	CategoriaAdicionalOpcoes string
 	CategoriaOpcoes          string
@@ -11,6 +14,8 @@ var TableNames = struct {
 	Clientes                 string
 	ContasReceber            string
 	Culinarias               string
+	FormasPagamento          string
+	OperadoresCaixa          string
 	OutboxEvent              string
 	PedidoItemAdicionais     string
 	PedidoItens              string
@@ -25,6 +30,9 @@ var TableNames = struct {
 	Tenants                  string
 	Users                    string
 }{
+	CaixaFechamentoFormas:    "caixa_fechamento_formas",
+	CaixaMovimentacoes:       "caixa_movimentacoes",
+	Caixas:                   "caixas",
 	CategoriaAdicionais:      "categoria_adicionais",
 	CategoriaAdicionalOpcoes: "categoria_adicional_opcoes",
 	CategoriaOpcoes:          "categoria_opcoes",
@@ -32,6 +40,8 @@ var TableNames = struct {
 	Clientes:                 "clientes",
 	ContasReceber:            "contas_receber",
 	Culinarias:               "culinarias",
+	FormasPagamento:          "formas_pagamento",
+	OperadoresCaixa:          "operadores_caixa",
 	OutboxEvent:              "outbox_event",
 	PedidoItemAdicionais:     "pedido_item_adicionais",
 	PedidoItens:              "pedido_itens",

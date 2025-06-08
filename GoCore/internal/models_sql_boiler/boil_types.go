@@ -50,3 +50,16 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	strmangle.PutBuffer(buf)
 	return str
 }
+
+// Enum values for StatusCaixa
+const (
+	StatusCaixaA string = "A"
+	StatusCaixaF string = "F"
+)
+
+func AllStatusCaixa() []string {
+	return []string{
+		StatusCaixaA,
+		StatusCaixaF,
+	}
+}

@@ -96,3 +96,33 @@ local   = "PedidoItemAdicional"
 [aliases.tables.pedido_itens.relationships.fk_pedido_itens_pedidos]
 foreign = "Pedido"       # já existe; mantido
 local   = "PedidoItem"
+# Corrigindo singular/plural para as tabelas que estavam conflitando
+[aliases.tables.caixas]
+up_singular   = "Caixa"
+up_plural     = "Caixas"
+down_singular = "caixa"
+down_plural   = "caixas"
+
+[aliases.tables.caixa_fechamento_formas]
+up_singular   = "CaixaFechamentoForma"
+up_plural     = "CaixaFechamentoFormas"
+down_singular = "caixaFechamentoForma"
+down_plural   = "caixaFechamentoFormas"
+
+[aliases.tables.caixa_movimentacoes]
+up_singular   = "CaixaMovimentacao"
+up_plural     = "CaixaMovimentacoes"
+down_singular = "caixaMovimentacao"
+down_plural   = "caixaMovimentacoes"
+
+[aliases.tables.formas_pagamento]
+up_singular   = "FormaPagamento"
+up_plural     = "FormasPagamento"
+down_singular = "formaPagamento"
+down_plural   = "formasPagamento"
+
+[aliases.tables.operadores_caixa]
+up_singular   = "OperadorCaixa"
+up_plural     = "OperadoresCaixa"
+down_singular = "operadorCaixa"
+down_plural   = "operadoresCaixa"

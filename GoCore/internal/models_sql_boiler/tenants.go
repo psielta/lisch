@@ -162,16 +162,20 @@ var TenantWhere = struct {
 // TenantRels is where relationship names are stored.
 var TenantRels = struct {
 	IDClientePadraoCliente string
+	Caixas                 string
 	Categorias             string
 	Clientes               string
+	OperadoresCaixas       string
 	OutboxEvents           string
 	Pedidos                string
 	Products               string
 	Users                  string
 }{
 	IDClientePadraoCliente: "IDClientePadraoCliente",
+	Caixas:                 "Caixas",
 	Categorias:             "Categorias",
 	Clientes:               "Clientes",
+	OperadoresCaixas:       "OperadoresCaixas",
 	OutboxEvents:           "OutboxEvents",
 	Pedidos:                "Pedidos",
 	Products:               "Products",
@@ -180,13 +184,15 @@ var TenantRels = struct {
 
 // tenantR is where relationships are stored.
 type tenantR struct {
-	IDClientePadraoCliente *Cliente         `boil:"IDClientePadraoCliente" json:"IDClientePadraoCliente" toml:"IDClientePadraoCliente" yaml:"IDClientePadraoCliente"`
-	Categorias             CategoriaSlice   `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
-	Clientes               ClienteSlice     `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
-	OutboxEvents           OutboxEventSlice `boil:"OutboxEvents" json:"OutboxEvents" toml:"OutboxEvents" yaml:"OutboxEvents"`
-	Pedidos                PedidoSlice      `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
-	Products               ProductSlice     `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
-	Users                  UserSlice        `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
+	IDClientePadraoCliente *Cliente           `boil:"IDClientePadraoCliente" json:"IDClientePadraoCliente" toml:"IDClientePadraoCliente" yaml:"IDClientePadraoCliente"`
+	Caixas                 CaixaSlice         `boil:"Caixas" json:"Caixas" toml:"Caixas" yaml:"Caixas"`
+	Categorias             CategoriaSlice     `boil:"Categorias" json:"Categorias" toml:"Categorias" yaml:"Categorias"`
+	Clientes               ClienteSlice       `boil:"Clientes" json:"Clientes" toml:"Clientes" yaml:"Clientes"`
+	OperadoresCaixas       OperadorCaixaSlice `boil:"OperadoresCaixas" json:"OperadoresCaixas" toml:"OperadoresCaixas" yaml:"OperadoresCaixas"`
+	OutboxEvents           OutboxEventSlice   `boil:"OutboxEvents" json:"OutboxEvents" toml:"OutboxEvents" yaml:"OutboxEvents"`
+	Pedidos                PedidoSlice        `boil:"Pedidos" json:"Pedidos" toml:"Pedidos" yaml:"Pedidos"`
+	Products               ProductSlice       `boil:"Products" json:"Products" toml:"Products" yaml:"Products"`
+	Users                  UserSlice          `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
 }
 
 // NewStruct creates a new relationship struct
@@ -201,6 +207,13 @@ func (r *tenantR) GetIDClientePadraoCliente() *Cliente {
 	return r.IDClientePadraoCliente
 }
 
+func (r *tenantR) GetCaixas() CaixaSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Caixas
+}
+
 func (r *tenantR) GetCategorias() CategoriaSlice {
 	if r == nil {
 		return nil
@@ -213,6 +226,13 @@ func (r *tenantR) GetClientes() ClienteSlice {
 		return nil
 	}
 	return r.Clientes
+}
+
+func (r *tenantR) GetOperadoresCaixas() OperadorCaixaSlice {
+	if r == nil {
+		return nil
+	}
+	return r.OperadoresCaixas
 }
 
 func (r *tenantR) GetOutboxEvents() OutboxEventSlice {
@@ -570,6 +590,20 @@ func (o *Tenant) IDClientePadraoCliente(mods ...qm.QueryMod) clienteQuery {
 	return Clientes(queryMods...)
 }
 
+// Caixas retrieves all the caixas's Caixas with an executor.
+func (o *Tenant) Caixas(mods ...qm.QueryMod) caixaQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"caixas\".\"tenant_id\"=?", o.ID),
+	)
+
+	return Caixas(queryMods...)
+}
+
 // Categorias retrieves all the categorias's Categorias with an executor.
 func (o *Tenant) Categorias(mods ...qm.QueryMod) categoriaQuery {
 	var queryMods []qm.QueryMod
@@ -596,6 +630,20 @@ func (o *Tenant) Clientes(mods ...qm.QueryMod) clienteQuery {
 	)
 
 	return Clientes(queryMods...)
+}
+
+// OperadoresCaixas retrieves all the operadores_caixa's OperadoresCaixa with an executor via tenant_id column.
+func (o *Tenant) OperadoresCaixas(mods ...qm.QueryMod) operadorCaixaQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"operadores_caixa\".\"tenant_id\"=?", o.ID),
+	)
+
+	return OperadoresCaixa(queryMods...)
 }
 
 // OutboxEvents retrieves all the outbox_event's OutboxEvents with an executor.
@@ -770,6 +818,119 @@ func (tenantL) LoadIDClientePadraoCliente(ctx context.Context, e boil.ContextExe
 					foreign.R = &clienteR{}
 				}
 				foreign.R.IDClientePadraoTenants = append(foreign.R.IDClientePadraoTenants, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadCaixas allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (tenantL) LoadCaixas(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTenant interface{}, mods queries.Applicator) error {
+	var slice []*Tenant
+	var object *Tenant
+
+	if singular {
+		var ok bool
+		object, ok = maybeTenant.(*Tenant)
+		if !ok {
+			object = new(Tenant)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeTenant))
+			}
+		}
+	} else {
+		s, ok := maybeTenant.(*[]*Tenant)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeTenant))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &tenantR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &tenantR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`caixas`),
+		qm.WhereIn(`caixas.tenant_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load caixas")
+	}
+
+	var resultSlice []*Caixa
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice caixas")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on caixas")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for caixas")
+	}
+
+	if len(caixaAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Caixas = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &caixaR{}
+			}
+			foreign.R.Tenant = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.TenantID {
+				local.R.Caixas = append(local.R.Caixas, foreign)
+				if foreign.R == nil {
+					foreign.R = &caixaR{}
+				}
+				foreign.R.Tenant = local
 				break
 			}
 		}
@@ -994,6 +1155,119 @@ func (tenantL) LoadClientes(ctx context.Context, e boil.ContextExecutor, singula
 				local.R.Clientes = append(local.R.Clientes, foreign)
 				if foreign.R == nil {
 					foreign.R = &clienteR{}
+				}
+				foreign.R.Tenant = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadOperadoresCaixas allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (tenantL) LoadOperadoresCaixas(ctx context.Context, e boil.ContextExecutor, singular bool, maybeTenant interface{}, mods queries.Applicator) error {
+	var slice []*Tenant
+	var object *Tenant
+
+	if singular {
+		var ok bool
+		object, ok = maybeTenant.(*Tenant)
+		if !ok {
+			object = new(Tenant)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeTenant))
+			}
+		}
+	} else {
+		s, ok := maybeTenant.(*[]*Tenant)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeTenant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeTenant))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &tenantR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &tenantR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`operadores_caixa`),
+		qm.WhereIn(`operadores_caixa.tenant_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load operadores_caixa")
+	}
+
+	var resultSlice []*OperadorCaixa
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice operadores_caixa")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on operadores_caixa")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for operadores_caixa")
+	}
+
+	if len(operadorCaixaAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.OperadoresCaixas = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &operadorCaixaR{}
+			}
+			foreign.R.Tenant = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.TenantID {
+				local.R.OperadoresCaixas = append(local.R.OperadoresCaixas, foreign)
+				if foreign.R == nil {
+					foreign.R = &operadorCaixaR{}
 				}
 				foreign.R.Tenant = local
 				break
@@ -1536,6 +1810,59 @@ func (o *Tenant) RemoveIDClientePadraoCliente(ctx context.Context, exec boil.Con
 	return nil
 }
 
+// AddCaixas adds the given related objects to the existing relationships
+// of the tenant, optionally inserting them as new records.
+// Appends related to o.R.Caixas.
+// Sets related.R.Tenant appropriately.
+func (o *Tenant) AddCaixas(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Caixa) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.TenantID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"caixas\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"tenant_id"}),
+				strmangle.WhereClause("\"", "\"", 2, caixaPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.TenantID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &tenantR{
+			Caixas: related,
+		}
+	} else {
+		o.R.Caixas = append(o.R.Caixas, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &caixaR{
+				Tenant: o,
+			}
+		} else {
+			rel.R.Tenant = o
+		}
+	}
+	return nil
+}
+
 // AddCategorias adds the given related objects to the existing relationships
 // of the tenant, optionally inserting them as new records.
 // Appends related to o.R.Categorias.
@@ -1633,6 +1960,59 @@ func (o *Tenant) AddClientes(ctx context.Context, exec boil.ContextExecutor, ins
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &clienteR{
+				Tenant: o,
+			}
+		} else {
+			rel.R.Tenant = o
+		}
+	}
+	return nil
+}
+
+// AddOperadoresCaixas adds the given related objects to the existing relationships
+// of the tenant, optionally inserting them as new records.
+// Appends related to o.R.OperadoresCaixas.
+// Sets related.R.Tenant appropriately.
+func (o *Tenant) AddOperadoresCaixas(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*OperadorCaixa) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.TenantID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"operadores_caixa\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"tenant_id"}),
+				strmangle.WhereClause("\"", "\"", 2, operadorCaixaPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.TenantID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &tenantR{
+			OperadoresCaixas: related,
+		}
+	} else {
+		o.R.OperadoresCaixas = append(o.R.OperadoresCaixas, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &operadorCaixaR{
 				Tenant: o,
 			}
 		} else {

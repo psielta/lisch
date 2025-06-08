@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Box,
   Button,
@@ -66,6 +66,12 @@ import api from "@/lib/api";
 import debounce from "lodash.debounce";
 import { PaginatedResponse } from "@/rxjs/clientes/cliente.model";
 import { User } from "@/context/auth-context";
+import { CaixaResponseDto, getCaixasAbertos } from "@/proxies/caixa-proxies";
+import ErrorCaixa from "@/components/my/ErrorCaixa";
+import LoaderCaixa from "@/components/my/LoaderCaixa";
+import AbrirCaixa from "@/components/my/AbrirCaixa";
+import { AxiosError } from "axios";
+import DialogResumoCaixa from "@/components/dialogs/DialogResumoCaixa";
 
 // Interface para os filtros
 interface FiltroPedidos {
@@ -156,6 +162,13 @@ export default function GerenciarVendas({
     } else {
       toast.error("Nenhum pedido selecionado");
     }
+  };
+  const [dialogResumoCaixaOpen, setDialogResumoCaixaOpen] = useState(false);
+  const handleAbrirDialogResumoCaixa = () => {
+    setDialogResumoCaixaOpen(true);
+  };
+  const handleFecharDialogResumoCaixa = () => {
+    setDialogResumoCaixaOpen(false);
   };
 
   const handleClienteSalvo = (clienteSalvo: any) => {
@@ -318,6 +331,68 @@ export default function GerenciarVendas({
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("pt-BR");
   };
+
+  const [caixaEmAberto, setCaixaEmAberto] = useState<CaixaResponseDto | null>(
+    null
+  );
+  const [isLoadingCaixa, setIsLoadingCaixa] = useState(true);
+  const [errorCaixa, setErrorCaixa] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCaixaEmAberto = async () => {
+      try {
+        debugger;
+        const response = await api.get<CaixaResponseDto[]>("/caixas/abertos");
+        if (response.data) {
+          if (response.data.length > 0) {
+            setCaixaEmAberto(response.data[0]);
+          } else {
+            // verificar se foi 404
+            if (response.status === 404) {
+              setErrorCaixa("Nenhum caixa em aberto encontrado");
+            } else {
+              setErrorCaixa("Erro ao buscar caixa em aberto");
+            }
+          }
+        } else {
+          if (response.status === 404) {
+            setErrorCaixa("Nenhum caixa em aberto encontrado");
+          } else {
+            setErrorCaixa("Erro ao buscar caixa em aberto");
+          }
+        }
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status === 404) {
+            setErrorCaixa("Nenhum caixa em aberto encontrado");
+          } else {
+            setErrorCaixa("Erro ao buscar caixa em aberto");
+          }
+        } else {
+          setErrorCaixa("Erro ao buscar caixa em aberto");
+        }
+      } finally {
+        setIsLoadingCaixa(false);
+      }
+    };
+    fetchCaixaEmAberto();
+  }, []);
+
+  if (isLoadingCaixa) {
+    return <LoaderCaixa />;
+  }
+  if (errorCaixa) {
+    if (errorCaixa === "Nenhum caixa em aberto encontrado") {
+      return (
+        <AbrirCaixa
+          setErrorCaixa={setErrorCaixa}
+          setCaixaEmAberto={setCaixaEmAberto}
+        />
+      );
+    } else {
+      return <ErrorCaixa error={errorCaixa} />;
+    }
+  }
 
   return (
     <div className="flex min-h-screen h-screen w-full">
@@ -1045,6 +1120,7 @@ export default function GerenciarVendas({
       <Fab
         color="primary"
         aria-label="Adicionar novo pedido"
+        title="Adicionar novo pedido"
         onClick={() => router.push("/vendas/new")}
         sx={{
           position: "fixed",
@@ -1054,6 +1130,21 @@ export default function GerenciarVendas({
         }}
       >
         <Add />
+      </Fab>
+
+      <Fab
+        color="primary"
+        aria-label="Resumo do Caixa"
+        onClick={handleAbrirDialogResumoCaixa}
+        title="Resumo do Caixa"
+        sx={{
+          position: "fixed",
+          bottom: 80,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <Receipt sx={{ fontSize: 24 }} />
       </Fab>
 
       {/* Diálogo de Filtros */}
@@ -1321,6 +1412,11 @@ export default function GerenciarVendas({
         user={user} // Você precisará passar o user como prop para o componente
         cliente={clienteParaEdicao as ClienteResponse}
         onClienteSaved={handleClienteSalvo}
+      />
+      <DialogResumoCaixa
+        open={dialogResumoCaixaOpen}
+        onClose={handleFecharDialogResumoCaixa}
+        id_caixa={caixaEmAberto?.id || ""}
       />
     </div>
   );

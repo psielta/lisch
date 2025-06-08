@@ -1,5 +1,5 @@
 "use client";
-import { Print } from "@mui/icons-material";
+import { ArrowBack, Print } from "@mui/icons-material";
 import { useAuth, User, Tenant } from "@/context/auth-context";
 import { ProdutoResponse } from "@/rxjs/produto/produto.model";
 import DialogCliente from "@/components/dialogs/DialogCliente";
@@ -44,6 +44,7 @@ import {
   Paper,
   Grid,
   CircularProgress,
+  Fab,
 } from "@mui/material";
 
 import { ItemModal as NewItemModal } from "../vendas/ItemModal";
@@ -99,6 +100,12 @@ import { getClientesPorCelular } from "@/proxies/getclientesporcelular";
 import { upsertCliente, UpsertClienteDTO } from "@/proxies/upsertcliente";
 import { onlyDigits } from "@/utils/onlyDigits";
 import { isUuid } from "@/lib/utils";
+import { CaixaResponseDto } from "@/proxies/caixa-proxies";
+import { AxiosError } from "axios";
+import LoaderCaixa from "@/components/my/LoaderCaixa";
+import AbrirCaixa from "@/components/my/AbrirCaixa";
+import ErrorCaixa from "@/components/my/ErrorCaixa";
+import DialogResumoCaixa from "@/components/dialogs/DialogResumoCaixa";
 
 // Interfaces
 interface PedidoFormValues {
@@ -335,6 +342,13 @@ function Vendas({
     "idle" | "searching" | "found" | "not-found"
   >("idle");
   const formikRef = useRef<FormikProps<PedidoFormValues>>(null);
+  const [dialogResumoCaixaOpen, setDialogResumoCaixaOpen] = useState(false);
+  const handleAbrirDialogResumoCaixa = () => {
+    setDialogResumoCaixaOpen(true);
+  };
+  const handleFecharDialogResumoCaixa = () => {
+    setDialogResumoCaixaOpen(false);
+  };
 
   const getCodigoPadrao = () => {
     const now = new Date();
@@ -710,6 +724,68 @@ function Vendas({
       setIsPrintLoading(false);
     }
   };
+
+  const [caixaEmAberto, setCaixaEmAberto] = useState<CaixaResponseDto | null>(
+    null
+  );
+  const [isLoadingCaixa, setIsLoadingCaixa] = useState(true);
+  const [errorCaixa, setErrorCaixa] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCaixaEmAberto = async () => {
+      try {
+        debugger;
+        const response = await api.get<CaixaResponseDto[]>("/caixas/abertos");
+        if (response.data) {
+          if (response.data.length > 0) {
+            setCaixaEmAberto(response.data[0]);
+          } else {
+            // verificar se foi 404
+            if (response.status === 404) {
+              setErrorCaixa("Nenhum caixa em aberto encontrado");
+            } else {
+              setErrorCaixa("Erro ao buscar caixa em aberto");
+            }
+          }
+        } else {
+          if (response.status === 404) {
+            setErrorCaixa("Nenhum caixa em aberto encontrado");
+          } else {
+            setErrorCaixa("Erro ao buscar caixa em aberto");
+          }
+        }
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          if (error.response?.status === 404) {
+            setErrorCaixa("Nenhum caixa em aberto encontrado");
+          } else {
+            setErrorCaixa("Erro ao buscar caixa em aberto");
+          }
+        } else {
+          setErrorCaixa("Erro ao buscar caixa em aberto");
+        }
+      } finally {
+        setIsLoadingCaixa(false);
+      }
+    };
+    fetchCaixaEmAberto();
+  }, []);
+
+  if (isLoadingCaixa) {
+    return <LoaderCaixa />;
+  }
+  if (errorCaixa) {
+    if (errorCaixa === "Nenhum caixa em aberto encontrado") {
+      return (
+        <AbrirCaixa
+          setErrorCaixa={setErrorCaixa}
+          setCaixaEmAberto={setCaixaEmAberto}
+        />
+      );
+    } else {
+      return <ErrorCaixa error={errorCaixa} />;
+    }
+  }
 
   return (
     <>
@@ -2305,6 +2381,40 @@ function Vendas({
           );
         }}
       </Formik>
+      <Fab
+        color="primary"
+        aria-label="Resumo do Caixa"
+        onClick={handleAbrirDialogResumoCaixa}
+        title="Resumo do Caixa"
+        sx={{
+          position: "fixed",
+          bottom: 80,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <Receipt sx={{ fontSize: 24 }} />
+      </Fab>
+      <Fab
+        color="primary"
+        aria-label="Voltar"
+        title="Voltar"
+        onClick={() => router.push("/gerenciar-vendas")}
+        sx={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <ArrowBack />
+      </Fab>
+
+      <DialogResumoCaixa
+        open={dialogResumoCaixaOpen}
+        onClose={handleFecharDialogResumoCaixa}
+        id_caixa={caixaEmAberto?.id || ""}
+      />
     </>
   );
 }

@@ -4,6 +4,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { getMe } from "@/proxies/users/GetMe";
+import {
+  getOperadorCaixa,
+  OperadorCaixaResponse,
+} from "@/proxies/operador-caixa-proxies";
 
 export interface User {
   id: string;
@@ -46,6 +50,7 @@ interface LoginInput {
 interface AuthCtx {
   user: User | null;
   tenant: Tenant | null;
+  operadorCaixa: OperadorCaixaResponse | null;
   reloadUser: () => void;
   loading: boolean;
   login(data: LoginInput): Promise<void>;
@@ -59,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [operadorCaixa, setOperadorCaixa] =
+    useState<OperadorCaixaResponse | null>(null);
   const router = useRouter();
 
   function reloadUser() {
@@ -115,9 +122,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user && user.id) {
+      getOperadorCaixa(user.id)
+        .then((operadorCaixa) =>
+          setOperadorCaixa(operadorCaixa as OperadorCaixaResponse)
+        )
+        .catch(() => setOperadorCaixa(null));
+    } else {
+      setOperadorCaixa(null);
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, reloadUser, tenant }}
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        reloadUser,
+        tenant,
+        operadorCaixa,
+      }}
     >
       {children}
     </AuthContext.Provider>

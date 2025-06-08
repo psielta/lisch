@@ -5,3 +5,31 @@ RETURNING *;
 
 -- name: GetCaixaAbertosPorTenant :many
 SELECT * FROM caixas WHERE tenant_id = $1 AND status = 'A' AND deleted_at IS NULL;
+
+-- name: SuprimentoCaixa :one
+INSERT INTO caixa_movimentacoes
+(id_caixa, tipo, valor, observacao, autorizado_por)
+VALUES
+($1, 'U', $2, $3, $4)
+RETURNING *;
+
+-- name: RemoveSuprimentoCaixa :exec
+UPDATE caixa_movimentacoes
+    set deleted_at = now()
+    where id = $1;
+
+-- name: SangriaCaixa :one
+INSERT INTO caixa_movimentacoes
+(id_caixa, tipo, valor, observacao, autorizado_por)
+VALUES
+($1, 'S', $2, $3, $4)
+RETURNING *;
+
+-- name: RemoveSangriaCaixa :exec
+UPDATE caixa_movimentacoes
+    set deleted_at = now()
+    where id = $1;
+
+-- name: ResumoCaixaAberto :many
+SELECT *
+FROM calcular_valores_esperados_caixa($1);

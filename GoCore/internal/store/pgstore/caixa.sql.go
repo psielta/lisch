@@ -90,3 +90,130 @@ func (q *Queries) InsertCaixa(ctx context.Context, arg InsertCaixaParams) (Caixa
 	)
 	return i, err
 }
+
+const removeSangriaCaixa = `-- name: RemoveSangriaCaixa :exec
+UPDATE caixa_movimentacoes
+    set deleted_at = now()
+    where id = $1
+`
+
+func (q *Queries) RemoveSangriaCaixa(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeSangriaCaixa, id)
+	return err
+}
+
+const removeSuprimentoCaixa = `-- name: RemoveSuprimentoCaixa :exec
+UPDATE caixa_movimentacoes
+    set deleted_at = now()
+    where id = $1
+`
+
+func (q *Queries) RemoveSuprimentoCaixa(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeSuprimentoCaixa, id)
+	return err
+}
+
+const resumoCaixaAberto = `-- name: ResumoCaixaAberto :many
+SELECT calcular_valores_esperados_caixa
+FROM calcular_valores_esperados_caixa($1)
+`
+
+func (q *Queries) ResumoCaixaAberto(ctx context.Context, pCaixaID uuid.UUID) ([]interface{}, error) {
+	rows, err := q.db.Query(ctx, resumoCaixaAberto, pCaixaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []interface{}
+	for rows.Next() {
+		var calcular_valores_esperados_caixa interface{}
+		if err := rows.Scan(&calcular_valores_esperados_caixa); err != nil {
+			return nil, err
+		}
+		items = append(items, calcular_valores_esperados_caixa)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const sangriaCaixa = `-- name: SangriaCaixa :one
+INSERT INTO caixa_movimentacoes
+(id_caixa, tipo, valor, observacao, autorizado_por)
+VALUES
+($1, 'S', $2, $3, $4)
+RETURNING id, seq_id, id_caixa, tipo, id_forma_pagamento, valor, observacao, id_pagamento, autorizado_por, created_at, updated_at, deleted_at
+`
+
+type SangriaCaixaParams struct {
+	IDCaixa       uuid.UUID      `json:"id_caixa"`
+	Valor         pgtype.Numeric `json:"valor"`
+	Observacao    pgtype.Text    `json:"observacao"`
+	AutorizadoPor pgtype.UUID    `json:"autorizado_por"`
+}
+
+func (q *Queries) SangriaCaixa(ctx context.Context, arg SangriaCaixaParams) (CaixaMovimentaco, error) {
+	row := q.db.QueryRow(ctx, sangriaCaixa,
+		arg.IDCaixa,
+		arg.Valor,
+		arg.Observacao,
+		arg.AutorizadoPor,
+	)
+	var i CaixaMovimentaco
+	err := row.Scan(
+		&i.ID,
+		&i.SeqID,
+		&i.IDCaixa,
+		&i.Tipo,
+		&i.IDFormaPagamento,
+		&i.Valor,
+		&i.Observacao,
+		&i.IDPagamento,
+		&i.AutorizadoPor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const suprimentoCaixa = `-- name: SuprimentoCaixa :one
+INSERT INTO caixa_movimentacoes
+(id_caixa, tipo, valor, observacao, autorizado_por)
+VALUES
+($1, 'U', $2, $3, $4)
+RETURNING id, seq_id, id_caixa, tipo, id_forma_pagamento, valor, observacao, id_pagamento, autorizado_por, created_at, updated_at, deleted_at
+`
+
+type SuprimentoCaixaParams struct {
+	IDCaixa       uuid.UUID      `json:"id_caixa"`
+	Valor         pgtype.Numeric `json:"valor"`
+	Observacao    pgtype.Text    `json:"observacao"`
+	AutorizadoPor pgtype.UUID    `json:"autorizado_por"`
+}
+
+func (q *Queries) SuprimentoCaixa(ctx context.Context, arg SuprimentoCaixaParams) (CaixaMovimentaco, error) {
+	row := q.db.QueryRow(ctx, suprimentoCaixa,
+		arg.IDCaixa,
+		arg.Valor,
+		arg.Observacao,
+		arg.AutorizadoPor,
+	)
+	var i CaixaMovimentaco
+	err := row.Scan(
+		&i.ID,
+		&i.SeqID,
+		&i.IDCaixa,
+		&i.Tipo,
+		&i.IDFormaPagamento,
+		&i.Valor,
+		&i.Observacao,
+		&i.IDPagamento,
+		&i.AutorizadoPor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}

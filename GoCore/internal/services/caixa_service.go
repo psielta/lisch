@@ -42,3 +42,47 @@ func (cs *CaixaService) GetCaixaAbertosPorTenant(ctx context.Context, tenantID u
 	}
 	return dto.CaixasToCaixasResponseDto(caixas), nil
 }
+
+func (cs *CaixaService) SuprimentoCaixa(ctx context.Context, suprimento dto.SuprimentoCaixaDto) (dto.CaixaMovimentacoDto, error) {
+	suprimentoParams, err := dto.SuprimentoCaixaDtoToSuprimentoCaixaParams(suprimento)
+	if err != nil {
+		return dto.CaixaMovimentacoDto{}, err
+	}
+
+	suprimentoDB, err := cs.queries.SuprimentoCaixa(ctx, suprimentoParams)
+	if err != nil {
+		return dto.CaixaMovimentacoDto{}, err
+	}
+
+	return dto.CaixaMovimentacoToCaixaMovimentacoDto(suprimentoDB), nil
+}
+
+func (cs *CaixaService) SangriaCaixa(ctx context.Context, sangria dto.SangriaCaixaDto) (dto.CaixaMovimentacoDto, error) {
+	sangriaParams, err := dto.SangriaCaixaDtoToSangriaCaixaParams(sangria)
+	if err != nil {
+		return dto.CaixaMovimentacoDto{}, err
+	}
+
+	sangriaDB, err := cs.queries.SangriaCaixa(ctx, sangriaParams)
+	if err != nil {
+		return dto.CaixaMovimentacoDto{}, err
+	}
+
+	return dto.CaixaMovimentacoToCaixaMovimentacoDto(sangriaDB), nil
+}
+
+func (cs *CaixaService) RemoveSangriaCaixa(ctx context.Context, id uuid.UUID) error {
+	return cs.queries.RemoveSangriaCaixa(ctx, id)
+}
+
+func (cs *CaixaService) RemoveSuprimentoCaixa(ctx context.Context, id uuid.UUID) error {
+	return cs.queries.RemoveSuprimentoCaixa(ctx, id)
+}
+
+func (cs *CaixaService) ResumoCaixaAberto(ctx context.Context, caixaID uuid.UUID) ([]dto.ValorEsperadoFormaDto, error) {
+	resumo, err := cs.queries.ResumoCaixaAberto(ctx, caixaID)
+	if err != nil {
+		return nil, err
+	}
+	return dto.InterfaceToValorEsperadoFormaDto(resumo)
+}

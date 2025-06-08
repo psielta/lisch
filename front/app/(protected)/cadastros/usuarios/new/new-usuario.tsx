@@ -44,10 +44,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import AlertWarningNoPermission from "@/components/my/AlertWarningNoPermission";
+import {
+  upsertOperadorCaixa,
+  UpsertOperadorCaixaDTO,
+} from "@/proxies/operador-caixa-proxies";
 
 const userSchema = z.object({
   tenant_id: z
@@ -64,6 +69,9 @@ const userSchema = z.object({
   permission_produto: z.boolean().optional(),
   permission_adicional: z.boolean().optional(),
   permission_cliente: z.boolean().optional(),
+  // Campos do operador de caixa
+  operador_caixa_ativo: z.enum(["0", "1"]),
+  operador_caixa_codigo: z.string().optional(),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -92,14 +100,21 @@ function NewUsuario({ user }: { user: User }) {
       permission_produto: false,
       permission_adicional: false,
       permission_cliente: false,
+      operador_caixa_ativo: "0",
+      operador_caixa_codigo: "",
     },
   });
 
   const onSubmit = async (data: UserForm) => {
     setIsSaving(true);
     try {
-      const response = await api.post("/users/signup", {
-        ...data,
+      // Primeiro, cria o usuário
+      const userResponse = await api.post("/users/signup", {
+        tenant_id: data.tenant_id,
+        user_name: data.user_name,
+        email: data.email,
+        bio: data.bio,
+        password: data.password,
         // Converte boolean para inteiro (conforme banco de dados)
         admin: data.admin ? 1 : 0,
         permission_users: data.permission_users ? 1 : 0,
@@ -109,24 +124,36 @@ function NewUsuario({ user }: { user: User }) {
         permission_cliente: data.permission_cliente ? 1 : 0,
       });
 
-      if (response.status === 200) {
-        toast.success("Usuário atualizado com sucesso.");
+      if (userResponse.status === 200) {
+        // Pega o ID do usuário criado
+        const userId = userResponse.data.id;
+
+        // Depois, cria/atualiza o operador de caixa
+        const operadorCaixaData: UpsertOperadorCaixaDTO = {
+          tenant_id: data.tenant_id,
+          id_usuario: userId,
+          nome: data.user_name,
+          codigo: data.operador_caixa_codigo || null,
+          ativo: parseInt(data.operador_caixa_ativo),
+        };
+
+        await upsertOperadorCaixa(operadorCaixaData);
+
+        toast.success("Usuário e operador de caixa criados com sucesso.");
         router.push("/cadastros/usuarios");
       } else {
-        toast.error(response.data?.error || "Erro ao atualizar usuário.");
+        toast.error(userResponse.data?.error || "Erro ao criar usuário.");
       }
     } catch (error) {
       if (error instanceof AxiosError) {
-        toast.error(
-          error.response?.data?.error || "Erro ao atualizar usuário."
-        );
+        toast.error(error.response?.data?.error || "Erro ao criar usuário.");
       } else if (error instanceof Error) {
         toast.error(error.message);
       } else if (error instanceof ZodError) {
         toast.error(error.message);
       } else {
-        console.error("Erro ao atualizar usuário:", error);
-        toast.error("Erro ao atualizar usuário.");
+        console.error("Erro ao criar usuário:", error);
+        toast.error("Erro ao criar usuário.");
       }
     } finally {
       setIsSaving(false);
@@ -149,7 +176,7 @@ function NewUsuario({ user }: { user: User }) {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{form.getValues("user_name")}</BreadcrumbPage>
+              <BreadcrumbPage>Novo Usuário</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -167,11 +194,9 @@ function NewUsuario({ user }: { user: User }) {
 
       <Card className="shadow-md bg-card">
         <CardHeader className="border-b">
-          <CardTitle className="text-2xl font-semibold">
-            Editar Usuário
-          </CardTitle>
+          <CardTitle className="text-2xl font-semibold">Novo Usuário</CardTitle>
           <CardDescription>
-            Altere os dados do usuário conforme necessário.
+            Preencha os dados para criar um novo usuário.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -313,6 +338,63 @@ function NewUsuario({ user }: { user: User }) {
                 ))}
               </div>
 
+              <Separator className="my-4" />
+              <h3 className="text-lg font-medium mb-4">Operador de Caixa</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Status Ativo */}
+                <FormField
+                  control={form.control}
+                  name="operador_caixa_ativo"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1" id="ativo-sim" />
+                            <FormLabel htmlFor="ativo-sim">Ativo</FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="0" id="ativo-nao" />
+                            <FormLabel htmlFor="ativo-nao">Inativo</FormLabel>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormDescription>
+                        Define se o usuário pode operar o caixa.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Código do Operador */}
+                <FormField
+                  control={form.control}
+                  name="operador_caixa_codigo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Código do Operador</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Digite o código do operador"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Código único para identificação no caixa (opcional).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="mt-4" />
             </CardContent>
             <CardFooter className="flex justify-end space-x-2 border-t pt-6">
@@ -324,7 +406,7 @@ function NewUsuario({ user }: { user: User }) {
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSaving} className="gap-2">
-                {isSaving && <Loader2 />}
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 <Save className="h-4 w-4 mr-1" />
                 Salvar Novo Usuário
               </Button>

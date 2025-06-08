@@ -40,6 +40,8 @@ func (api *Api) BindRoutes() {
 					r.Put("/putnopassword/{id}", api.handleUpdateUserNoPassword)
 					r.Delete("/delete/{id}", api.handleDeleteUser)
 					r.Get("/list", api.handleListUsers)
+					r.Get("/{id}/operador-caixa", api.handleGetOperadorCaixa)
+					r.Post("/{id}/operador-caixa", api.handlePostOperadorCaixa)
 				})
 			})
 

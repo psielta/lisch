@@ -2,8 +2,10 @@ package api
 
 import (
 	"errors"
+	"gobid/internal/dto"
 	"gobid/internal/jsonutils"
 	"gobid/internal/services"
+	"gobid/internal/store/pgstore"
 	"gobid/internal/usecase/user"
 	"net/http"
 	"time"
@@ -421,4 +423,63 @@ func (api *Api) handleGetCurrentUserToken(w http.ResponseWriter, r *http.Request
 	}
 
 	jsonutils.EncodeJson(w, r, http.StatusOK, userDTO)
+}
+
+func (api *Api) handleGetOperadorCaixa(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	idUUID, err := uuid.Parse(id)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "formato de userID inválido"})
+		return
+	}
+
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+
+	operadorCaixa, err := api.OperadorCaixaService.GetOperadorCaixa(r.Context(), idUUID, tenantID)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "falha ao buscar operador de caixa"})
+		return
+	}
+
+	if operadorCaixa == (pgstore.GetOprRow{}) {
+		jsonutils.EncodeJson(w, r, http.StatusNotFound, map[string]any{"error": "operador de caixa não encontrado"})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, dto.GetOprRowToGetOperadorCaixaResponse(operadorCaixa))
+}
+
+func (api *Api) handlePostOperadorCaixa(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	idUUID, err := uuid.Parse(id)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "formato de userID inválido"})
+		return
+	}
+
+	data, problems, err := jsonutils.DecodeValidJsonV10[dto.UpsertOperadorCaixaDTO](r)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, problems)
+		return
+	}
+
+	// verificar se id do body é igual ao id do usuario
+	if data.IDUsuario != idUUID {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{"error": "id do usuario não corresponde ao id do body"})
+		return
+	}
+
+	operadorCaixaParams := dto.UpsertOperadorCaixaDTOToUpsertOperadorCaixaCompletoParams(data)
+
+	operadorCaixa, err := api.OperadorCaixaService.UpsertOperadorCaixaCompleto(r.Context(), operadorCaixaParams)
+	if err != nil {
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "falha ao criar operador de caixa"})
+		return
+	}
+
+	jsonutils.EncodeJson(w, r, http.StatusOK, dto.UpsertOperadorCaixaCompletoRowToOperadorCaixaResponse(operadorCaixa))
 }

@@ -44,10 +44,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import AlertWarningNoPermission from "@/components/my/AlertWarningNoPermission";
+import {
+  upsertOperadorCaixa,
+  UpsertOperadorCaixaDTO,
+  getOperadorCaixa,
+  OperadorCaixaResponse,
+} from "@/proxies/operador-caixa-proxies";
 
 const userSchema = z.object({
   id: z.string().uuid("ID deve ser um UUID válido").min(1, "ID é obrigatório"),
@@ -70,6 +77,9 @@ const userSchema = z.object({
   permission_produto: z.boolean().optional(),
   permission_adicional: z.boolean().optional(),
   permission_cliente: z.boolean().optional(),
+  // Campos do operador de caixa
+  operador_caixa_ativo: z.enum(["0", "1"]),
+  operador_caixa_codigo: z.string().optional(),
 });
 
 type UserForm = z.infer<typeof userSchema>;
@@ -83,6 +93,9 @@ function EditUsuario({
 }) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [operadorCaixa, setOperadorCaixa] =
+    useState<OperadorCaixaResponse | null>(null);
   const { id } = useParams();
 
   if (user.admin !== 1) {
@@ -106,16 +119,48 @@ function EditUsuario({
       permission_produto: initial.permission_produto === 1,
       permission_adicional: initial.permission_adicional === 1,
       permission_cliente: initial.permission_cliente === 1,
+      operador_caixa_ativo: "0",
+      operador_caixa_codigo: "",
     },
   });
+
+  // Carrega os dados do operador de caixa
+  useEffect(() => {
+    const loadOperadorCaixa = async () => {
+      try {
+        setIsLoading(true);
+        const operadorData = await getOperadorCaixa(id as string);
+        setOperadorCaixa(operadorData);
+
+        // Atualiza os valores do formulário com os dados do operador
+        form.setValue(
+          "operador_caixa_ativo",
+          operadorData.ativo.toString() as "0" | "1"
+        );
+        form.setValue("operador_caixa_codigo", operadorData.codigo || "");
+      } catch (error) {
+        // Se não encontrar operador de caixa, mantém os valores padrão
+        console.log("Operador de caixa não encontrado, usando valores padrão");
+        setOperadorCaixa(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadOperadorCaixa();
+    }
+  }, [id, form]);
 
   const onSubmit = async (data: UserForm) => {
     setIsSaving(true);
     try {
+      // Primeiro, atualiza o usuário
       let endpoint = "/users/put";
       if (!data.password || data.password === "") {
         endpoint = "/users/putnopassword";
       }
+
       const response = await api.put(`${endpoint}/${id}`, {
         ...data,
         // Converte boolean para inteiro (conforme banco de dados)
@@ -128,7 +173,18 @@ function EditUsuario({
       });
 
       if (response.status === 200) {
-        toast.success("Usuário atualizado com sucesso.");
+        // Depois, atualiza o operador de caixa
+        const operadorCaixaData: UpsertOperadorCaixaDTO = {
+          tenant_id: data.tenant_id,
+          id_usuario: data.id,
+          nome: data.user_name,
+          codigo: data.operador_caixa_codigo || null,
+          ativo: parseInt(data.operador_caixa_ativo),
+        };
+
+        await upsertOperadorCaixa(operadorCaixaData);
+
+        toast.success("Usuário e operador de caixa atualizados com sucesso.");
         router.push("/cadastros/usuarios");
       } else {
         toast.error(response.data?.error || "Erro ao atualizar usuário.");
@@ -150,6 +206,10 @@ function EditUsuario({
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="container mx-auto py-9">
@@ -344,6 +404,66 @@ function EditUsuario({
                   />
                 ))}
               </div>
+
+              <Separator className="my-4" />
+              <h3 className="text-lg font-medium mb-4">Operador de Caixa</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Status Ativo */}
+                <FormField
+                  control={form.control}
+                  name="operador_caixa_ativo"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="1" id="ativo-sim" />
+                            <FormLabel htmlFor="ativo-sim">Ativo</FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="0" id="ativo-nao" />
+                            <FormLabel htmlFor="ativo-nao">Inativo</FormLabel>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormDescription>
+                        Define se o usuário pode operar o caixa.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Código do Operador */}
+                <FormField
+                  control={form.control}
+                  name="operador_caixa_codigo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Código do Operador</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Digite o código do operador"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Código único para identificação no caixa (opcional).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="mt-4" />
             </CardContent>
             <CardFooter className="flex justify-end space-x-2 border-t pt-6 mt-6">
               <Button
@@ -354,7 +474,7 @@ function EditUsuario({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSaving} className="gap-2">
-                {isSaving && <Loader2 />}
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 <Save className="h-4 w-4 mr-1" />
                 Salvar Alterações
               </Button>

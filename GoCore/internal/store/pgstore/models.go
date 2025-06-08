@@ -5,11 +5,133 @@
 package pgstore
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type StatusCaixa string
+
+const (
+	StatusCaixaA StatusCaixa = "A"
+	StatusCaixaF StatusCaixa = "F"
+)
+
+func (e *StatusCaixa) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StatusCaixa(s)
+	case string:
+		*e = StatusCaixa(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StatusCaixa: %T", src)
+	}
+	return nil
+}
+
+type NullStatusCaixa struct {
+	StatusCaixa StatusCaixa `json:"status_caixa"`
+	Valid       bool        `json:"valid"` // Valid is true if StatusCaixa is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStatusCaixa) Scan(value interface{}) error {
+	if value == nil {
+		ns.StatusCaixa, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StatusCaixa.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStatusCaixa) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StatusCaixa), nil
+}
+
+// Sessões de caixa - abertura & fechamento (status_caixa ENUM)
+type Caixa struct {
+	ID                   uuid.UUID          `json:"id"`
+	SeqID                int64              `json:"seq_id"`
+	TenantID             uuid.UUID          `json:"tenant_id"`
+	IDOperador           uuid.UUID          `json:"id_operador"`
+	DataAbertura         time.Time          `json:"data_abertura"`
+	DataFechamento       pgtype.Timestamptz `json:"data_fechamento"`
+	ValorAbertura        pgtype.Numeric     `json:"valor_abertura"`
+	ObservacaoAbertura   pgtype.Text        `json:"observacao_abertura"`
+	ObservacaoFechamento pgtype.Text        `json:"observacao_fechamento"`
+	// A=Aberto, F=Fechado
+	Status    StatusCaixa        `json:"status"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+// Valores informados no fechamento às cegas por forma de pagamento
+type CaixaFechamentoForma struct {
+	ID               uuid.UUID      `json:"id"`
+	SeqID            int64          `json:"seq_id"`
+	IDCaixa          uuid.UUID      `json:"id_caixa"`
+	IDFormaPagamento int16          `json:"id_forma_pagamento"`
+	ValorEsperado    pgtype.Numeric `json:"valor_esperado"`
+	ValorInformado   pgtype.Numeric `json:"valor_informado"`
+	Diferenca        pgtype.Numeric `json:"diferenca"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+}
+
+// Movimentações de caixa (pagamento, sangria, suprimento)
+type CaixaMovimentaco struct {
+	ID      uuid.UUID `json:"id"`
+	SeqID   int64     `json:"seq_id"`
+	IDCaixa uuid.UUID `json:"id_caixa"`
+	// S=Sangria (saída), U=Suprimento (entrada), P=Pagamento (entrada)
+	Tipo             string             `json:"tipo"`
+	IDFormaPagamento pgtype.Int2        `json:"id_forma_pagamento"`
+	Valor            pgtype.Numeric     `json:"valor"`
+	Observacao       pgtype.Text        `json:"observacao"`
+	IDPagamento      pgtype.UUID        `json:"id_pagamento"`
+	AutorizadoPor    pgtype.UUID        `json:"autorizado_por"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CaixaMovimentacoesView struct {
+	ID               uuid.UUID          `json:"id"`
+	SeqID            int64              `json:"seq_id"`
+	IDCaixa          uuid.UUID          `json:"id_caixa"`
+	Tipo             string             `json:"tipo"`
+	IDFormaPagamento pgtype.Int2        `json:"id_forma_pagamento"`
+	Valor            pgtype.Numeric     `json:"valor"`
+	Observacao       pgtype.Text        `json:"observacao"`
+	IDPagamento      pgtype.UUID        `json:"id_pagamento"`
+	AutorizadoPor    pgtype.UUID        `json:"autorizado_por"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CaixasView struct {
+	ID                   uuid.UUID          `json:"id"`
+	SeqID                int64              `json:"seq_id"`
+	TenantID             uuid.UUID          `json:"tenant_id"`
+	IDOperador           uuid.UUID          `json:"id_operador"`
+	DataAbertura         time.Time          `json:"data_abertura"`
+	DataFechamento       pgtype.Timestamptz `json:"data_fechamento"`
+	ValorAbertura        pgtype.Numeric     `json:"valor_abertura"`
+	ObservacaoAbertura   pgtype.Text        `json:"observacao_abertura"`
+	ObservacaoFechamento pgtype.Text        `json:"observacao_fechamento"`
+	Status               StatusCaixa        `json:"status"`
+	CreatedAt            time.Time          `json:"created_at"`
+	UpdatedAt            time.Time          `json:"updated_at"`
+}
 
 // Armazena as categorias de produtos do cardápio de um tenant
 type Categoria struct {
@@ -208,6 +330,41 @@ type Culinaria struct {
 	IDCulinaria int32  `json:"id_culinaria"`
 	Nome        string `json:"nome"`
 	MeioMeio    int16  `json:"meio_meio"`
+}
+
+type FormasPagamento struct {
+	ID     int16       `json:"id"`
+	Codigo string      `json:"codigo"`
+	Nome   string      `json:"nome"`
+	Tipo   string      `json:"tipo"`
+	Ativo  int16       `json:"ativo"`
+	Ordem  pgtype.Int2 `json:"ordem"`
+}
+
+type OperadoresCaixa struct {
+	ID        uuid.UUID          `json:"id"`
+	SeqID     int64              `json:"seq_id"`
+	TenantID  uuid.UUID          `json:"tenant_id"`
+	IDUsuario uuid.UUID          `json:"id_usuario"`
+	Nome      string             `json:"nome"`
+	Codigo    pgtype.Text        `json:"codigo"`
+	Ativo     int16              `json:"ativo"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type OperadoresCaixaView struct {
+	ID        uuid.UUID          `json:"id"`
+	SeqID     int64              `json:"seq_id"`
+	TenantID  uuid.UUID          `json:"tenant_id"`
+	IDUsuario uuid.UUID          `json:"id_usuario"`
+	Nome      string             `json:"nome"`
+	Codigo    pgtype.Text        `json:"codigo"`
+	Ativo     int16              `json:"ativo"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type OutboxEvent struct {

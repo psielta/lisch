@@ -77,17 +77,18 @@ func main() {
 	validate := validation.Init()
 
 	api := api.Api{
-		Router:           chi.NewMux(),
-		Logger:           logger,
-		UserService:      services.NewUserService(pool),
-		ClienteService:   services.NewClienteService(pool),
-		DashboardService: services.NewDashboardService(pool),
-		OutboxService:    services.NewOutboxService(pool),
-		Sessions:         s,
-		JWTSecret:        []byte(jwtSecret),
-		Validate:         validate,
-		DBPool:           pool,
-		SQLBoilerDB:      sqlBoilerDB, // Use o adaptador SQLBoiler
+		Router:               chi.NewMux(),
+		Logger:               logger,
+		UserService:          services.NewUserService(pool),
+		ClienteService:       services.NewClienteService(pool),
+		DashboardService:     services.NewDashboardService(pool),
+		OutboxService:        services.NewOutboxService(pool),
+		OperadorCaixaService: services.NewOperadorCaixaService(pool),
+		Sessions:             s,
+		JWTSecret:            []byte(jwtSecret),
+		Validate:             validate,
+		DBPool:               pool,
+		SQLBoilerDB:          sqlBoilerDB, // Use o adaptador SQLBoiler
 	}
 
 	api.BindRoutes()

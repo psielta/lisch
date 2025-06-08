@@ -20,17 +20,18 @@ import (
 )
 
 type Api struct {
-	Router           *chi.Mux
-	Logger           *zap.Logger
-	UserService      services.UserService
-	ClienteService   services.ClienteService
-	DashboardService services.DashboardService
-	OutboxService    services.OutboxService
-	Sessions         *scs.SessionManager
-	JWTSecret        []byte
-	tenantCache      sync.Map
-	userCache        sync.Map // <-- novo
-	cacheExpiration  time.Duration
+	Router               *chi.Mux
+	Logger               *zap.Logger
+	UserService          services.UserService
+	ClienteService       services.ClienteService
+	DashboardService     services.DashboardService
+	OutboxService        services.OutboxService
+	OperadorCaixaService services.OperadorCaixaService
+	Sessions             *scs.SessionManager
+	JWTSecret            []byte
+	tenantCache          sync.Map
+	userCache            sync.Map // <-- novo
+	cacheExpiration      time.Duration
 	// S3Service               services.S3Service
 	// ProdutoImagemService    services.ProdutoImagemService
 	Validate    *validator.Validate
@@ -54,23 +55,25 @@ func NewApi(router *chi.Mux,
 	clienteService services.ClienteService,
 	dashboardService services.DashboardService,
 	outboxService services.OutboxService,
+	operadorCaixaService services.OperadorCaixaService,
 	sessions *scs.SessionManager, jwtSecret []byte,
 	validate *validator.Validate,
 	pool *pgxpool.Pool,
 	sqlBoilerDB *database.SQLBoilerDB) *Api {
 	return &Api{
-		Router:           router,
-		Logger:           logger,
-		UserService:      userService,
-		ClienteService:   clienteService,
-		DashboardService: dashboardService,
-		OutboxService:    outboxService,
-		Sessions:         sessions,
-		JWTSecret:        jwtSecret,
-		cacheExpiration:  15 * time.Minute, // Cache expira em 15 minutos
-		Validate:         validate,
-		DBPool:           pool,
-		SQLBoilerDB:      sqlBoilerDB,
+		Router:               router,
+		Logger:               logger,
+		UserService:          userService,
+		ClienteService:       clienteService,
+		DashboardService:     dashboardService,
+		OutboxService:        outboxService,
+		OperadorCaixaService: operadorCaixaService,
+		Sessions:             sessions,
+		JWTSecret:            jwtSecret,
+		cacheExpiration:      15 * time.Minute, // Cache expira em 15 minutos
+		Validate:             validate,
+		DBPool:               pool,
+		SQLBoilerDB:          sqlBoilerDB,
 	}
 }
 

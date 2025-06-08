@@ -41,11 +41,19 @@ type GetOperadorCaixaResponse struct {
 }
 
 func UpsertOperadorCaixaDTOToUpsertOperadorCaixaCompletoParams(dto UpsertOperadorCaixaDTO) pgstore.UpsertOperadorCaixaCompletoParams {
+	var codigo pgtype.Text
+	if dto.Codigo != nil && *dto.Codigo != "" {
+		codigo = pgtype.Text{String: *dto.Codigo, Valid: true}
+	} else if dto.Codigo != nil {
+		// codigo presente mas vazio: retorna valor nulo
+		codigo = pgtype.Text{}
+	}
+
 	return pgstore.UpsertOperadorCaixaCompletoParams{
 		TenantID:  dto.TenantID,
 		IDUsuario: dto.IDUsuario,
 		Nome:      dto.Nome,
-		Codigo:    pgtype.Text{String: *dto.Codigo, Valid: dto.Codigo != nil},
+		Codigo:    codigo,
 		Ativo:     dto.Ativo,
 	}
 }

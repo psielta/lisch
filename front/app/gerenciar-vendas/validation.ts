@@ -351,17 +351,14 @@ export const validarFormaPagamento = (
 
   const formasValidas = {
     Cartão: [
-      "Débito",
-      "Crédito",
-      "Visa",
-      "Mastercard",
-      "Elo",
-      "Hipercard",
-      "American Express",
+      "Cartão de Débito",
+      "Cartão de Crédito",
+      "Vale Alimentação",
+      "Vale Refeição",
     ],
-    Dinheiro: ["Espécie", "Dinheiro"],
-    Pix: ["Pix"],
-  };
+    Dinheiro: ["Dinheiro", "Boleto Bancário", "Cheque", "Crediário"],
+    Pix: ["PIX", "Transferência Bancária"],
+  } as const;
 
   return forma.trim().length >= 2; // Validação básica - permite formas customizadas
 };

@@ -1417,6 +1417,8 @@ export default function GerenciarVendas({
         open={dialogResumoCaixaOpen}
         onClose={handleFecharDialogResumoCaixa}
         id_caixa={caixaEmAberto?.id || ""}
+        setErrorCaixa={setErrorCaixa}
+        setCaixaEmAberto={setCaixaEmAberto}
       />
     </div>
   );

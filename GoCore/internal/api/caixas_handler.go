@@ -163,3 +163,45 @@ func (api *Api) handleCaixas_Resumo(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonutils.EncodeJson(w, r, http.StatusOK, resumo)
 }
+
+func (api *Api) handleCaixas_InserirValoresInformados(w http.ResponseWriter, r *http.Request) {
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	data, problems, err := jsonutils.DecodeValidJsonV10[dto.InserirValoresInformadosParams](r)
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, problems)
+		return
+	}
+
+	err = api.CaixaService.InserirValoresInformados(r.Context(), data)
+	if err != nil {
+		api.Logger.Error("erro ao inserir valores informados", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "unexpected internal server error"})
+		return
+	}
+	jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{"message": "valores informados inseridos com sucesso"})
+}
+
+func (api *Api) handleCaixas_FecharCaixa(w http.ResponseWriter, r *http.Request) {
+	tenantID := api.getTenantIDFromContext(r)
+	if tenantID == uuid.Nil {
+		jsonutils.EncodeJson(w, r, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	data, problems, err := jsonutils.DecodeValidJsonV10[dto.FecharCaixaParams](r)
+	if err != nil {
+		_ = jsonutils.EncodeJson(w, r, http.StatusUnprocessableEntity, problems)
+		return
+	}
+
+	err = api.CaixaService.FecharCaixa(r.Context(), data)
+	if err != nil {
+		api.Logger.Error("erro ao fechar caixa", zap.Error(err))
+		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{"error": "unexpected internal server error"})
+		return
+	}
+	jsonutils.EncodeJson(w, r, http.StatusOK, map[string]any{"message": "caixa fechado com sucesso"})
+}

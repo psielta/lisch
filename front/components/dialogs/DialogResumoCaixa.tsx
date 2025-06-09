@@ -8,6 +8,8 @@ import {
   removeSangriaCaixa,
   removeSuprimentoCaixa,
   CaixaMovimentacaoDto,
+  inserirValoresInformados,
+  fecharCaixa,
 } from "@/proxies/sangria-suprimento-proxies";
 import { Close, Add, Remove } from "@mui/icons-material";
 import {
@@ -24,6 +26,8 @@ import { Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
+import { CaixaResponseDto } from "@/proxies/caixa-proxies";
+import { toast } from "sonner";
 
 const movimentacaoSchema = Yup.object().shape({
   valor: Yup.number()
@@ -32,16 +36,30 @@ const movimentacaoSchema = Yup.object().shape({
   observacao: Yup.string(),
 });
 
+const fechamentoSchema = Yup.object().shape({
+  observacao_fechamento: Yup.string(),
+  valores_informados: Yup.array().of(
+    Yup.object().shape({
+      id_forma_pagamento: Yup.number().required(),
+      valor_informado: Yup.number().required("Valor é obrigatório").min(0),
+    })
+  ),
+});
+
 export interface DialogResumoCaixaProps {
   open: boolean;
   onClose: () => void;
   id_caixa: string;
+  setErrorCaixa: (error: string | null) => void;
+  setCaixaEmAberto: (caixa: CaixaResponseDto | null) => void;
 }
 
 export default function DialogResumoCaixa({
   open,
   onClose,
   id_caixa,
+  setErrorCaixa,
+  setCaixaEmAberto,
 }: DialogResumoCaixaProps) {
   const [valorEsperadoForma, setValorEsperadoForma] = useState<
     ValorEsperadoFormaDto[]
@@ -52,6 +70,7 @@ export default function DialogResumoCaixa({
   );
   const [dialogSuprimentoOpen, setDialogSuprimentoOpen] = useState(false);
   const [dialogSangriaOpen, setDialogSangriaOpen] = useState(false);
+  const [dialogFechamentoOpen, setDialogFechamentoOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -105,6 +124,40 @@ export default function DialogResumoCaixa({
     }
   };
 
+  const handleFecharCaixa = async (values: {
+    observacao_fechamento: string;
+    valores_informados: {
+      id_forma_pagamento: number;
+      valor_informado: number;
+    }[];
+  }) => {
+    try {
+      // Inserir valores informados
+      for (const valor of values.valores_informados) {
+        await inserirValoresInformados({
+          id_caixa,
+          id_forma_pagamento: valor.id_forma_pagamento,
+          valor_informado: valor.valor_informado,
+        });
+      }
+
+      // Fechar caixa
+      await fecharCaixa({
+        id: id_caixa,
+        observacao_fechamento: values.observacao_fechamento || "",
+      });
+
+      toast.success("Caixa fechado com sucesso!");
+      setDialogFechamentoOpen(false);
+      onClose();
+      setCaixaEmAberto(null);
+      setErrorCaixa("Nenhum caixa em aberto encontrado");
+    } catch (error) {
+      console.error("Erro ao fechar caixa:", error);
+      toast.error("Erro ao fechar caixa");
+    }
+  };
+
   const MovimentacaoDialog = ({
     open,
     onClose,
@@ -125,7 +178,14 @@ export default function DialogResumoCaixa({
         validationSchema={movimentacaoSchema}
         onSubmit={onSubmit}
       >
-        {({ values, handleChange, handleBlur, errors, touched }) => (
+        {({
+          values,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          isSubmitting,
+        }) => (
           <Form>
             <DialogContent>
               <TextField
@@ -156,8 +216,131 @@ export default function DialogResumoCaixa({
             </DialogContent>
             <DialogActions>
               <Button onClick={onClose}>Cancelar</Button>
-              <Button type="submit" variant="contained" color="primary">
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isSubmitting}
+              >
                 Confirmar
+              </Button>
+            </DialogActions>
+          </Form>
+        )}
+      </Formik>
+    </Dialog>
+  );
+
+  const FechamentoDialog = () => (
+    <Dialog
+      open={dialogFechamentoOpen}
+      onClose={() => setDialogFechamentoOpen(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>Fechamento de Caixa</DialogTitle>
+      <Formik
+        initialValues={{
+          observacao_fechamento: "",
+          valores_informados: valorEsperadoForma.map((forma) => ({
+            id_forma_pagamento: forma.id_forma_pagamento,
+            valor_informado: 0,
+          })),
+        }}
+        validationSchema={fechamentoSchema}
+        onSubmit={handleFecharCaixa}
+      >
+        {({
+          values,
+          handleChange,
+          handleBlur,
+          errors,
+          touched,
+          isSubmitting,
+        }) => (
+          <Form>
+            <DialogContent>
+              {valorEsperadoForma.map((forma, index) => (
+                <Box key={forma.id_forma_pagamento} sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    name={`valores_informados.${index}.valor_informado`}
+                    label={`Valor em ${forma.nome_forma}`}
+                    type="number"
+                    value={values.valores_informados[index].valor_informado}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={
+                      touched.valores_informados?.[index] &&
+                      typeof errors.valores_informados?.[index] === "object" &&
+                      "valor_informado" in errors.valores_informados[index] &&
+                      Boolean(
+                        (
+                          errors.valores_informados[index] as {
+                            valor_informado: string;
+                          }
+                        ).valor_informado
+                      )
+                    }
+                    helperText={
+                      touched.valores_informados?.[index] &&
+                      typeof errors.valores_informados?.[index] === "object" &&
+                      "valor_informado" in errors.valores_informados[index] &&
+                      (
+                        errors.valores_informados[index] as {
+                          valor_informado: string;
+                        }
+                      ).valor_informado
+                    }
+                  />
+                  <Typography variant="caption" color="textSecondary">
+                    Valor Esperado:{" "}
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(forma.valor_esperado)}
+                    {" | "}
+                    Diferença:{" "}
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(
+                      values.valores_informados[index].valor_informado -
+                        forma.valor_esperado
+                    )}
+                  </Typography>
+                </Box>
+              ))}
+              <TextField
+                fullWidth
+                name="observacao_fechamento"
+                label="Observação do Fechamento"
+                multiline
+                rows={4}
+                value={values.observacao_fechamento}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={
+                  touched.observacao_fechamento &&
+                  Boolean(errors.observacao_fechamento)
+                }
+                helperText={
+                  touched.observacao_fechamento && errors.observacao_fechamento
+                }
+                margin="normal"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDialogFechamentoOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isSubmitting}
+              >
+                Fechar Caixa
               </Button>
             </DialogActions>
           </Form>
@@ -202,6 +385,13 @@ export default function DialogResumoCaixa({
                 onClick={() => setDialogSangriaOpen(true)}
               >
                 Sangria
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setDialogFechamentoOpen(true)}
+              >
+                Fechar Caixa
               </Button>
             </Box>
 
@@ -261,6 +451,8 @@ export default function DialogResumoCaixa({
         tipo="sangria"
         onSubmit={handleSangria}
       />
+
+      <FechamentoDialog />
     </>
   );
 }

@@ -86,3 +86,19 @@ func (cs *CaixaService) ResumoCaixaAberto(ctx context.Context, caixaID uuid.UUID
 	}
 	return dto.InterfaceToValorEsperadoFormaDto(resumo)
 }
+
+func (cs *CaixaService) InserirValoresInformados(ctx context.Context, valoresInformados dto.InserirValoresInformadosParams) error {
+	valoresInformadosParams, err := dto.InserirValoresInformadosParamsToInserirValoresInformadosParams(valoresInformados)
+	if err != nil {
+		return err
+	}
+	return cs.queries.InserirValoresInformados(ctx, valoresInformadosParams)
+}
+
+func (cs *CaixaService) FecharCaixa(ctx context.Context, fecharCaixa dto.FecharCaixaParams) error {
+	fecharCaixaParams, err := dto.FecharCaixaParamsToFecharCaixaParams(fecharCaixa)
+	if err != nil {
+		return err
+	}
+	return cs.queries.FecharCaixa(ctx, fecharCaixaParams)
+}

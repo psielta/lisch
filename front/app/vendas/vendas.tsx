@@ -2414,6 +2414,8 @@ function Vendas({
         open={dialogResumoCaixaOpen}
         onClose={handleFecharDialogResumoCaixa}
         id_caixa={caixaEmAberto?.id || ""}
+        setErrorCaixa={setErrorCaixa}
+        setCaixaEmAberto={setCaixaEmAberto}
       />
     </>
   );

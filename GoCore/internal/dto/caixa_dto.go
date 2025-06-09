@@ -72,6 +72,39 @@ type CaixaMovimentacoDto struct {
 	DeletedAt        *time.Time `json:"deleted_at"`
 }
 
+type InserirValoresInformadosParams struct {
+	IDCaixa          uuid.UUID `json:"id_caixa"`
+	IDFormaPagamento int16     `json:"id_forma_pagamento"`
+	ValorInformado   float64   `json:"valor_informado"`
+}
+
+type FecharCaixaParams struct {
+	ID                   uuid.UUID `json:"id"`
+	ObservacaoFechamento string    `json:"observacao_fechamento"`
+}
+
+func InserirValoresInformadosParamsToInserirValoresInformadosParams(dto InserirValoresInformadosParams) (pgstore.InserirValoresInformadosParams, error) {
+	var valorInformadoValue pgtype.Numeric
+	s := strconv.FormatFloat(dto.ValorInformado, 'f', -1, 64)
+	if err := valorInformadoValue.Scan(s); err != nil {
+		return pgstore.InserirValoresInformadosParams{}, fmt.Errorf("falha ao converter ValorInformado para NUMERIC: %w", err)
+	}
+
+	return pgstore.InserirValoresInformadosParams{
+		IDCaixa:          dto.IDCaixa,
+		IDFormaPagamento: dto.IDFormaPagamento,
+		ValorInformado:   valorInformadoValue,
+	}, nil
+}
+
+func FecharCaixaParamsToFecharCaixaParams(dto FecharCaixaParams) (pgstore.FecharCaixaParams, error) {
+
+	return pgstore.FecharCaixaParams{
+		ID:                   dto.ID,
+		ObservacaoFechamento: pgtype.Text{String: dto.ObservacaoFechamento, Valid: true},
+	}, nil
+}
+
 func InsertCaixaParamsToInsertCaixaParams(dto InsertCaixaParams) (pgstore.InsertCaixaParams, error) {
 	var valorAberturaValue pgtype.Numeric
 	// converte  e.g. 123.45 → "123.45"

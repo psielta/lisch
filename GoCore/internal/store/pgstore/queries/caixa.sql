@@ -33,3 +33,15 @@ UPDATE caixa_movimentacoes
 -- name: ResumoCaixaAberto :many
 SELECT *
 FROM calcular_valores_esperados_caixa($1);
+
+-- name: InserirValoresInformados :exec
+INSERT INTO caixa_fechamento_formas (id_caixa, id_forma_pagamento, valor_informado)
+VALUES
+  ($1, $2, $3);
+
+-- name: FecharCaixa :exec
+UPDATE caixas
+SET status = 'F',
+    data_fechamento = now(),
+    observacao_fechamento = $2
+WHERE id = $1;

@@ -66,6 +66,8 @@ func (api *Api) BindRoutes() {
 					r.Delete("/sangria/{id}", api.handleCaixas_RemoveSangria)
 					r.Delete("/suprimento/{id}", api.handleCaixas_RemoveSuprimento)
 					r.Get("/resumo/{id}", api.handleCaixas_Resumo)
+					r.Post("/inserir-valores-informados", api.handleCaixas_InserirValoresInformados)
+					r.Post("/fechar-caixa", api.handleCaixas_FecharCaixa)
 				})
 			})
 

@@ -12,6 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const fecharCaixa = `-- name: FecharCaixa :exec
+UPDATE caixas
+SET status = 'F',
+    data_fechamento = now(),
+    observacao_fechamento = $2
+WHERE id = $1
+`
+
+type FecharCaixaParams struct {
+	ID                   uuid.UUID   `json:"id"`
+	ObservacaoFechamento pgtype.Text `json:"observacao_fechamento"`
+}
+
+func (q *Queries) FecharCaixa(ctx context.Context, arg FecharCaixaParams) error {
+	_, err := q.db.Exec(ctx, fecharCaixa, arg.ID, arg.ObservacaoFechamento)
+	return err
+}
+
 const getCaixaAbertosPorTenant = `-- name: GetCaixaAbertosPorTenant :many
 SELECT id, seq_id, tenant_id, id_operador, data_abertura, data_fechamento, valor_abertura, observacao_abertura, observacao_fechamento, status, created_at, updated_at, deleted_at FROM caixas WHERE tenant_id = $1 AND status = 'A' AND deleted_at IS NULL
 `
@@ -48,6 +66,23 @@ func (q *Queries) GetCaixaAbertosPorTenant(ctx context.Context, tenantID uuid.UU
 		return nil, err
 	}
 	return items, nil
+}
+
+const inserirValoresInformados = `-- name: InserirValoresInformados :exec
+INSERT INTO caixa_fechamento_formas (id_caixa, id_forma_pagamento, valor_informado)
+VALUES
+  ($1, $2, $3)
+`
+
+type InserirValoresInformadosParams struct {
+	IDCaixa          uuid.UUID      `json:"id_caixa"`
+	IDFormaPagamento int16          `json:"id_forma_pagamento"`
+	ValorInformado   pgtype.Numeric `json:"valor_informado"`
+}
+
+func (q *Queries) InserirValoresInformados(ctx context.Context, arg InserirValoresInformadosParams) error {
+	_, err := q.db.Exec(ctx, inserirValoresInformados, arg.IDCaixa, arg.IDFormaPagamento, arg.ValorInformado)
+	return err
 }
 
 const insertCaixa = `-- name: InsertCaixa :one

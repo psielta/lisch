@@ -86,3 +86,26 @@ export async function getResumoCaixa(
   const response = await api.get(`/caixas/resumo/${id_caixa}`);
   return response.data;
 }
+
+export type InserirValoresInformadosParams = {
+  id_caixa: string;
+  id_forma_pagamento: number;
+  valor_informado: number;
+};
+
+export type FecharCaixaParams = {
+  id: string;
+  observacao_fechamento: string;
+};
+
+export async function inserirValoresInformados(
+  params: InserirValoresInformadosParams
+): Promise<void> {
+  const response = await api.post("/caixas/inserir-valores-informados", params);
+  return response.data;
+}
+
+export async function fecharCaixa(params: FecharCaixaParams): Promise<void> {
+  const response = await api.post("/caixas/fechar-caixa", params);
+  return response.data;
+}

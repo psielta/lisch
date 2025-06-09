@@ -488,6 +488,11 @@ type PedidoPagamento struct {
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type PedidoSeqCaixa struct {
+	IDCaixa uuid.UUID `json:"id_caixa"`
+	Seq     int32     `json:"seq"`
+}
+
 type PedidoSeqDiarium struct {
 	TenantID uuid.UUID   `json:"tenant_id"`
 	Dia      pgtype.Date `json:"dia"`
